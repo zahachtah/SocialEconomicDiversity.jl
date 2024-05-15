@@ -47,11 +47,11 @@ function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_
 		
 	function get_deriv_vector(y,u,z)
 		
-		du=zeros(z.N+2)
+		du=zeros(z.N+3)
 		usum=cumsum(z.ū)
 		Q=findall(usum.<=u)
 		n=length(Q)
-		U=zeros(z.N+2)
+		U=zeros(z.N+3)
 		
 		deltau=length(Q)>0 ? usum[min(z.N,Q[end]+1)]-u : 0
 		length(Q)>0 ? U[Q]=z.ū[Q] : nothing
@@ -68,6 +68,7 @@ function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_
 	end
 	for is in S
 		p=is
+        println(p)
 		c=p.color
 		MS=10
 		id=sortperm(is.w̃)

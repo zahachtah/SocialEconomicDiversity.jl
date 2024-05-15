@@ -121,6 +121,7 @@ function sim!(p; tend=(0.0,2000.0), y0=1.0, dydt=1.0,u0=fill(0.0/p.N,p.N), p0=0.
         #R̃ₕᵣ= S.u.*(S.y .- S.w̃);
         p.total_revenue = p.wage_revenue .+  p.resource_revenue=#
 		p.gini=gini(p.total_revenue)
+        #p.sim=sol.retcode
 	return p
 
 end

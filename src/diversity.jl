@@ -121,6 +121,7 @@ function dist!(s,N::Int64)
     return s
 end
 
+# Helper function to generate a lognormal distribution from a min and max
 function lognormal(min; stop=1.0,length=10)
     min==0.0 ? min=0.01 : nothing # Note, I adjust min to not be ==0
     min>stop ? stop=min+0.01 : nothing
@@ -220,6 +221,7 @@ function SED(; data=nothing, min=nothing, max=nothing, kwargs...)
     return sed
 end
 
+# functions to make SED behave like any array
 Base.size(a::SED) = size(a.data)
 Base.getindex(a::SED, i...) = getindex(a.data, i...)
 Base.setindex!(a::SED, v, i...) = setindex!(a.data, v, i...)
