@@ -223,8 +223,8 @@ function individual_u!(a,S;labels=true,rot=false)
 		heatmap!(a,S.w̃[id],S.t,rotl90(S.t_u[:,reverse(id)]),colormap=cgrad([:white,S.color]))
 		!labels ? hidedecorations!(a) : nothing
 	else
-	heatmap!(a,S.t,S.w̃[id],S.t_u[:,id],colormap=cgrad([:white,S.color]))
-	!labels ? hidedecorations!(a) : nothing
+        heatmap!(a,S.t,S.w̃[id],S.t_u[:,id],colormap=cgrad([:white,S.color]))
+        !labels ? hidedecorations!(a) : nothing
 	end
 	hidespines!(a)
 end

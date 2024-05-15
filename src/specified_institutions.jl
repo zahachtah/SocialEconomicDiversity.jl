@@ -26,7 +26,7 @@ mutable struct Dynamic_permit_allocation <: LimitInstitution
     fun::Function
 end
 
-function dyn_permits(institution::Dynamic_permit_allocation,du,u,s,t)
+function dynamic_permits(institution::Dynamic_permit_allocation,du,u,s,t)
   
     n=Int64(round(institution.value.*s.N)) # number of allowed permitholders (can we do this at scenario creation)
     id=findall(u.>0.0)      # get all who would like to use resource
@@ -74,7 +74,7 @@ mutable struct Protected_area <: StaticInstitution
     fun::Function
 end
 
-function protected_area3(institution::Protected_area,s)
+function protected_area(institution::Protected_area,s)
   s.protected=1-institution.value
   s.dispersal=institution.dispersal
 end
