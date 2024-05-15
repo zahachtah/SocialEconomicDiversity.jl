@@ -42,7 +42,7 @@ phaseplot!(axis, s, show_trajectory=true, vector_field=true)
 function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_color=true, show_realized=nothing,show_trajectory=false, regulated_dot_reduction=0.3, attractor_size=30, show_attractor=true,show_target=true, vector_field=false,vector_grid=20,show_vertical_potential=false, attractor_color=nothing, show_legend=nothing, attractor_to_legend=false, show_exploitation=true, indicate_incentives=false)
 
 	if !isa(S,Array)
-		S=[S]
+		S=[S];
 	end
 		
 	function get_deriv_vector(y,u,z)
@@ -67,8 +67,7 @@ function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_
 		poly!(A, Rect(0.5, 0, 0.5,1), color=HSLA(180, 0.5, 0.5,0.1))
 	end
 	for is in S
-		p=is
-        println(p)
+		p=is;
 		c=p.color
 		MS=10
 		id=sortperm(is.w̃)
