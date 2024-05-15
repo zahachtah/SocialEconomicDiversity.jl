@@ -17,7 +17,7 @@ end
 
 # Permits or use rights:
 
-mutable struct Dynamic_permit_allocation <: limitInstitution
+mutable struct Dynamic_permit_allocation <: LimitInstitution
     criteria::Symbol
     reverse::Bool
     target::Symbol
@@ -26,7 +26,7 @@ mutable struct Dynamic_permit_allocation <: limitInstitution
     fun::Function
 end
 
-function dyn_permits(institution::dynamic_permit_allocation,du,u,s,t)
+function dyn_permits(institution::Dynamic_permit_allocation,du,u,s,t)
   
     n=Int64(round(institution.value.*s.N)) # number of allowed permitholders (can we do this at scenario creation)
     id=findall(u.>0.0)      # get all who would like to use resource
@@ -47,7 +47,7 @@ end
 # Equal share
 
 
-mutable struct Equal_share_allocation <: limitInstitution
+mutable struct Equal_share_allocation <: LimitInstitution
     criteria::Symbol
     reverse::Bool
     target::Symbol
@@ -56,7 +56,7 @@ mutable struct Equal_share_allocation <: limitInstitution
     fun::Function
 end
 
-function equal_share(institution::equal_share_allocation,du,u,s,t)
+function equal_share(institution::Equal_share_allocation,du,u,s,t)
     n=sum(u.>0.0)
     if institution.target==:yield
         u[1:s.N].=ifelse.(u[1:s.N].>institution.value/u[s.N+1]/n, institution.value/u[s.N+1]/n , u[1:s.N] )
@@ -68,7 +68,7 @@ end
 
 # Protected area
 
-mutable struct Protected_area <: staticInstitution
+mutable struct Protected_area <: StaticInstitution
     dispersal::Float64
     value::Float64
     fun::Function
@@ -79,7 +79,7 @@ function protected_area3(institution::Protected_area,s)
   s.dispersal=institution.dispersal
 end
 
-mutable struct Economic_incentive <: staticInstitution
+mutable struct Economic_incentive <: StaticInstitution
     criteria::Symbol
     reverse::Bool
     target::Symbol
@@ -88,7 +88,7 @@ mutable struct Economic_incentive <: staticInstitution
     fun::Function
 end
 
-function economic_incentiveA(institution::economic_incentive,s)
+function economic_incentiveA(institution::Economic_incentive,s)
     if institution.criteria==:p
         s.aw̃=s.aw̃.+institution.value*(institution.reverse ? -1.0 : 1.0) 
     elseif institution.criteria==:q
