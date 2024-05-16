@@ -80,20 +80,28 @@ function protected_area(institution::Protected_area,s)
 end
 
 mutable struct Economic_incentive <: StaticInstitution
-    criteria::Symbol
-    reverse::Bool
     target::Symbol
+    max::Float64
+    reverse::Bool
     value::Float64
-    control::Symbol
     fun::Function
+
+    function Economic_incentive(;
+        target::Symbol = :q, 
+        max::Float64 = 0.5, 
+        reverse::Bool = false, 
+        value::Float64 = 1.0, 
+        fun::Function = economic_incentive)
+    new(target,max,reverse, value, fun)
+    end
 end
 
 function economic_incentive(institution::Economic_incentive,s)
-    if institution.criteria==:p
-        s.aw̃=s.aw̃.+institution.value*(institution.reverse ? -1.0 : 1.0) 
-    elseif institution.criteria==:q
-        s.aū=s.aū.+institution.value*(institution.reverse ? -1.0 : 1.0)
-        s.aw̃=s.aw̃./(1+institution.value*(institution.reverse ? -1.0 : 1.0))
+    if institution.target==:p
+        s.aw̃=s.aw̃.+institution.max*institution.value*(institution.reverse ? -1.0 : 1.0) 
+    elseif institution.target==:q
+        s.aū=s.aū.+institution.max*institution.value*(institution.reverse ? -1.0 : 1.0)
+        s.aw̃=s.aw̃./(1+institution.max*institution.value*(institution.reverse ? -1.0 : 1.0))
     end
 end
 
