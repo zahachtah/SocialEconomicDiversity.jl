@@ -6,3 +6,8 @@
 * fix the scaling of the vector field in phaseplots
 * have phaseplot! return legend-elements and labels to makeing legend simple!
 * make tradable quotas work!
+* implement highst incomes first for tradable quotas!
+* fix indexed is correct for incomes!
+* make sure revenues works correctly for trade
+* assign institution either as s.institions=Market() or s.instution=[Market()]
+* all instutions with constructors

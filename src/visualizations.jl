@@ -251,19 +251,20 @@ function incomes!(
         mw = z.w̃[end] / 5
     end
 
-    indexed ? nothing : fix_xlim ? xlims!(a, [0, 1]) : xlims!(a, [z.w̃[1], z.w̃[end]])
+    indexed==true ? nothing : fix_xlim ? xlims!(a, [0, 1]) : xlims!(a, [z.w̃[1], z.w̃[end]])
 
     #hideydecorations!(a)
     #hidespines!(a)
 
-    id = indexed ? collect(1:z.N) : sortperm(z.total_revenue)
+    id = indexed==true ? collect(1:z.N) : sortperm(getfield(z,indexed))
     if densityplot
         pred = kde(z.total_revenue[id])
         band!(a, pred.x, pred.x .* 0, pred.density, color=(c, 0.5))
         lines!(a, kde(z.total_revenue[id]), color=c)
     else
-        barplot!(a, indexed ? collect(1:z.N) : z.w̃, z.total_revenue[id], color=c, width=indexed ? 1 : mw, offset=z.trade_revenue[id])
-        barplot!(a, indexed ? collect(1:z.N) : z.w̃, z.wage_revenue[id], color=cw, width=indexed ? 1 : mw, offset=z.trade_revenue[id] + z.resource_revenue[id])
+        barplot!(a, indexed==true ? collect(1:z.N) : z.w̃, z.total_revenue[id], color=c, width=indexed==true ? 1 : mw, offset=z.trade_revenue[id])
+        barplot!(a, indexed==true ? collect(1:z.N) : z.w̃, z.wage_revenue[id], color=cw, width=indexed==true ? 1 : mw, offset=z.trade_revenue[id] + z.resource_revenue[id])
+        barplot!(a, indexed==true ? collect(1:z.N) : z.w̃, abs.(z.trade_revenue[id]), color=HSLA(0,0,0.8,0.5), width=indexed==true ? 1 : mw, offset=min.(0.0,z.trade_revenue[id]))
     end
 
     mi = minimum(z.trade_revenue[id] + z.resource_revenue[id])
@@ -375,7 +376,7 @@ function plot_institutional_impact(o;weight=[1,1,1,1,1],s=scenario())
     flipaxis = true, tellwidth=false, halign=:left)
     lines!(a3,[opt,opt],[0,100],color=:darkorange,linestyle=:dash)
     S=deepcopy(s)
-    println(S)
+    
     S.institution[1].value=o.target[opt]
     S.color=convert(HSL,colorant"darkorange")
     sim!(S)
@@ -494,11 +495,11 @@ s = scenario()
 phaseplot!(s, show_trajectory=true, vector_field=true)
 ```
 """
-    function phaseplot(S;vector_field=false, show_realized=false, saveas="")
+    function phaseplot(S;vector_field=false, show_realized=false, show_trajectory=false, saveas="")
         f=Figure()
         a=CairoMakie.Axis(f[1,1])
         hidespines!(a)
-        phaseplot!(a,S,show_trajectory=true;vector_field,show_realized)
+        phaseplot!(a,S;vector_field,show_realized, show_trajectory)
         if saveas!=""
             save("graphics/"*saveas,f)
         end

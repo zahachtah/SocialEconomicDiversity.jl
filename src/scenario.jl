@@ -214,7 +214,9 @@ function revenues!(S::Scenario)
     c̃=0 #Yo, add c to scenario!
     S.wage_revenue = (S.ū.*S.aū .- S.u) .* S.w̃.*S.aw̃.*S.r.*S.p.*S.K;
     S.resource_revenue = S.u.*(S.y*(1.0-S.protected) .- c̃).*S.r.*S.p.*S.K;
-    S.trade_revenue=(S.value./(S.y*(1.0-S.protected))./S.N.-S.u).*S.ϕ.*S.r.*S.p.*S.K;
+    if typeof(S.institution[1])==Market 
+        S.trade_revenue=(S.institution[1].value./(S.y*(1.0-S.protected))./S.N.-S.u).*S.ϕ.*S.r.*S.p.*S.K;
+    end
     #R̃ₕᵣ= S.u.*(S.y .- S.w̃);
     S.total_revenue = S.wage_revenue .+  S.resource_revenue
 end
