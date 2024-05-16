@@ -1,20 +1,3 @@
-#=
-
-Consider this instead:
-
-struct dynamic_permit_allocation <: limitInstitution
-    params=NamedTuple()
-end
-
-function dyn_permits(institution::dynamic_permit_allocation,du,u,s,t)
-    @unpack criteria, reverse, target, value, control, fun = institution.params
-
-end
-
-=#
-
-
-
 # Permits or use rights:
 """
     mutable struct Dynamic_permit_allocation <: LimitInstitution
@@ -36,11 +19,10 @@ Initializes an instance of `Dynamic_permit_allocation` with optional parameters,
 mutable struct Dynamic_permit_allocation <: LimitInstitution
     criteria::Symbol
     reverse::Bool
-    target::Symbol
     value::Float64
     fun::Function
-    function Dynamic_permit_allocation(;criteria::Symbol = :w̃, reverse::Bool = false, target::Symbol = :effort, value::Float64 = 1.0, fun::Function = dynamic_permits)
-        new(criteria, reverse, target, value, fun)
+    function Dynamic_permit_allocation(;criteria::Symbol = :w̃, reverse::Bool = false,  value::Float64 = 1.0, fun::Function = dynamic_permits)
+        new(criteria, reverse,  value, fun)
     end
 end
 
@@ -140,7 +122,6 @@ end
 
 
 # Protected area
-
 """
     mutable struct Protected_area <: StaticInstitution
 
@@ -189,6 +170,8 @@ function protected_area(institution::Protected_area, s)
 end
 
 
+# Subsidies and taxes
+
 """
     mutable struct Economic_incentive <: StaticInstitution
 
@@ -197,25 +180,25 @@ A mutable struct that defines the parameters and function for an economic incent
 # Fields
 - `target::Symbol`: A symbol representing the target parameter for the economic incentive.
 - `max::Float64`: A maximum value used in the calculation of the economic incentive.
-- `reverse::Bool`: A boolean flag indicating whether to reverse the effect of the economic incentive.
+- `subsidize::Bool`: A boolean flag indicating whether to reverse the effect of the economic incentive.
 - `value::Float64`: A value used in the calculation to determine the magnitude of the economic incentive.
 - `fun::Function`: A function to execute the economic incentive configuration.
 
 # Constructor
-    Economic_incentive(; target::Symbol = :q, max::Float64 = 0.5, reverse::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive)
+    Economic_incentive(; target::Symbol = :q, max::Float64 = 0.5, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive)
 
 Initializes an instance of `Economic_incentive` with optional parameters, providing default values for each field.
 """
 mutable struct Economic_incentive <: StaticInstitution
     target::Symbol      # Target parameter for the economic incentive
     max::Float64        # Maximum value used for the incentive calculation
-    reverse::Bool       # Flag to reverse the effect of the incentive
+    subsidize::Bool       # subsidize=true or tax
     value::Float64      # Value used to determine the magnitude of the incentive
     fun::Function       # Function to execute the economic incentive configuration
 
     # Constructor for `Economic_incentive` with default parameter values
-    function Economic_incentive(; target::Symbol = :q, max::Float64 = 0.5, reverse::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive)
-        new(target, max, reverse, value, fun)
+    function Economic_incentive(; target::Symbol = :q, max::Float64 = 0.5, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive)
+        new(target, max, subsidize, value, fun)
     end
 end
 
@@ -235,12 +218,12 @@ Configures the economic incentive based on the specified target, maximum value, 
 function economic_incentive(institution::Economic_incentive, s)
     if institution.target == :p
         # Adjust aw̃ by adding the incentive effect
-        s.aw̃ = s.aw̃ .+ institution.max * institution.value * (institution.reverse ? -1.0 : 1.0)
+        s.aw̃ = s.aw̃ .+ institution.max * institution.value * (institution.subsidize ? -1.0 : 1.0)
     elseif institution.target == :q
         # Adjust aū by adding the incentive effect
-        s.aū = s.aū .+ institution.max * institution.value * (institution.reverse ? -1.0 : 1.0)
+        s.aū = s.aū .+ institution.max * institution.value * (institution.subsidize ? -1.0 : 1.0)
         # Normalize aw̃ based on the incentive effect
-        s.aw̃ = s.aw̃ ./ (1 + institution.max * institution.value * (institution.reverse ? -1.0 : 1.0))
+        s.aw̃ = s.aw̃ ./ (1 + institution.max * institution.value * (institution.subsidize ? -1.0 : 1.0))
     end
 end
 
@@ -265,19 +248,18 @@ mutable struct Market <: DynamicInstitution
     criteria::Symbol    # Criteria for market allocation
     target::Symbol      # Target parameter for market allocation
     value::Float64      # Total supply available in the market
+    market_rate::Float64 # Rate of change in the tradable quota price
     fun::Function       # Function to execute the market mechanism
 
     # Constructor for `Market` with default parameter values
     function Market(;criteria::Symbol = :ϕ, 
-                    reverse::Bool = false, 
                     target::Symbol = :effort, 
                     value::Float64 = 1.0, 
-                    control::Symbol = :default_control, 
+                    market_rate::Float64 = 0.01, 
                     fun::Function = market)
-        new(criteria, target, value, fun)
+        new(criteria, target, value, market_rate,fun)
     end
 end
-
 """
     market(institution::Market, du, u, s, t)
 
@@ -318,6 +300,8 @@ function market(institution::Market, du, u, s, t)
     end
     
     # Update the tradable quota price based on the difference between demand and supply
-    du[s.N+3] = s.β * (demand - supply)
+    du[s.N+3] = s.institution[1].market_rate * (demand - supply)
 end
+
+
 

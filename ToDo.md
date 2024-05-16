@@ -11,3 +11,5 @@
 * make sure revenues works correctly for trade
 * assign institution either as s.institions=Market() or s.instution=[Market()]
 * all instutions with constructors
+* Insightful and understandable institutions documentation
+* better/more robust check in revenues! part of refactoring instiuttions as Array or not

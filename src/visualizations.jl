@@ -354,7 +354,8 @@ end
 function plot_institutional_impact(o,s;weight=[1,1,1,1,1])
     weight=round.(weight, digits=4)
     w=o.resource.^weight[1].*o.total.^weight[2].*o.gini.^weight[3].*o.I.^weight[4].*o.y.^weight[5]
-    opt=argmax(w)
+    w=round.(w,digits=4)
+    opt=findall(w.==w[argmax(w)])[end]
     f=Figure(size=(800,700))
     t="hello"
     a=CairoMakie.Axis(f[1,1:2], xticks=([],[]),yticks=([],[]),ylabel="normalized")
@@ -377,14 +378,13 @@ function plot_institutional_impact(o,s;weight=[1,1,1,1,1])
     flipaxis = true, tellwidth=false, halign=:left)
     lines!(a3,[opt,opt],[0,100],color=:darkorange,linestyle=:dash)
     S=deepcopy(s)
-    println(S)
     S.institution[1].value=o.target[opt]
     S.color=convert(HSL,colorant"darkorange")
-    sim!(S)
+    sim!(S);
     phaseplot!(a4,S,show_realized=true)
     S.institution[1].value=1.0
     S.color=convert(HSL,colorant"gray")
-    sim!(S)
+    sim!(S);
     phaseplot!(a4,S,show_realized=true)
     return f
 end
