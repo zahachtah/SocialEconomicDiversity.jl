@@ -351,7 +351,7 @@ function dependencies(s)
     f
 end
 
-function plot_institutional_impact(o;weight=[1,1,1,1,1],s=scenario())
+function plot_institutional_impact(o,s;weight=[1,1,1,1,1])
     weight=round.(weight, digits=4)
     w=o.resource.^weight[1].*o.total.^weight[2].*o.gini.^weight[3].*o.I.^weight[4].*o.y.^weight[5]
     opt=argmax(w)
@@ -366,6 +366,7 @@ function plot_institutional_impact(o;weight=[1,1,1,1,1],s=scenario())
     l3=lines!(a,o.target,o.gini./maximum(o.gini),label="Gini", linewidth=3)
     l4=lines!(a,o.target,(o.I.-minimum(o.I))./maximum(o.I.-minimum(o.I)),label="Institutional Impact", linewidth=3)
     l5=lines!(a,o.target,o.y/maximum(o.y),label="Stock", linewidth=3)
+    ylims!(a,(-1,1))
     lines!(a,[o.target[opt],o.target[opt]],[0,1],color=:darkorange,linestyle=:dash)
     Legend(f[1,3],[l1,l2,l3,l4,l5],["Resource Revenue","Total Revenue","Gini","Institutional Coercion","Stock"],"Governance aspects",tellwidth=false,orientation = :vertical, halign=:left)
    
@@ -376,7 +377,7 @@ function plot_institutional_impact(o;weight=[1,1,1,1,1],s=scenario())
     flipaxis = true, tellwidth=false, halign=:left)
     lines!(a3,[opt,opt],[0,100],color=:darkorange,linestyle=:dash)
     S=deepcopy(s)
-    
+    println(S)
     S.institution[1].value=o.target[opt]
     S.color=convert(HSL,colorant"darkorange")
     sim!(S)

@@ -87,7 +87,7 @@ function sim!(p; tend=(0.0,2000.0), y0=1.0, dydt=1.0,u0=fill(0.0/p.N,p.N), p0=0.
     # solves the ODESSPRK22
     #sol=solve(prob,adaptive=false, Euler(),saveat=0.1,callback=terminate_steady_state ? TerminateSteadyState(1e-6,1e-4) : nothing,dt=p.sim.dt)#  
 	sol=solve(prob,SSPRK43(;stage_limiter!),reltol=1e-8,callback=terminate_steady_state ? TerminateSteadyState(1e-6,1e-4) : nothing)
-	if sol.retcode != :Success
+	if sol.retcode != :Success && sol.retcode != :Terminated
 		println("Simulation failed with retcode: ", sol.retcode)
 		println((p.label,p.institution[1]))
 	end
