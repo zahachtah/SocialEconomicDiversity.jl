@@ -98,9 +98,6 @@ function economic_incentive(institution::Economic_incentive,s)
 end
 
 
-
-
-
 mutable struct Market <: DynamicInstitution
     criteria::Symbol
     reverse::Bool
