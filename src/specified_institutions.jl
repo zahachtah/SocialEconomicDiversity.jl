@@ -304,4 +304,13 @@ function market(institution::Market, du, u, s, t)
 end
 
 
+mutable struct Open_access <: StaticInstitution
+    fun::Function
+    function Open_access(fun::Function = open_access)
+        new(fun)
+    end
+end
 
+function open_access(inst::Open_access, s)
+    return
+end
