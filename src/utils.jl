@@ -33,30 +33,38 @@ function revenues(s; non_dimensional=true)
 end
 
 function analytical(p)
-    Y=range(0.0,stop=max(1.0,maximum(p.w̃))	,length=1000)
-    us=sum.(u_sust.(Y,Ref(p)))/p.N
-    ur=sum.(u_real.(Y,Ref(p)))/p.N
-    return (us,ur,Y)
+    w̃ = p.w̃ .* p.aw̃
+    ū = p.ū .* p.aū
+
+    Y = range(0.0, stop = max(1.0, maximum(w̃)), length = 1000)
+    us = sum.(u_sust.(Y, Ref(p))) / p.N
+    ur = sum.(u_real.(Y, Ref(p))) / p.N
+    return (us, ur, Y)
 end
 
+function u_sust(y, p)
+    w̃ = p.w̃ .* p.aw̃
+    ū = p.ū .* p.aū
 
-function u_sust(y,p)
-    id=sortperm(p.w̃)
-    cu=cumsum(p.ū[id])
-    f=sum(cu.<(1.0-y))
-    if f==0
-        f=(1.0-y)/p.ū[id[1]]
-    elseif f<p.N
-        f=f+((1-y)-cu[f])/p.ū[id[f+1]]
+    id = sortperm(w̃)
+    cu = cumsum(ū[id])
+    f = sum(cu .< (1.0 - y))
+    if f == 0
+        f = (1.0 - y) / ū[id[1]]
+    elseif f < p.N
+        f = f + ((1 - y) - cu[f]) / ū[id[f + 1]]
     end
     return f
 end
 
-function u_real(y,p)
-    id=sortperm(p.w̃) # if w_bar's are not in ascending order
-    f=sum(p.w̃[id].<y) # how many are participating
+function u_real(y, p)
+    w̃ = p.w̃ .* p.aw̃
+
+    id = sortperm(w̃) # if w_bar's are not in ascending order
+    f = sum(w̃[id] .< y) # how many are participating
     return f
 end
+
 	
 
 
