@@ -306,7 +306,8 @@ end
 
 mutable struct Open_access <: StaticInstitution
     fun::Function
-    function Open_access(fun::Function = open_access)
+    value::Float64
+    function Open_access(fun::Function = open_access, value::Float64 = 0.0)
         new(fun)
     end
 end
