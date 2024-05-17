@@ -84,11 +84,14 @@ function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_
 	
 		
 		(us,ur,y)=analytical(is)
-		if is.target=="yield" && show_target
-	        lines!(A,y,is.value./y, color=c, linewidth=0.5, linestyle=:dash)
-		elseif is.target=="effort" && show_target
-	        lines!(A,y,fill(mean(is.value),length(y)), color=c, linewidth=0.5, linestyle=:dash)
-	    end
+        if hasfield(typeof(is.institution[1]),:target)
+            if is.institution[1].target==:yield && show_target
+                
+                lines!(A,y,is.institution[1].value./y, color=c, linewidth=0.5, linestyle=:dash)
+            elseif is.institution[1].target==:effort && show_target
+                lines!(A,y,fill(mean(is.institution[1].value),length(y)), color=c, linewidth=0.5, linestyle=:dash)
+            end
+        end
 	
 		#Trajectory plot
 		show_trajectory ? lines!(A,is.t_y,is.t_U,color=c, linewidth=1,linestyle=:dash, label="Trajectory") : nothing
@@ -496,11 +499,11 @@ s = scenario()
 phaseplot!(s, show_trajectory=true, vector_field=true)
 ```
 """
-    function phaseplot(S;vector_field=false, show_realized=false, show_trajectory=false, saveas="")
+    function phaseplot(S;vector_field=false, show_realized=false, show_trajectory=false, show_target=true,saveas="")
         f=Figure()
         a=CairoMakie.Axis(f[1,1])
         hidespines!(a)
-        phaseplot!(a,S;vector_field,show_realized, show_trajectory)
+        phaseplot!(a,S;vector_field,show_realized, show_trajectory,show_target)
         if saveas!=""
             save("graphics/"*saveas,f)
         end

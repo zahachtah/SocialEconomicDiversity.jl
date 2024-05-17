@@ -98,4 +98,3 @@ function institutional_impact(S::Scenario;M=100, inst=1)
     #id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_ginnig=t[argmin(gini)],
     return (target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],total=total,resource=resource,gini=gini,I=I,y=y,U=U)
 end
-

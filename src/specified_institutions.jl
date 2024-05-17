@@ -218,10 +218,10 @@ Configures the economic incentive based on the specified target, maximum value, 
 function economic_incentive(institution::Economic_incentive, s)
     if institution.target == :p
         # Adjust aw̃ by adding the incentive effect
-        s.aw̃ = s.aw̃ .+ institution.max * institution.value * (institution.subsidize ? 1.0 : -1.0)
+        s.aw̃ = s.aw̃ ./ (1 + institution.max * institution.value * (institution.subsidize ? 1.0 : -1.0))
     elseif institution.target == :q
         # Adjust aū by adding the incentive effect
-        s.aū = s.aū .+ institution.max * institution.value * (institution.subsidize ? 1.0 : -1.0)
+        s.aū = s.aū .*(1 + institution.max * institution.value * (institution.subsidize ? 1.0 : -1.0))
         # Normalize aw̃ based on the incentive effect
         s.aw̃ = s.aw̃ ./ (1 + institution.max * institution.value * (institution.subsidize ? 1.0 : -1.0))
     end

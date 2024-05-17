@@ -1,3 +1,4 @@
+* add aw and au to phaseplot for outcome plots. Same for incomes?
 * Add periodicity detection and averaging
 * Clean up dudt function from comments
 * make branch and move model over to ComponentArrays
@@ -13,3 +14,4 @@
 * all instutions with constructors
 * Insightful and understandable institutions documentation
 * better/more robust check in revenues! part of refactoring instiuttions as Array or not
+* make a figure that shows the incentive switch, for linear and for non-linear, i.e. double switch. Also one that illustrates how increased q without increased w can cause incentive shifts
