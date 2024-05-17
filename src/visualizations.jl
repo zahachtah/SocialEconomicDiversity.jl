@@ -41,94 +41,97 @@ phaseplot!(axis, s, show_trajectory=true, vector_field=true)
 """
 function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_color=true, show_realized=nothing,show_trajectory=false, regulated_dot_reduction=0.3, attractor_size=30, show_attractor=true,show_target=true, vector_field=false,vector_grid=20,show_vertical_potential=false, attractor_color=nothing, show_legend=nothing, attractor_to_legend=false, show_exploitation=true, indicate_incentives=false)
 
-	if !isa(S,Array)
-		S=[S];
-	end
-		
-	function get_deriv_vector(y,u,z)
-		
-		du=zeros(z.N+3)
-		usum=cumsum(z.ū)
-		Q=findall(usum.<=u)
-		n=length(Q)
-		U=zeros(z.N+3)
-		
-		deltau=length(Q)>0 ? usum[min(z.N,Q[end]+1)]-u : 0
-		length(Q)>0 ? U[Q]=z.ū[Q] : nothing
-		U[min(z.N,n+1)]=deltau
-		U[z.N+1]=y
-		dudt(du,U,z,0)
-		radian_angle = atan(sum(du[1:z.N]),du[z.N+1])
+    if !isa(S,Array)
+        S=[S];
+    end
 
-		radian_angle-pi/2,sqrt(sum(du[1:z.N])^2+du[z.N+1]^2)
-	end
-	if show_exploitation
-		poly!(A, Rect(0, 0, 0.5,1), color=HSLA(10, 0.5, 0.5,0.1))
-		poly!(A, Rect(0.5, 0, 0.5,1), color=HSLA(180, 0.5, 0.5,0.1))
-	end
-	for is in S
-		p=is;
-		c=p.color
-		MS=10
-		id=sortperm(is.w̃)
-		scatter!(A,[is.y],[is.U],color=attractor_color==nothing ? HSLA(c.h,c.s,c.l,0.3) : attractor_color,markersize=show_attractor ? attractor_size : 0,strokecolor=:transparent,strokewidth=0,rotations=pi)
-		if vector_field
-			points = [Point2f(x/(vector_grid+1), y/(vector_grid+1)) for y in 1:vector_grid for x in 1:vector_grid]
-			rotations = [get_deriv_vector(p[1],p[2],is)[1] for p in points]
-			markersizeVector = [(get_deriv_vector(p[1],p[2],is)[2]*20)^0.2*15 for p in points]
-	
-			scatter!(A,points, rotations = rotations, markersize = markersizeVector*0.7, marker = '|', color=adjustColor(c,"l",0.4))
-			scatter!(A,points, rotations = rotations, markersize = 4, color=:black)
-	
-		end
-	
-		
-		(us,ur,y)=analytical(is)
-        if hasfield(typeof(is.institution[1]),:target)
-            if is.institution[1].target==:yield && show_target
-                
-                lines!(A,y,is.institution[1].value./y, color=c, linewidth=0.5, linestyle=:dash)
-            elseif is.institution[1].target==:effort && show_target
-                lines!(A,y,fill(mean(is.institution[1].value),length(y)), color=c, linewidth=0.5, linestyle=:dash)
+    for s in S
+        w̃ = s.w̃.* s.aw̃
+        ū = s.ū.* s.aū
+        
+        function get_deriv_vector(y,u,z)
+            du=zeros(z.N+3)
+            usum=cumsum(z.ū)
+            Q=findall(usum.<=u)
+            n=length(Q)
+            U=zeros(z.N+3)
+
+            deltau=length(Q)>0 ? usum[min(z.N,Q[end]+1)]-u : 0
+            length(Q)>0 ? U[Q]=z.ū[Q] : nothing
+            U[min(z.N,n+1)]=deltau
+            U[z.N+1]=y
+            dudt(du,U,z,0)
+            radian_angle = atan(sum(du[1:z.N]),du[z.N+1])
+
+            radian_angle-pi/2,sqrt(sum(du[1:z.N])^2+du[z.N+1]^2)
+        end
+
+        if show_exploitation
+            poly!(A, Rect(0, 0, 0.5,1), color=HSLA(10, 0.5, 0.5,0.1))
+            poly!(A, Rect(0.5, 0, 0.5,1), color=HSLA(180, 0.5, 0.5,0.1))
+        end
+
+        p=s;
+        c=p.color
+        MS=10
+        id=sortperm(w̃)
+        scatter!(A,[s.y],[s.U],color=attractor_color==nothing ? HSLA(c.h,c.s,c.l,0.3) : attractor_color,markersize=show_attractor ? attractor_size : 0,strokecolor=:transparent,strokewidth=0,rotations=pi)
+        
+        if vector_field
+            points = [Point2f(x/(vector_grid+1), y/(vector_grid+1)) for y in 1:vector_grid for x in 1:vector_grid]
+            rotations = [get_deriv_vector(p[1],p[2],s)[1] for p in points]
+            markersizeVector = [(get_deriv_vector(p[1],p[2],s)[2]*20)^0.2*15 for p in points]
+
+            scatter!(A,points, rotations = rotations, markersize = markersizeVector*0.7, marker = '|', color=adjustColor(c,"l",0.4))
+            scatter!(A,points, rotations = rotations, markersize = 4, color=:black)
+        end
+
+        (us,ur,y)=analytical(s)
+        if hasfield(typeof(s.institution[1]),:target)
+            if s.institution[1].target==:yield && show_target
+                lines!(A,y,s.institution[1].value./y, color=c, linewidth=0.5, linestyle=:dash)
+            elseif s.institution[1].target==:effort && show_target
+                lines!(A,y,fill(mean(s.institution[1].value),length(y)), color=c, linewidth=0.5, linestyle=:dash)
             end
         end
-	
-		#Trajectory plot
-		show_trajectory ? lines!(A,is.t_y,is.t_U,color=c, linewidth=1,linestyle=:dash, label="Trajectory") : nothing
-		
-		institutional_impact=(is.y.-is.w̃ .>0 .&& is.ū.-is.u.>1e-5).*MS*regulated_dot_reduction
-		institutional_not_profitable=(is.y.-is.w̃ .<0 ).*MS*1.11
-		open_access_not_profitable=(is.y.-is.w̃[id] .<0 ).*MS
-		
-		optoutvector=[is.w̃[i]>is.y ? is.u[i] : is.u[i] for i in eachindex(is.w̃[id])] #for non-flattened curve: is.final.p.ū[i]
-		
-		if show_potential 
-			potential=scatter!(A,y,ur,color=same_potential_color ? c : :gray, markersize=MS.*0.3)
-			show_vertical_potential ? lines!(A,y,ur,color=same_potential_color ? c : :gray, linewidth=MS.*0.2,label="P(y)") : nothing
-		end
 
-		if show_realized==true
-			inst=MarkerElement(marker = :circle, color = :black,strokecolor = c,strokewidth=1,markersize = MS)
+        # Trajectory plot
+        show_trajectory ? lines!(A,s.t_y,s.t_U,color=c, linewidth=1,linestyle=:dash, label="Trajectory") : nothing
 
-			#Shows actors that opt out of resource use 
-			#scatter!(A,is.w̃[id],cumsum(x.u[id]./x.ū[id])/x.N,color=adjustColor(c,"l",0.15), markersize=open_access_not_profitable.*0.3)
-			
-			realized=scatter!(A,is.w̃[id],cumsum(is.u[id]./is.ū[id])/is.N,color=typeof(indicate_incentives)==Symbol ? getproperty(is, indicate_incentives) : c, markersize=MS,label="R(y)")
-			
-			#optout=scatter!(A,is.w̃[id],cumsum(optoutvector./is.ū)./is.N,color=adjustColor(c,"l",0.85), markersize=institutional_not_profitable)
-			
-			#scatter!(A,is.w̃[id],cumsum(is.u./is.ū)./is.N, color=:black,markersize=institutional_impact)
-		end
-		
-		show_trajectory ? scatter!(A,[is.y],[is.U],color=:black,markersize=show_attractor ? 8 : 0,strokecolor=:transparent,strokewidth=0,rotations=pi) : nothing
-		#scatter!(A,[is.y],[is.U],color=:transparent,markersize=show_attractor ? attractor_size : 0,strokecolor=c,strokewidth=2,rotations=pi)
-		
-		show_sustained ? sustained=lines!(A,y,us,linewidth=0.5,markersize=0.5,color=same_potential_color ? c : :gray,label="S(y)") : nothing
-	end
-	ylims!(A,(-0.02,1.02))
-	xlims!(A,(0,1))
-	show_legend!=nothing ? axislegend(A,framevisible = false,position=show_legend) : nothing
+        institutional_impact=(s.y.-w̃ .>0 .&& ū.-s.u.>1e-5).*MS*regulated_dot_reduction
+        institutional_not_profitable=(s.y.-w̃ .<0 ).*MS*1.11
+        open_access_not_profitable=(s.y.-w̃[id] .<0 ).*MS
+
+        optoutvector=[w̃[i]>s.y ? s.u[i] : s.u[i] for i in eachindex(w̃[id])] #for non-flattened curve: s.final.p.ū[i]
+
+        if show_potential 
+            potential=scatter!(A,y,ur,color=same_potential_color ? c : :gray, markersize=MS.*0.3)
+            show_vertical_potential ? lines!(A,y,ur,color=same_potential_color ? c : :gray, linewidth=MS.*0.2,label="P(y)") : nothing
+        end
+
+        if show_realized==true
+            inst=MarkerElement(marker = :circle, color = :black,strokecolor = c,strokewidth=1,markersize = MS)
+
+            # Shows actors that opt out of resource use 
+            # scatter!(A,w̃[id],cumsum(x.u[id]./x.ū[id])/x.N,color=adjustColor(c,"l",0.15), markersize=open_access_not_profitable.*0.3)
+            
+            realized=scatter!(A,w̃[id],cumsum(s.u[id]./ū[id])/s.N,color=typeof(indicate_incentives)==Symbol ? getproperty(s, indicate_incentives) : c, markersize=MS,label="R(y)")
+            
+            # optout=scatter!(A,w̃[id],cumsum(optoutvector./ū)./s.N,color=adjustColor(c,"l",0.85), markersize=institutional_not_profitable)
+            
+            # scatter!(A,w̃[id],cumsum(s.u./ū)./s.N, color=:black,markersize=institutional_impact)
+        end
+        
+        show_trajectory ? scatter!(A,[s.y],[s.U],color=:black,markersize=show_attractor ? 8 : 0,strokecolor=:transparent,strokewidth=0,rotations=pi) : nothing
+        # scatter!(A,[s.y],[s.U],color=:transparent,markersize=show_attractor ? attractor_size : 0,strokecolor=c,strokewidth=2,rotations=pi)
+
+        show_sustained ? sustained=lines!(A,y,us,linewidth=0.5,markersize=0.5,color=same_potential_color ? c : :gray,label="S(y)") : nothing
+    end
+    ylims!(A,(-0.02,1.02))
+    xlims!(A,(0,1))
+    show_legend!=nothing ? axislegend(A,framevisible = false,position=show_legend) : nothing
 end
+
 
 	"""
 	    SEDplot(a, s, v1, v2; show_density=false, sort=true, markersize=5, labels=true, icons=false, icon_size=30)
