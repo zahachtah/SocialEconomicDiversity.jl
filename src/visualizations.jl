@@ -87,11 +87,13 @@ function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_
         end
 
         (us,ur,y)=analytical(s)
-        if hasfield(typeof(s.institution[1]),:target)
-            if s.institution[1].target==:yield && show_target
-                lines!(A,y,s.institution[1].value./y, color=c, linewidth=0.5, linestyle=:dash)
-            elseif s.institution[1].target==:effort && show_target
-                lines!(A,y,fill(mean(s.institution[1].value),length(y)), color=c, linewidth=0.5, linestyle=:dash)
+        if !isempty(s.institution)
+            if hasfield(typeof(s.institution[1]),:target)
+                if s.institution[1].target==:yield && show_target
+                    lines!(A,y,s.institution[1].value./y, color=c, linewidth=0.5, linestyle=:dash)
+                elseif s.institution[1].target==:effort && show_target
+                    lines!(A,y,fill(mean(s.institution[1].value),length(y)), color=c, linewidth=0.5, linestyle=:dash)
+                end
             end
         end
 
