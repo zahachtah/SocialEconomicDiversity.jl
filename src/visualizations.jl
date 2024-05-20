@@ -51,7 +51,7 @@ function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_
         
         function get_deriv_vector(y,u,z)
             du=zeros(z.N+3)
-            usum=cumsum(z.ū)
+            usum=cumsum(z.ū.*z.aū)
             Q=findall(usum.<=u)
             n=length(Q)
             U=zeros(z.N+3)
@@ -87,6 +87,7 @@ function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_
         end
 
         (us,ur,y)=analytical(s)
+
         if !isempty(s.institution)
             if hasfield(typeof(s.institution[1]),:target)
                 if s.institution[1].target==:yield && show_target
@@ -107,7 +108,7 @@ function phaseplot!(A,S; show_sustained=true,show_potential=true,same_potential_
         optoutvector=[w̃[i]>s.y ? s.u[i] : s.u[i] for i in eachindex(w̃[id])] #for non-flattened curve: s.final.p.ū[i]
 
         if show_potential 
-            potential=scatter!(A,y,ur,color=same_potential_color ? c : :gray, markersize=MS.*0.3)
+            potential=lines!(A,y,ur,color=same_potential_color ? c : :gray, linewidth=MS*0.2,markersize=MS.*0.3)
             show_vertical_potential ? lines!(A,y,ur,color=same_potential_color ? c : :gray, linewidth=MS.*0.2,label="P(y)") : nothing
         end
 

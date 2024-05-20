@@ -38,7 +38,7 @@ function stage_limiter!(u, integrator, p, t)
 
 	[limit_institution(inst,p,integrator) for inst in p.institution]
 	
-	u[1:p.N].=ifelse.(u[1:p.N].<0.0,0.0,ifelse.(u[1:p.N].>p.ū.*p.aū,p.ū.*p.aū,u[1:p.N]))
+	u[1:p.N].=ifelse.(u[1:p.N].<0.0,0.0,ifelse.(u[1:p.N].>(p.ū.*p.aū),p.ū.*p.aū,u[1:p.N]))
 
 
 end
@@ -101,16 +101,17 @@ function sim!(p; tend=(0.0,2000.0), y0=1.0, dydt=1.0,u0=fill(0.0/p.N,p.N), p0=0.
 		yy=[u[N+1] for u in sol.u]
 		period=1:length(yy)
 
-
+        id=findall(p.ū.>0.0)
 		p.u=sol.u[end][1:N]
-		p.U=sum(sol.u[end][findall(p.ū.>0.0)]./p.ū[findall(p.ū.>0.0)]./p.N)
+		p.U=sum(sol.u[end][id]./(p.ū[id].*p.aū)./p.N)
 	    p.y=sol.u[end][N+1]
 	    p.ϕ=sol.u[end][end]
 		p.t=sol.t
 		p.t_u=[sol.u[t][i] for t in 1:length(sol.t), i in 1:p.N]#[u[1:N] for u in sol.u]
 	    p.t_y=[u[N+1] for u in sol.u]
 	    p.t_ϕ=[u[end] for u in sol.u]
-		p.t_U=[sum(u[findall(p.ū.>0.0)]./p.ū[findall(p.ū.>0.0)]./p.N) for u in sol.u]
+        
+		p.t_U=[sum(u[id]./(p.ū[id].*p.aū[id])./p.N) for u in sol.u]
 		c̃=0 
 		
 		revenues!(p)

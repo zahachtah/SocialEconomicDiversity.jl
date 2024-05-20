@@ -31,7 +31,7 @@ function revenues(s; non_dimensional=true)
     return (;Ry,Rw,Rq,RT,RW
         )
 end
-
+#=
 function analytical(p)
     Y=range(0.0,stop=max(1.0,maximum(p.w̃))	,length=1000)
     us=sum.(u_sust.(Y,Ref(p)))/p.N
@@ -57,7 +57,7 @@ function u_real(y,p)
     f=sum(p.w̃[id].<y) # how many are participating
     return f
 end
-#=
+=#
 function analytical(p)
     w̃ = p.w̃ .* p.aw̃
     ū = p.ū .* p.aū
@@ -92,7 +92,7 @@ function u_real(y, p)
 end
 
 	
-=#
+
 
 function adjustColor(C,f,v)
     h=C.h
