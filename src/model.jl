@@ -38,6 +38,7 @@ function stage_limiter!(u, integrator, p, t)
 
 	[limit_institution(inst,p,integrator) for inst in p.institution]
 	
+    u[p.N+3]=max(0.0,u[p.N+3])
 	u[1:p.N].=ifelse.(u[1:p.N].<0.0,0.0,ifelse.(u[1:p.N].>(p.ū.*p.aū),p.ū.*p.aū,u[1:p.N]))
 
 
