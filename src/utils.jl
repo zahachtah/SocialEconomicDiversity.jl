@@ -3,34 +3,6 @@ function gini(x)
     sum([abs(x[i]-x[j]) for i in 1:length(x), j in 1:length(x)])/(2*length(x)*sum(x))
 end
 
-function revenues(s; non_dimensional=true)
-    y=s.final.y
-    u=s.final.u
-    ū=s.final.p.ū
-    w̃=s.final.p.w̃
-    
-    T=s.final.p.T
-    N=s.final.p.N
-    ϕ=s.final.ϕ
-    
-    if non_dimensional
-        Ry=y.*u
-        Rw=(ū.-u).*w̃
-        Rq=(T./y./N.-u).*ϕ
-        RT=Ry+Rw+Rq
-        RW=RT.-ū.*w̃
-    else
-        w=s.final.p.w
-        q=s.final.p.q
-        Ry=y.*u.*q
-        Rw=(ū.-u).*w
-        Rq=(T./y./N.-u).*ϕ
-        RT=Ry+Rw+Rq
-        RW=RT.-ū.*w̃
-    end
-    return (;Ry,Rw,Rq,RT,RW
-        )
-end
 #=
 function analytical(p)
     Y=range(0.0,stop=max(1.0,maximum(p.w̃))	,length=1000)

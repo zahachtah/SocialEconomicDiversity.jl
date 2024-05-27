@@ -104,7 +104,7 @@ function sim!(p; tend=(0.0,2000.0), y0=1.0, dydt=1.0,u0=fill(0.0/p.N,p.N), p0=0.
 
         id=findall(p.ū.>0.0)
 		p.u=sol.u[end][1:N]
-		p.U=sum(sol.u[end][id]./(p.ū[id].*p.aū)./p.N)
+		p.U=sum(sol.u[end][id]./(p.ū[id].*p.aū[id])./p.N)
 	    p.y=sol.u[end][N+1]
 	    p.ϕ=sol.u[end][end]
 		p.t=sol.t

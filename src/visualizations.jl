@@ -89,12 +89,16 @@ function phaseplot!(
 
         us, ur, y = analytical(s)
 
-        if show_target && !isempty(s.institution) && hasfield(typeof(s.institution[1]), :target)
-            target, value = s.institution[1].target, s.institution[1].value
-            if target == :yield
-                lines!(A, y, value ./ y, color=:black, linewidth=0.5, linestyle=:dash)
-            elseif target == :effort
-                lines!(A, y, fill(mean(value), length(y)), color=:black, linewidth=0.5, linestyle=:dash)
+        if show_target && !isempty(s.institution)
+            if hasfield(typeof(s.institution[1]), :target)
+                target, value = s.institution[1].target, s.institution[1].value
+                if target == :yield
+                    lines!(A, y, value ./ y, color=:black, linewidth=0.5, linestyle=:dash)
+                elseif target == :effort
+                    lines!(A, y, fill(mean(value), length(y)), color=:black, linewidth=0.5, linestyle=:dash)
+                end
+            else
+                lines!(A, y, fill(mean(s.institution[1].value), length(y)), color=:black, linewidth=0.5, linestyle=:dash)
             end
         end
 
@@ -105,7 +109,7 @@ function phaseplot!(
 
         if show_potential
             potential_color = same_potential_color ? c : :gray
-            lines!(A, y, ur, color=potential_color, linewidth=10 * 0.2, markersize=10 * 0.3)
+            lines!(A, y, ur, color=potential_color, linewidth=10 * 0.2)
             if show_vertical_potential
                 lines!(A, y, ur, color=potential_color, linewidth=10 * 0.2, label="P(y)")
             end
@@ -117,7 +121,7 @@ function phaseplot!(
         end
 
         if show_sustained
-            lines!(A, y, us, linewidth=0.5, markersize=0.5, color=same_potential_color ? c : :gray, label="S(y)")
+            lines!(A, y, us, linewidth=0.5, color=same_potential_color ? c : :gray, label="S(y)")
         end
     end
 
@@ -464,11 +468,11 @@ function plot_institutional_impact(o,s;weight=[1,1,1,1,1])
     l2=lines!(a,o.target,o.total./maximum(o.total),label="Total Revenue", linewidth=3)
     l1=lines!(a,o.target,o.resource./maximum(o.resource),label="Resource Revenue", linewidth=3)
     l3=lines!(a,o.target,o.gini./maximum(o.gini),label="Gini", linewidth=3)
-    l4=lines!(a,o.target,(o.I.-minimum(o.I))./maximum(o.I.-minimum(o.I)),label="Institutional Impact", linewidth=3)
+    #l4=lines!(a,o.target,(o.I.-minimum(o.I))./maximum(o.I.-minimum(o.I)),label="Institutional Impact", linewidth=3)
     l5=lines!(a,o.target,o.y/maximum(o.y),label="Stock", linewidth=3)
     ylims!(a,(-1,1))
     lines!(a,[o.target[opt],o.target[opt]],[0,1],color=:darkorange,linestyle=:dash)
-    Legend(f[1,3],[l1,l2,l3,l4,l5],["Resource Revenue","Total Revenue","Gini","Institutional Coercion","Stock"],"Governance aspects",tellwidth=false,orientation = :vertical, halign=:left)
+    Legend(f[1,3],[l1,l2,l3,l5],["Resource Revenue","Total Revenue","Gini","Stock"],"Governance aspects",tellwidth=false,orientation = :vertical, halign=:left)
    
     lines!(a2,o.target,w./maximum(w),color=:darkorange, linewidth=3)
     lines!(a2,[o.target[opt],o.target[opt]],[0,1],color=:darkorange,linestyle=:dash)
