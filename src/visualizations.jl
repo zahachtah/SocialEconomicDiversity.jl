@@ -55,7 +55,7 @@ function phaseplot!(
         function get_deriv_vector(y, u, z)
             du = zeros(z.N + 3)
             usum = cumsum(z.ū .* z.aū)
-            Q = findall(<=, usum, u)
+            Q = findall(usum.<=u)
             n = length(Q)
             U = zeros(z.N + 3)
 
@@ -90,12 +90,14 @@ function phaseplot!(
         us, ur, y = analytical(s)
 
         if show_target && !isempty(s.institution)
+            
             if hasfield(typeof(s.institution[1]), :target)
                 target, value = s.institution[1].target, s.institution[1].value
+                up=us[findall(y.<=(1-value))[end]]
                 if target == :yield
-                    lines!(A, y, value ./ y, color=:black, linewidth=0.5, linestyle=:dash)
+                    lines!(A, y, up ./ y, color=:black, linewidth=0.5, linestyle=:dash)
                 elseif target == :effort
-                    lines!(A, y, fill(mean(value), length(y)), color=:black, linewidth=0.5, linestyle=:dash)
+                    lines!(A, y, fill(up, length(y)), color=:black, linewidth=0.5, linestyle=:dash)
                 end
             else
                 lines!(A, y, fill(mean(s.institution[1].value), length(y)), color=:black, linewidth=0.5, linestyle=:dash)
@@ -599,11 +601,11 @@ s = scenario()
 phaseplot!(s, show_trajectory=true, vector_field=true)
 ```
 """
-    function phaseplot(S;vector_field=false, show_realized=false, show_trajectory=false, show_target=true,saveas="")
+    function phaseplot(S;vector_field=false, show_realized=false, show_sustained=true, show_trajectory=false, show_target=true,saveas="")
         f=Figure()
         a=CairoMakie.Axis(f[1,1])
         hidespines!(a)
-        phaseplot!(a,S;vector_field,show_realized, show_trajectory,show_target)
+        phaseplot!(a,S;vector_field,show_realized, show_trajectory,show_target,show_sustained)
         if saveas!=""
             save("graphics/"*saveas,f)
         end

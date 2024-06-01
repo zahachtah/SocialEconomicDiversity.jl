@@ -7,7 +7,7 @@ import Base: show
 import Distributions: pdf, Uniform, LogNormal, Normal, Exponential, Dirac
 
 export SED, dist!,astext
-export scenario
+export scenario, Scenario
 export sim!
 export institutional_impact
 export phaseplot!,phaseplot, incomes!,incomes, SEDplot!,SEDplot, individual_u!, dependencies, plot_institutional_impact

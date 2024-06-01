@@ -165,7 +165,7 @@ function scenario(;
 
 
     S=Scenario(N,external,w,q,ē,a,r,K,protected,dispersal,p,w̃,ū,aw̃,aū,α,g,u,U,y,ϕ,t,t_u,t_U,t_y,t_ϕ,total_revenue,resource_revenue,wage_revenue,trade_revenue,gini,institution,target,value,β,sim,label,image,caption,color)
-   
+   dist!(S)
 	return S
 end
 
