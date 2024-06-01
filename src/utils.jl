@@ -79,7 +79,7 @@ end
 
 
 function institutional_impact!(S;M=100, inst=1)
-    isa(S,Array) ? S=[S] : nothing
+    !isa(S,Array) ? S=[S] : nothing
     for s in S
         total::Array{Float64}=[]
         resource::Array{Float64}=[]

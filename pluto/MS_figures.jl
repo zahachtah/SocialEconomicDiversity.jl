@@ -15,8 +15,8 @@ begin
 	set_theme!(theme_light())
 end;
 
-# ╔═╡ e65aabad-06fd-448a-abd8-c01ebae950ee
-institutional_impact!
+# ╔═╡ a056a4d9-6599-4a18-b105-c45a46ab3c9e
+
 
 # ╔═╡ 6df01524-46b9-4ded-aa90-67960eca540c
 function figure_explain_institutions()
@@ -24,7 +24,7 @@ end
 
 # ╔═╡ 2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
 function figure_institutional_analysis(S)
-	f=Figure(size=(900,length(S)*300))
+	f=Figure(size=(600,length(S)*300))
 	k=2
 	Label(f[1,1:2],text="Socio-economic Diversity",tellwidth=false)
 	Label(f[2,1],text="Hypothetical Scenarios",tellwidth=false)
@@ -46,7 +46,7 @@ end
 
 # ╔═╡ 88914d21-71ca-4c8e-88c2-2c1e3fd6f59a
 function Scenarios(;random=false,distribution=Uniform)
-	S=Vector{Scenario}
+	S=[]
 	s1=scenario(
 		w=SED(min=0.0,max=0.3,normalize=true;random,distribution),
 		q=SED(mean=1.0,sigma=0.0,normalize=true;random),
@@ -72,7 +72,7 @@ end
 
 # ╔═╡ 2d1dc9a6-08b5-4c36-809f-cbbf1a580795
 begin
-	S=Scenarios(); institutional_impact!(S)
+	S=Scenarios(); 
 end
 
 # ╔═╡ b43c0e48-660e-435d-8384-6c675f276c19
@@ -84,6 +84,14 @@ fieldnames(typeof(S[1]))
 # ╔═╡ a814b70a-ffd2-405e-bf79-2fdd2f3327c7
 image_file = download(S[1].image)
 
+# ╔═╡ e65aabad-06fd-448a-abd8-c01ebae950ee
+begin
+for i in 1:length(S)
+	S[i].institution=[Market(target=:effort)]
+end
+	institutional_impact!(S)
+end
+
 # ╔═╡ d01b8a26-d381-4e0e-8456-b2802beff4df
 
 
@@ -93,6 +101,7 @@ image_file = download(S[1].image)
 # ╠═2d1dc9a6-08b5-4c36-809f-cbbf1a580795
 # ╠═a814b70a-ffd2-405e-bf79-2fdd2f3327c7
 # ╠═e65aabad-06fd-448a-abd8-c01ebae950ee
+# ╠═a056a4d9-6599-4a18-b105-c45a46ab3c9e
 # ╠═6df01524-46b9-4ded-aa90-67960eca540c
 # ╠═2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
 # ╠═88914d21-71ca-4c8e-88c2-2c1e3fd6f59a
