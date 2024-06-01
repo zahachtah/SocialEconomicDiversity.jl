@@ -15,6 +15,9 @@ begin
 	set_theme!(theme_light())
 end;
 
+# ╔═╡ e65aabad-06fd-448a-abd8-c01ebae950ee
+institutional_impact!
+
 # ╔═╡ 6df01524-46b9-4ded-aa90-67960eca540c
 function figure_explain_institutions()
 end
@@ -43,7 +46,7 @@ end
 
 # ╔═╡ 88914d21-71ca-4c8e-88c2-2c1e3fd6f59a
 function Scenarios(;random=false,distribution=Uniform)
-	S=[]
+	S=Vector{Scenario}
 	s1=scenario(
 		w=SED(min=0.0,max=0.3,normalize=true;random,distribution),
 		q=SED(mean=1.0,sigma=0.0,normalize=true;random),
@@ -89,6 +92,7 @@ image_file = download(S[1].image)
 # ╠═c589b69f-b5ef-47a1-8c25-0c4d7eee426e
 # ╠═2d1dc9a6-08b5-4c36-809f-cbbf1a580795
 # ╠═a814b70a-ffd2-405e-bf79-2fdd2f3327c7
+# ╠═e65aabad-06fd-448a-abd8-c01ebae950ee
 # ╠═6df01524-46b9-4ded-aa90-67960eca540c
 # ╠═2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
 # ╠═88914d21-71ca-4c8e-88c2-2c1e3fd6f59a
