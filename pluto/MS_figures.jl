@@ -15,9 +15,6 @@ begin
 	set_theme!(theme_light())
 end;
 
-# ╔═╡ a056a4d9-6599-4a18-b105-c45a46ab3c9e
-
-
 # ╔═╡ 6df01524-46b9-4ded-aa90-67960eca540c
 function figure_explain_institutions()
 end
@@ -86,11 +83,14 @@ image_file = download(S[1].image)
 
 # ╔═╡ e65aabad-06fd-448a-abd8-c01ebae950ee
 begin
-for i in 1:length(S)
-	S[i].institution=[Market(target=:effort)]
-end
+	for i in 1:length(S)
+		S[i].institution=[Market(target=:effort)]
+	end
 	institutional_impact!(S)
 end
+
+# ╔═╡ a056a4d9-6599-4a18-b105-c45a46ab3c9e
+typeof(S[1].institution[1])
 
 # ╔═╡ d01b8a26-d381-4e0e-8456-b2802beff4df
 
