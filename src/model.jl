@@ -10,8 +10,7 @@ function dudt(dx,x,p,t)
 	w̃=p.w̃.*p.aw̃
 	# should add a\alpha
 	α=p.α
-	#q=p.t
-	β=p.β
+	
 	dt=p.sim.dt #parameters
     
     # extract the variables from state vector
