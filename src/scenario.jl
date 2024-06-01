@@ -60,7 +60,6 @@ function Base.show(io::IO, scenario::Scenario)
     println(io, "dispersal: ", scenario.dispersal)
     
     println(io, "Institution: ", scenario.institution)
-    println(io, "Target: ", scenario.target)
 end
 
 

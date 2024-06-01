@@ -15,6 +15,9 @@ begin
 	set_theme!(theme_light())
 end;
 
+# ╔═╡ 375767f6-fb7d-4b32-bc23-c1cc10d0e5fd
+hasfield(Protected_area,:target)
+
 # ╔═╡ 6df01524-46b9-4ded-aa90-67960eca540c
 function figure_explain_institutions()
 end
@@ -93,7 +96,7 @@ begin
 end
 
 # ╔═╡ a056a4d9-6599-4a18-b105-c45a46ab3c9e
-fieldnames(typeof(S[1]))
+S[1].institutional_impacts
 
 # ╔═╡ d01b8a26-d381-4e0e-8456-b2802beff4df
 
@@ -105,6 +108,7 @@ fieldnames(typeof(S[1]))
 # ╠═a814b70a-ffd2-405e-bf79-2fdd2f3327c7
 # ╠═e65aabad-06fd-448a-abd8-c01ebae950ee
 # ╠═a056a4d9-6599-4a18-b105-c45a46ab3c9e
+# ╠═375767f6-fb7d-4b32-bc23-c1cc10d0e5fd
 # ╠═6df01524-46b9-4ded-aa90-67960eca540c
 # ╠═2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
 # ╠═88914d21-71ca-4c8e-88c2-2c1e3fd6f59a
