@@ -105,6 +105,6 @@ function institutional_impact!(S;M=100, inst=1)
         end
         s.institution[inst].value=told
         #id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_ginnig=t[argmin(gini)],
-        push!(s.analysis,(target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],total=total,resource=resource,gini=gini,I=I,y=y,U=U, institution=typeof(S[1].institution[1])))
+        push!(s.institutional_impacts,(target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],total=total,resource=resource,gini=gini,I=I,y=y,U=U, institution=typeof(S[1].institution[1])))
     end 
 end

@@ -158,7 +158,7 @@ function scenario(;
     caption::String="",
     color::Union{Colorant,Symbol,String,Nothing}=nothing,
     simulate::Bool=true,
-    analysis=[]
+    institutional_impacts=[]
 )
     # Set default outputs
     t=[];t_u=[];t_U=[];t_y=[];t_ϕ=[];total_revenue=[];resource_revenue=[];wage_revenue=[];trade_revenue=[];gini=0;sim=(;ū0,y0,dt,dydt);u=[];U=0;y=0.0;ϕ=0.0
@@ -166,7 +166,7 @@ function scenario(;
     color = isa(color, Nothing) ? convert(HSL, colorant"crimson") : isa(color, RGB) ? convert(HSL, color) : isa(color, String) ? convert(HSL, parse(Colorant, color)) : isa(color, Symbol) ? convert(HSL, parse(Colorant, string(color))) : color
 
 
-    S=Scenario(N,external,w,q,ē,a,r,K,protected,dispersal,p,w̃,ū,aw̃,aū,α,g,u,U,y,ϕ,t,t_u,t_U,t_y,t_ϕ,total_revenue,resource_revenue,wage_revenue,trade_revenue,gini,institution,target,value,β,sim,label,image,caption,color,analysis)
+    S=Scenario(N,external,w,q,ē,a,r,K,protected,dispersal,p,w̃,ū,aw̃,aū,α,g,u,U,y,ϕ,t,t_u,t_U,t_y,t_ϕ,total_revenue,resource_revenue,wage_revenue,trade_revenue,gini,institution,target,value,β,sim,label,image,caption,color,institutional_impacts)
    dist!(S); sim!(S)
 	return S
 end

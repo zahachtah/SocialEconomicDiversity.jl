@@ -83,14 +83,17 @@ image_file = download(S[1].image)
 
 # ╔═╡ e65aabad-06fd-448a-abd8-c01ebae950ee
 begin
-	for i in 1:length(S)
-		S[i].institution=[Market(target=:effort)]
+	I=[Market(target=:effort),Market(target=:yield), Protected_area()]
+	for inst in I
+		for j in 1:length(S)
+			S[j].institution=[inst]
+		end
+		institutional_impact!(S)
 	end
-	institutional_impact!(S)
 end
 
 # ╔═╡ a056a4d9-6599-4a18-b105-c45a46ab3c9e
-typeof(S[1].institution[1])
+S[1].analysis
 
 # ╔═╡ d01b8a26-d381-4e0e-8456-b2802beff4df
 
