@@ -68,7 +68,9 @@ function Scenarios(;random=false,distribution=Uniform)
 end
 
 # ╔═╡ 2d1dc9a6-08b5-4c36-809f-cbbf1a580795
-S=Scenarios()
+begin
+	S=Scenarios(); institutional_impact!(S)
+end
 
 # ╔═╡ b43c0e48-660e-435d-8384-6c675f276c19
 figure_institutional_analysis(S)
