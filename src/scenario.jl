@@ -31,15 +31,12 @@ mutable struct Scenario
     trade_revenue
     gini
     institution
-    target
-    value
-    β
     sim
     label
     image
     caption
     color
-    analysis
+    institutional_impacts
 end
 
 function Base.show(io::IO, scenario::Scenario)
@@ -98,8 +95,6 @@ Simulates a scenario based on various parameters. The function adjusts these par
 
 # Institutional parameters
 - `institution::Institution`: Type of institution (default: []).
-- `β::Float64`: Institutional parameter, conditional based on the institution type (default: 0.05 for "TQ", else 0.0).
-- `target::Float64`, `signal::String`: Institutional parameters (default: target=1.0, signal="effort").
 
 # Simulation parameters
 - `ts::Float64`, 
@@ -143,9 +138,6 @@ function scenario(;
     α=SED(distribution=Derived),
     # institutional parameters
     institution=[],
-    β::Float64=institution=="Tradable" ? 0.05 : 0.0,
-    value::Float64=1.0,
-    target::String="access",
     #simulation parameters
     ts::Float64=0.0,
     ū0::Array{Float64,1}=fill(0.0,N),
@@ -166,7 +158,7 @@ function scenario(;
     color = isa(color, Nothing) ? convert(HSL, colorant"crimson") : isa(color, RGB) ? convert(HSL, color) : isa(color, String) ? convert(HSL, parse(Colorant, color)) : isa(color, Symbol) ? convert(HSL, parse(Colorant, string(color))) : color
 
 
-    S=Scenario(N,external,w,q,ē,a,r,K,protected,dispersal,p,w̃,ū,aw̃,aū,α,g,u,U,y,ϕ,t,t_u,t_U,t_y,t_ϕ,total_revenue,resource_revenue,wage_revenue,trade_revenue,gini,institution,target,value,β,sim,label,image,caption,color,institutional_impacts)
+    S=Scenario(N,external,w,q,ē,a,r,K,protected,dispersal,p,w̃,ū,aw̃,aū,α,g,u,U,y,ϕ,t,t_u,t_U,t_y,t_ϕ,total_revenue,resource_revenue,wage_revenue,trade_revenue,gini,institution,sim,label,image,caption,color,institutional_impacts)
    dist!(S); sim!(S)
 	return S
 end

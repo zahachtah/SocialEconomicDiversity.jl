@@ -93,7 +93,7 @@ begin
 end
 
 # ╔═╡ a056a4d9-6599-4a18-b105-c45a46ab3c9e
-S[1].analysis
+fieldnames(typeof(S[1]))
 
 # ╔═╡ d01b8a26-d381-4e0e-8456-b2802beff4df
 
