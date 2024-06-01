@@ -77,30 +77,34 @@ function adjustColor(C,f,v)
 end
 
 
-function institutional_impact(S::Scenario;M=100, inst=1)
-    s=deepcopy(S)
-    total::Array{Float64}=[]
-    resource::Array{Float64}=[]
-    gini::Array{Float64}=[]
-    I::Array{Float64}=[]
-    y::Array{Float64}=[]
-    t=range(0.0,stop=1.0,length=M)
-    U=zeros(s.N,M)
-    for i in 1:M
-        s.institution[inst].value=t[i]
-        sim!(s)
-        
-        push!(total,sum(s.total_revenue))
-        push!(resource,sum(s.resource_revenue))
-        push!(gini,s.gini)
-        push!(y,s.y)
-        U[:,i]=s.resource_revenue
-        s.institution[inst].value=0
-        du=zeros(s.N+3)
-        dudt(du,vcat(s.u,s.y,0.0,s.ϕ),s,0.0)
-        push!(I,sum(max.(0.0,du[1:s.N])))
-    end
 
-    #id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_ginnig=t[argmin(gini)],
-    return (target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],total=total,resource=resource,gini=gini,I=I,y=y,U=U)
+function institutional_impact(S::Scenario;M=100, inst=1)
+    isa(S,Array) ? S=[S] : nothing
+    for s in S
+        total::Array{Float64}=[]
+        resource::Array{Float64}=[]
+        gini::Array{Float64}=[]
+        I::Array{Float64}=[]
+        y::Array{Float64}=[]
+        t=range(0.0,stop=1.0,length=M)
+        told=s.institution[inst].value
+        U=zeros(s.N,M)
+        for i in 1:M
+            s.institution[inst].value=t[i]
+            sim!(s)
+            
+            push!(total,sum(s.total_revenue))
+            push!(resource,sum(s.resource_revenue))
+            push!(gini,s.gini)
+            push!(y,s.y)
+            U[:,i]=s.resource_revenue
+            s.institution[inst].value=0
+            du=zeros(s.N+3)
+            dudt(du,vcat(s.u,s.y,0.0,s.ϕ),s,0.0)
+            push!(I,sum(max.(0.0,du[1:s.N])))
+        end
+        s.institution[inst].value=told
+        #id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_ginnig=t[argmin(gini)],
+        push!(s.analysis,(target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],total=total,resource=resource,gini=gini,I=I,y=y,U=U))
+    end 
 end

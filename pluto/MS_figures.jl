@@ -15,12 +15,16 @@ begin
 	set_theme!(theme_light())
 end;
 
+# ╔═╡ 6df01524-46b9-4ded-aa90-67960eca540c
+function figure_explain_institutions()
+end
+
 # ╔═╡ 2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
-function figureInstitutionalAnalysis(S)
+function figure_institutional_analysis(S)
 	f=Figure(size=(900,length(S)*300))
 	k=2
 	Label(f[1,1:2],text="Socio-economic Diversity",tellwidth=false)
-	Label(f[2,1],text="Hypothetical Scenario",tellwidth=false)
+	Label(f[2,1],text="Hypothetical Scenarios",tellwidth=false)
 	Label(f[2,2],text="Incentives & Impacts",tellwidth=false)
 	for (i,s) in enumerate(S)
 		image_file = download(s.image)
@@ -54,25 +58,37 @@ function Scenarios(;random=false,distribution=Uniform)
 		image="http://zahachtah.github.io/CAS/images/case2.png"
 	)
 	push!(S,s1)
+		s1=scenario(
+		w=SED(min=0.4,max=0.9,normalize=true;random,distribution),
+		q=SED(mean=1.0,sigma=0.0,normalize=true;random),
+		label="Few income opportunities, and moderate impact",
+		image="http://zahachtah.github.io/CAS/images/case3.png"
+	)
+	push!(S,s1)
 end
 
 # ╔═╡ 2d1dc9a6-08b5-4c36-809f-cbbf1a580795
 S=Scenarios()
 
 # ╔═╡ b43c0e48-660e-435d-8384-6c675f276c19
-figureInstitutionalAnalysis(S)
+figure_institutional_analysis(S)
 
 # ╔═╡ c589b69f-b5ef-47a1-8c25-0c4d7eee426e
-typeof(S)
+fieldnames(typeof(S[1]))
 
 # ╔═╡ a814b70a-ffd2-405e-bf79-2fdd2f3327c7
 image_file = download(S[1].image)
+
+# ╔═╡ d01b8a26-d381-4e0e-8456-b2802beff4df
+
 
 # ╔═╡ Cell order:
 # ╠═b43c0e48-660e-435d-8384-6c675f276c19
 # ╠═c589b69f-b5ef-47a1-8c25-0c4d7eee426e
 # ╠═2d1dc9a6-08b5-4c36-809f-cbbf1a580795
 # ╠═a814b70a-ffd2-405e-bf79-2fdd2f3327c7
+# ╠═6df01524-46b9-4ded-aa90-67960eca540c
 # ╠═2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
 # ╠═88914d21-71ca-4c8e-88c2-2c1e3fd6f59a
+# ╠═d01b8a26-d381-4e0e-8456-b2802beff4df
 # ╠═fe5ddb88-1fe3-11ef-133f-e38ab23873d9
