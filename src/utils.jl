@@ -78,7 +78,7 @@ end
 
 
 
-function institutional_impact(S::Scenario;M=100, inst=1)
+function institutional_impact!(S::Scenario;M=100, inst=1)
     isa(S,Array) ? S=[S] : nothing
     for s in S
         total::Array{Float64}=[]
