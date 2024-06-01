@@ -24,11 +24,12 @@ end
 
 # ╔═╡ 2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
 function figure_institutional_analysis(S)
-	f=Figure(size=(600,length(S)*300))
+	f=Figure(size=(900,length(S)*300))
 	k=2
 	Label(f[1,1:2],text="Socio-economic Diversity",tellwidth=false)
 	Label(f[2,1],text="Hypothetical Scenarios",tellwidth=false)
-	Label(f[2,2],text="Incentives & Impacts",tellwidth=false)
+	Label(f[2,2],text="Incentives & Impacts Plot",tellwidth=false)
+	Label(f[2,3:4],text="Institutional outcomes",tellwidth=false)
 	for (i,s) in enumerate(S)
 		image_file = download(s.image)
 		image = load(image_file)
@@ -40,6 +41,22 @@ function figure_institutional_analysis(S)
 		b=CairoMakie.Axis(f[i+k,2],aspect=1, xlabel="Resource level", ylabel="Participation")
 		hidedecorations!(b,label=false)
 		phaseplot!(b,s)
+
+		
+		M=zeros(length(s.institutional_impacts),4)
+		for (k,inst_impact) in enumerate(s.institutional_impacts)
+			M[k,1]=(maximum(inst_impact.resource)-inst_impact.resource[end])/inst_impact.resource[end]
+			M[k,2]=(maximum(inst_impact.total)-inst_impact.total[end])/inst_impact.total[end]
+			M[k,3]=(minimum(inst_impact.gini)-inst_impact.gini[end])/inst_impact.gini[end]
+			q=inst_impact.gini.^-0.5 .+ inst_impact.total.^1
+			M[k,4]=(maximum(q)-q[end])/q[end]
+		end
+		c=CairoMakie.Axis(f[i+k,3:4],aspect=length(s.institutional_impacts)/3)
+		hidespines!(c)
+		hidedecorations!(c)
+		heatmap!(c,1:length(s.institutional_impacts),1:4,M,colormap=:balance,colorrange=(-1,1))
+		[text!(c,x,y,text=string(floor(M[x,y]*100)),align=(:center,:baseline), color=abs(M[x,y])<0.5 ? :black : :white) for x in 1:length(s.institutional_impacts), y in 1:4]
+text
 	end
 	f
 end
@@ -56,14 +73,14 @@ function Scenarios(;random=false,distribution=Uniform)
 	push!(S,s1)
 	s1=scenario(
 		w=SED(min=0.4,max=0.9,normalize=true;random,distribution),
-		q=SED(mean=1.0,sigma=0.0,normalize=true;random),
+		q=SED(mean=3.0,sigma=0.0,normalize=true;random),
 		label="Few income opportunities, and moderate impact",
 		image="http://zahachtah.github.io/CAS/images/case2.png"
 	)
 	push!(S,s1)
 		s1=scenario(
-		w=SED(min=0.4,max=0.9,normalize=true;random,distribution),
-		q=SED(mean=1.0,sigma=0.0,normalize=true;random),
+		w=SED(min=0.1,max=0.9,normalize=true,distribution=LogNormal;random),
+		q=SED(mean=2.5,sigma=1.0,normalize=true;random),
 		label="Few income opportunities, and moderate impact",
 		image="http://zahachtah.github.io/CAS/images/case3.png"
 	)
@@ -86,7 +103,7 @@ image_file = download(S[1].image)
 
 # ╔═╡ e65aabad-06fd-448a-abd8-c01ebae950ee
 begin
-	I=[Market(target=:effort),Market(target=:yield), Protected_area()]
+	I=[Market(target=:effort),Market(target=:yield), Protected_area(), Economic_incentive(target=:p), Dynamic_permit_allocation(criteria=:w)]
 	for inst in I
 		for j in 1:length(S)
 			S[j].institution=[inst]

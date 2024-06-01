@@ -80,7 +80,8 @@ end
 
 function institutional_impact!(S;M=100, inst=1)
     !isa(S,Array) ? S=[S] : nothing
-    for s in S
+    for q in S
+        s=deepcopy(q)
         total::Array{Float64}=[]
         resource::Array{Float64}=[]
         gini::Array{Float64}=[]
