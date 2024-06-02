@@ -27,7 +27,7 @@ end
 
 # ╔═╡ 2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
 function figure_institutional_analysis(S)
-	f=Figure(size=(900,length(S)*300))
+	f=Figure(size=(1000,length(S)*300))
 	k=2
 	Label(f[1,1:2],text="Socio-economic Diversity",tellwidth=false)
 	Label(f[2,1],text="Hypothetical Scenarios",tellwidth=false)
@@ -57,9 +57,9 @@ function figure_institutional_analysis(S)
 		c=CairoMakie.Axis(f[i+k,3:4],aspect=length(s.institutional_impacts)/3)
 		hidespines!(c)
 		hidedecorations!(c)
-		println(size(M))
-		heatmap!(c,1:length(s.institutional_impacts),1:4,M,colormap=:balance,colorrange=(-1,1))
-		[text!(c,x,y,text=string(floor(M[x,y]*100)),align=(:center,:baseline), color=abs(M[x,y])<0.5 ? :black : :white) for x in 1:length(s.institutional_impacts), y in 1:4]
+		#println(size(M))
+		heatmap!(c,1:length(s.institutional_impacts),1:4,M,colormap=:bam,colorrange=(-1,1))
+		[text!(c,x,y,text=string(round(M[x,y]*100,digits=0))[1:end-2],align=(:center,:baseline), color=abs(M[x,y])<0.5 ? :black : :white) for x in 1:length(s.institutional_impacts), y in 1:4]
 text
 	end
 	f
@@ -130,6 +130,9 @@ begin
 	ff
 end
 
+# ╔═╡ 20aa630b-f177-417a-9daf-400945746df9
+S[1].institutional_impacts
+
 # ╔═╡ d01b8a26-d381-4e0e-8456-b2802beff4df
 S[1].institutional_impacts
 
@@ -145,6 +148,7 @@ S[1].institutional_impacts
 # ╠═ed841aa0-0868-469a-a697-12bfa00c35d4
 # ╠═6df01524-46b9-4ded-aa90-67960eca540c
 # ╠═2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
+# ╠═20aa630b-f177-417a-9daf-400945746df9
 # ╠═88914d21-71ca-4c8e-88c2-2c1e3fd6f59a
 # ╠═d01b8a26-d381-4e0e-8456-b2802beff4df
 # ╠═fe5ddb88-1fe3-11ef-133f-e38ab23873d9
