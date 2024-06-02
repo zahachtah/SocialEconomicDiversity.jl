@@ -202,7 +202,7 @@ end# Define a default constructor for when no arguments are given
 
 
 
-function SED(; data=nothing, min=nothing, max=nothing, kwargs...)
+function sed(; data=nothing, min=nothing, max=nothing, kwargs...)
     T = Float64  # Default type if not inferred from `data`
     N = 1        # Default number of dimensions
     A = Array{T, N} # Default array type if not inferred from `data`

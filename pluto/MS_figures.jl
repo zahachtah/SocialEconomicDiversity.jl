@@ -15,8 +15,11 @@ begin
 	set_theme!(theme_light())
 end;
 
-# ╔═╡ 375767f6-fb7d-4b32-bc23-c1cc10d0e5fd
-hasfield(Protected_area,:target)
+# ╔═╡ a0593d27-36d8-421f-9ebb-8650b459b4c0
+
+
+# ╔═╡ ed841aa0-0868-469a-a697-12bfa00c35d4
+
 
 # ╔═╡ 6df01524-46b9-4ded-aa90-67960eca540c
 function figure_explain_institutions()
@@ -54,6 +57,7 @@ function figure_institutional_analysis(S)
 		c=CairoMakie.Axis(f[i+k,3:4],aspect=length(s.institutional_impacts)/3)
 		hidespines!(c)
 		hidedecorations!(c)
+		println(size(M))
 		heatmap!(c,1:length(s.institutional_impacts),1:4,M,colormap=:balance,colorrange=(-1,1))
 		[text!(c,x,y,text=string(floor(M[x,y]*100)),align=(:center,:baseline), color=abs(M[x,y])<0.5 ? :black : :white) for x in 1:length(s.institutional_impacts), y in 1:4]
 text
@@ -65,7 +69,7 @@ end
 function Scenarios(;random=false,distribution=Uniform)
 	S=[]
 	s1=scenario(
-		w=SED(min=0.0,max=0.3,normalize=true;random,distribution),
+		w=SED(min=0.01,max=0.3,normalize=true;random,distribution),
 		q=SED(mean=1.0,sigma=0.0,normalize=true;random),
 		label="Few income opportunities, and moderate impact",
 		image="http://zahachtah.github.io/CAS/images/case1.png"
@@ -73,15 +77,15 @@ function Scenarios(;random=false,distribution=Uniform)
 	push!(S,s1)
 	s1=scenario(
 		w=SED(min=0.4,max=0.9,normalize=true;random,distribution),
-		q=SED(mean=3.0,sigma=0.0,normalize=true;random),
-		label="Few income opportunities, and moderate impact",
+		q=SED(mean=2.5,sigma=0.0,normalize=true;random),
+		label="Moderate income opportunities, and high impact",
 		image="http://zahachtah.github.io/CAS/images/case2.png"
 	)
 	push!(S,s1)
 		s1=scenario(
 		w=SED(min=0.1,max=0.9,normalize=true,distribution=LogNormal;random),
 		q=SED(mean=2.5,sigma=1.0,normalize=true;random),
-		label="Few income opportunities, and moderate impact",
+		label="Few income opportunities, and high impact",
 		image="http://zahachtah.github.io/CAS/images/case3.png"
 	)
 	push!(S,s1)
@@ -103,7 +107,7 @@ image_file = download(S[1].image)
 
 # ╔═╡ e65aabad-06fd-448a-abd8-c01ebae950ee
 begin
-	I=[Market(target=:effort),Market(target=:yield), Protected_area(), Economic_incentive(target=:p), Dynamic_permit_allocation(criteria=:w)]
+	I=[Market(target=:effort),Market(target=:yield), Protected_area(), Economic_incentive(target=:p), Dynamic_permit_allocation(criteria=:w), Dynamic_permit_allocation(criteria=:w, reverse=true)]
 	for inst in I
 		for j in 1:length(S)
 			S[j].institution=[inst]
@@ -113,19 +117,32 @@ begin
 end
 
 # ╔═╡ a056a4d9-6599-4a18-b105-c45a46ab3c9e
-S[1].institutional_impacts
+S[2]
+
+# ╔═╡ 375767f6-fb7d-4b32-bc23-c1cc10d0e5fd
+begin
+	s=deepcopy(S[2])
+	s.institution[1].value=0.47474747474747
+	sim!(s)
+	ff=Figure()
+	aa=CairoMakie.Axis(ff[1,1])
+	phaseplot!(aa,s, show_trajectory=true)
+	ff
+end
 
 # ╔═╡ d01b8a26-d381-4e0e-8456-b2802beff4df
-
+S[1].institutional_impacts
 
 # ╔═╡ Cell order:
 # ╠═b43c0e48-660e-435d-8384-6c675f276c19
 # ╠═c589b69f-b5ef-47a1-8c25-0c4d7eee426e
 # ╠═2d1dc9a6-08b5-4c36-809f-cbbf1a580795
 # ╠═a814b70a-ffd2-405e-bf79-2fdd2f3327c7
+# ╠═a0593d27-36d8-421f-9ebb-8650b459b4c0
 # ╠═e65aabad-06fd-448a-abd8-c01ebae950ee
 # ╠═a056a4d9-6599-4a18-b105-c45a46ab3c9e
 # ╠═375767f6-fb7d-4b32-bc23-c1cc10d0e5fd
+# ╠═ed841aa0-0868-469a-a697-12bfa00c35d4
 # ╠═6df01524-46b9-4ded-aa90-67960eca540c
 # ╠═2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb
 # ╠═88914d21-71ca-4c8e-88c2-2c1e3fd6f59a

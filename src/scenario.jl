@@ -119,22 +119,22 @@ function scenario(;
     # basic dimensionalized parameters
     N::Int=100,
     external=(;),
-    ē=SED(min=1.0,max=1.0),
-    q=SED(min=1.0,max=1.0,normalize=true),
-    a=SED(min=1000.0,max=1000.0),
-    w=SED(min=0.1,max=0.9,normalize=true,distribution=Uniform),
+    ē=sed(min=1.0,max=1.0),
+    q=sed(min=1.0,max=1.0,normalize=true),
+    a=sed(min=1000.0,max=1000.0),
+    w=sed(min=0.1,max=0.9,normalize=true,distribution=Uniform),
     r=1.0,
     K=1.0,
     protected=0.0,
     dispersal=0.0,
-    p=SED(min=1.0,max=1.0),
+    p=sed(min=1.0,max=1.0),
     # basic non-dimensionalized parameters, if set these override dimensionalized parameters
-    w̃=SED(distribution=Derived),
-    ū=SED(distribution=Derived),
+    w̃=sed(distribution=Derived),
+    ū=sed(distribution=Derived),
     aw̃=fill(1.0,N),
     aū=fill(1.0,N),
     g=DiGraph(),
-    α=SED(distribution=Derived),
+    α=sed(distribution=Derived),
     # institutional parameters
     institution=[],
     #simulation parameters
@@ -246,9 +246,9 @@ function scenario(scenario::Scenario; kwargs...)
     dist!(s.K,s.N)
 
 
-    s.w̃==nothing ? s.w̃=SED(data=s.w./(s.K.*s.p.*s.q)) : isa(s.w̃,SED) ? s.w̃=dist!(s.w̃,s.N) : nothing
-    s.ū==nothing ? s.ū=SED(data=s.ē.*s.q./s.r) : isa(s.ū,SED) ? s.ū=dist!(s.ū,s.N) : nothing
-    s.α==nothing ? s.α=SED(data=(s.a.*s.p.*s.K.*s.q)./s.r) : isa(s.α,SED) ? s.α=dist!(s.α,s.N) : nothing
+    s.w̃==nothing ? s.w̃=sed(data=s.w./(s.K.*s.p.*s.q)) : isa(s.w̃,SED) ? s.w̃=dist!(s.w̃,s.N) : nothing
+    s.ū==nothing ? s.ū=sed(data=s.ē.*s.q./s.r) : isa(s.ū,SED) ? s.ū=dist!(s.ū,s.N) : nothing
+    s.α==nothing ? s.α=sed(data=(s.a.*s.p.*s.K.*s.q)./s.r) : isa(s.α,SED) ? s.α=dist!(s.α,s.N) : nothing
 
     # We just need a good recalc method to be able to adjust e.g. PA dependence!
 
