@@ -69,22 +69,22 @@ end
 function Scenarios(;random=false,distribution=Uniform)
 	S=[]
 	s1=scenario(
-		w=SED(min=0.01,max=0.3,normalize=true;random,distribution),
-		q=SED(mean=1.0,sigma=0.0,normalize=true;random),
+		w=sed(min=0.01,max=0.3,normalize=true;random,distribution),
+		q=sed(mean=1.0,sigma=0.0,normalize=true;random),
 		label="Few income opportunities, and moderate impact",
 		image="http://zahachtah.github.io/CAS/images/case1.png"
 	)
 	push!(S,s1)
 	s1=scenario(
-		w=SED(min=0.4,max=0.9,normalize=true;random,distribution),
-		q=SED(mean=2.5,sigma=0.0,normalize=true;random),
+		w=sed(min=0.4,max=0.9,normalize=true;random,distribution),
+		q=sed(mean=2.5,sigma=0.0,normalize=true;random),
 		label="Moderate income opportunities, and high impact",
 		image="http://zahachtah.github.io/CAS/images/case2.png"
 	)
 	push!(S,s1)
 		s1=scenario(
-		w=SED(min=0.1,max=0.9,normalize=true,distribution=LogNormal;random),
-		q=SED(mean=2.5,sigma=1.0,normalize=true;random),
+		w=sed(min=0.1,max=0.9,normalize=true,distribution=LogNormal;random),
+		q=sed(mean=2.5,sigma=1.0,normalize=true;random),
 		label="Few income opportunities, and high impact",
 		image="http://zahachtah.github.io/CAS/images/case3.png"
 	)

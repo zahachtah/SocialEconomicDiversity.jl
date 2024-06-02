@@ -6,7 +6,7 @@ using Base: @kwdef
 import Base: show
 import Distributions: pdf, Uniform, LogNormal, Normal, Exponential, Dirac
 
-export SED, dist!,astext
+export SED,sed, dist!,astext
 export scenario, Scenario
 export sim!
 export institutional_impact!
