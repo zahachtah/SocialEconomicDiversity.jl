@@ -221,7 +221,7 @@ function revenues!(S::Scenario)
 end
 
 
-function scenario(scenario::Scenario; kwargs...)
+function update(scenario::Scenario; kwargs...)
     # Create a copy of the scenario to avoid mutating the original
     s = deepcopy(scenario)
 

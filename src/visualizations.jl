@@ -83,8 +83,8 @@ function phaseplot!(
             rotations = [get_deriv_vector(p[1], p[2], s)[1] for p in points]
             markersizeVector = [(get_deriv_vector(p[1], p[2], s)[2] * 20)^0.2 * 15 for p in points]
 
-            scatter!(A, points, rotations=rotations, markersize=markersizeVector * 0.7, marker='|', color=adjustColor(c, "l", 0.4))
-            scatter!(A, points, rotations=rotations, markersize=4, color=:black)
+            scatter!(A, points, rotation=rotations, markersize=markersizeVector * 0.7, marker='|', color=adjustColor(c, "l", 0.4))
+            scatter!(A, points, rotation=rotations, markersize=4, color=:black)
         end
 
         us, ur, y = analytical(s)
