@@ -31,6 +31,100 @@ todo:
 * make simple notebook for marty
 "
 
+# ╔═╡ 7e4435af-6408-451c-ac80-a579ce2a4ac2
+begin
+	s=scenario(q=sed(mean=1.5,sigma=0.0, normalize=true))
+	
+	s.institution=[Protected_area(value=0.9)]
+	sim!(s)
+	institutional_impact!(s)
+
+	# Protected_area(value=0.8) something fishy, does not allow flow it seems
+end
+
+# ╔═╡ 35a9c7ed-1b9d-43e1-ab26-61766abd85b5
+scatter(s.t,s.t_y)
+
+# ╔═╡ c9bd3302-a5fc-4f8c-a7cd-6db0a873fc1d
+phaseplot(s)
+
+# ╔═╡ b2d48e5b-f7d7-4e0a-a962-e8d3bd963573
+function institutional_examples()
+
+	s=scenario(q=sed(mean=1.5,sigma=0.0, normalize=true))
+	iPH=Dynamic_permit_allocation(criteria=:w, reverse=true)
+	iPL=Dynamic_permit_allocation(criteria=:w, reverse=false)
+	iSE=Equal_share_allocation(target=:effort)
+	iSY=Equal_share_allocation(target=:yield)
+	iTE=Market(target=:effort)
+	iTY=Market(target=:yield)
+	iPA=Protected_area()
+	iPAD=Protected_area()
+	iETp=Economic_incentive(target=:p)
+	iESp=Economic_incentive(target=:p,subsidize=true)
+	iETq=Economic_incentive(target=:q)
+	iESq=Economic_incentive(target=:q,subsidize=true)
+	institution=[iPH,iPL,iSE,iSY,iTE,iTY,iPA,iPAD,iETp,iESp,iETq,iESq]
+	D=[]
+	for (i,inst) in enumerate(institution)
+		println(string(inst))
+		d=deepcopy(s)
+		d.institution=[inst]
+		# color
+		o=institutional_impact!(d)
+		d.institution[1].value=d.institutional_impacts[1].id_resource
+		sim!(d)
+		push!(D,d)
+	end
+	return D
+end
+
+# ╔═╡ 10dadc04-90e5-4eca-88f2-37878198835d
+D=institutional_examples()
+
+# ╔═╡ 03278683-c09b-4b5b-b1bb-baac56d95f4f
+scatter(D[1].institutional_impacts[1].U)
+
+# ╔═╡ afe2675b-3381-4765-b8fd-cf765f4e61a7
+sum(D[1].institutional_impacts[1].U,dims=1)[:]
+
+# ╔═╡ bd083dfa-eacb-44fb-9066-f20f4deadd40
+function Figure4(D)
+	# run scenario sims outside!
+	# just add a placement/title array for where the scenarios should be placed
+	f=Figure()
+	PH=CairoMakie.Axis(f[1,1], ylabel="Participation")
+	PL=CairoMakie.Axis(f[1,2])
+	SE=CairoMakie.Axis(f[2,1], ylabel="Participation")
+	SY=CairoMakie.Axis(f[2,2])
+	TE=CairoMakie.Axis(f[3,1], ylabel="Participation", xlabel="Resource Level")
+	TY=CairoMakie.Axis(f[3,2], xlabel="Resource Level")
+	PA=CairoMakie.Axis(f[1,3])
+	PAD=CairoMakie.Axis(f[1,4])
+	ETp=CairoMakie.Axis(f[2,3])
+	ESp=CairoMakie.Axis(f[2,4])
+	ETq=CairoMakie.Axis(f[3,3], xlabel="Resource Level")
+	ESq=CairoMakie.Axis(f[3,4], xlabel="Resource Level")
+	axes=[PH,PL,SE,SY,TE,TY,PA,PAD,ETp,ESp,ETq,ESq]
+	[hidespines!(ax) for ax in axes]
+	[hidedecorations!(ax, label=false) for ax in axes]
+
+	for (i,q) in enumerate(D)
+		d=deepcopy(q)
+		d.institution=[]
+		sim!(d)
+		phaseplot!(axes[i],d)
+		
+		phaseplot!(axes[i],q, show_realized=true)
+		#lines!(axes[i],q.institutional_impacts[1].y,sum(D[1].institutional_impacts[1].U,dims=1)[:]./sum(D[1].ū), color=:black)
+	end
+	
+	f
+end
+
+# ╔═╡ ac474bad-48df-4697-aa38-449bf238f78c
+Figure4(D)
+
 # ╔═╡ 4975bd4b-496b-4368-91e2-77c5cfc3e6c7
 
 function newFigure3(;distribution=Uniform, title_font="Arial", annotation_font="Gloria Hallelujah",N=100,scale=1.0,vector_grid=20)
@@ -78,12 +172,6 @@ end
 # ╔═╡ 5c3d7480-53d4-4be4-81b6-0f9280689be7
 newFigure3()
 
-# ╔═╡ 99e442ad-6c7a-496c-a2e0-25152f491d5e
-SED(min=0.15,max=0.85,distribution=LogNormal,normalize=true)
-
-# ╔═╡ eca75c3e-e7c7-4d01-9d6b-42d4a5ee7e78
-SED(min=0.15,max=0.85)
-
 # ╔═╡ a0593d27-36d8-421f-9ebb-8650b459b4c0
 
 
@@ -103,6 +191,7 @@ function figure_institutional_analysis(S;dsize=250)
 	
 	Label(f[2,3],text="Incentives & Impacts Plot",tellwidth=false, color=:black)
 	Label(f[2,4:5],text="Best Institutional Outcomes",tellwidth=false, color=:forestgreen)
+	Label(f[2,6],text="Best Mixed T + G",tellwidth=false, color=:forestgreen)
 	for (i,s) in enumerate(S)
 		image_file = download(s.image)
 		image = load(image_file)
@@ -188,7 +277,10 @@ begin
 end
 
 # ╔═╡ b43c0e48-660e-435d-8384-6c675f276c19
-figure_institutional_analysis(S)
+f=figure_institutional_analysis(S)
+
+# ╔═╡ a902f794-0829-44ae-b364-1635289c2531
+save(homedir()*"/Desktop/Figure6.png",f)
 
 # ╔═╡ a059afec-8816-4043-9ca5-0474c5697584
 md"
@@ -208,7 +300,7 @@ image_file = download(S[1].image)
 
 # ╔═╡ e65aabad-06fd-448a-abd8-c01ebae950ee
 begin
-	I=[Market(target=:effort),Market(target=:yield), Protected_area(), Economic_incentive(target=:p),Economic_incentive(target=:q), Dynamic_permit_allocation(criteria=:w), Dynamic_permit_allocation(criteria=:w, reverse=true)]
+	I=[Market(target=:effort),Market(target=:yield), Protected_area(), Economic_incentive(target=:p),Economic_incentive(target=:q)]#, Dynamic_permit_allocation(criteria=:w), Dynamic_permit_allocation(criteria=:w, reverse=true)]
 	for inst in I
 		for j in 1:length(S)
 			S[j].institution=[inst]
@@ -220,17 +312,6 @@ end
 # ╔═╡ a056a4d9-6599-4a18-b105-c45a46ab3c9e
 S[2]
 
-# ╔═╡ 375767f6-fb7d-4b32-bc23-c1cc10d0e5fd
-begin
-	s=deepcopy(S[2])
-	s.institution[1].value=0.47474747474747
-	sim!(s)
-	ff=Figure()
-	aa=CairoMakie.Axis(ff[1,1])
-	phaseplot!(aa,s, show_trajectory=true)
-	ff
-end
-
 # ╔═╡ 20aa630b-f177-417a-9daf-400945746df9
 S[1].institutional_impacts
 
@@ -240,19 +321,26 @@ S[1].institutional_impacts
 # ╔═╡ Cell order:
 # ╠═4845050b-3ffe-432b-b426-932c944b8b4e
 # ╠═b43c0e48-660e-435d-8384-6c675f276c19
+# ╠═a902f794-0829-44ae-b364-1635289c2531
 # ╠═a059afec-8816-4043-9ca5-0474c5697584
 # ╠═438f0a66-794c-4efc-89ef-0aaadfb8c148
 # ╠═dc2f5246-53ae-434a-9101-4a848bb215f0
+# ╠═ac474bad-48df-4697-aa38-449bf238f78c
+# ╠═7e4435af-6408-451c-ac80-a579ce2a4ac2
+# ╠═35a9c7ed-1b9d-43e1-ab26-61766abd85b5
+# ╠═c9bd3302-a5fc-4f8c-a7cd-6db0a873fc1d
+# ╠═10dadc04-90e5-4eca-88f2-37878198835d
+# ╠═b2d48e5b-f7d7-4e0a-a962-e8d3bd963573
+# ╠═03278683-c09b-4b5b-b1bb-baac56d95f4f
+# ╠═afe2675b-3381-4765-b8fd-cf765f4e61a7
+# ╠═bd083dfa-eacb-44fb-9066-f20f4deadd40
 # ╠═5c3d7480-53d4-4be4-81b6-0f9280689be7
 # ╠═4975bd4b-496b-4368-91e2-77c5cfc3e6c7
-# ╠═99e442ad-6c7a-496c-a2e0-25152f491d5e
-# ╠═eca75c3e-e7c7-4d01-9d6b-42d4a5ee7e78
 # ╠═2d1dc9a6-08b5-4c36-809f-cbbf1a580795
 # ╠═a814b70a-ffd2-405e-bf79-2fdd2f3327c7
 # ╠═a0593d27-36d8-421f-9ebb-8650b459b4c0
 # ╠═e65aabad-06fd-448a-abd8-c01ebae950ee
 # ╠═a056a4d9-6599-4a18-b105-c45a46ab3c9e
-# ╠═375767f6-fb7d-4b32-bc23-c1cc10d0e5fd
 # ╠═ed841aa0-0868-469a-a697-12bfa00c35d4
 # ╠═6df01524-46b9-4ded-aa90-67960eca540c
 # ╠═2b05ad03-1cf0-4ffc-87d8-4aca8e88dcdb

@@ -225,6 +225,9 @@ function update(scenario::Scenario; kwargs...)
     # Create a copy of the scenario to avoid mutating the original
     s = deepcopy(scenario)
 
+    s.w̃=nothing
+    s.ū=nothing
+    s.α=nothing
     # Iterate over each keyword argument and update the corresponding field
     for (key, value) in kwargs
         if hasfield(typeof(s), key)
