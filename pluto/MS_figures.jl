@@ -31,6 +31,11 @@ todo:
 * make simple notebook for marty
 "
 
+# ╔═╡ 684f9d00-6de3-4aad-92ae-33d7deb0a3c4
+md"
+Figure 4. the fingerprint of institutions on the incentive and impact patterns.
+"
+
 # ╔═╡ 7e4435af-6408-451c-ac80-a579ce2a4ac2
 begin
 	s=scenario(q=sed(mean=1.5,sigma=0.0, normalize=true))
@@ -42,16 +47,10 @@ begin
 	# Protected_area(value=0.8) something fishy, does not allow flow it seems
 end
 
-# ╔═╡ 35a9c7ed-1b9d-43e1-ab26-61766abd85b5
-scatter(s.t,s.t_y)
-
-# ╔═╡ c9bd3302-a5fc-4f8c-a7cd-6db0a873fc1d
-phaseplot(s)
-
 # ╔═╡ b2d48e5b-f7d7-4e0a-a962-e8d3bd963573
 function institutional_examples()
 
-	s=scenario(q=sed(mean=1.5,sigma=0.0, normalize=true))
+	
 	iPH=Dynamic_permit_allocation(criteria=:w, reverse=true)
 	iPL=Dynamic_permit_allocation(criteria=:w, reverse=false)
 	iSE=Equal_share_allocation(target=:effort)
@@ -68,11 +67,16 @@ function institutional_examples()
 	D=[]
 	for (i,inst) in enumerate(institution)
 		println(string(inst))
+		if i == 8
+			s=scenario(w=sed(min=0.01,max=0.5,distribution=LogNormal,normalize=true),q=sed(mean=2.5,sigma=0.0, normalize=true))
+		else
+			s=scenario(w=sed(min=0.1,max=1.5,normalize=true),q=sed(mean=2.0,sigma=0.0, normalize=true))
+		end
 		d=deepcopy(s)
 		d.institution=[inst]
 		# color
-		o=institutional_impact!(d)
-		d.institution[1].value=d.institutional_impacts[1].id_resource
+		institutional_impact!(d)
+		d.institution[1].value=d.institutional_impacts[1].id_total
 		sim!(d)
 		push!(D,d)
 	end
@@ -82,32 +86,41 @@ end
 # ╔═╡ 10dadc04-90e5-4eca-88f2-37878198835d
 D=institutional_examples()
 
-# ╔═╡ 03278683-c09b-4b5b-b1bb-baac56d95f4f
-scatter(D[1].institutional_impacts[1].U)
+# ╔═╡ 5e7c662a-33ff-4457-b97a-28992a94bcae
+k=11
 
 # ╔═╡ afe2675b-3381-4765-b8fd-cf765f4e61a7
-sum(D[1].institutional_impacts[1].U,dims=1)[:]
+D[end-k].institutional_impacts[1]
+
+# ╔═╡ c2ef6546-7431-43eb-af5e-54083ea87f39
+scatter(D[end-k].institutional_impacts[1].target,max.(0.0,D[end-k].institutional_impacts[1].total))
+
+# ╔═╡ 9dd14c7f-a27e-4140-97ee-c4f928396660
+D[end-k].institutional_impacts[1].target[argmin(D[end-k].institutional_impacts[1].y)]
+
+# ╔═╡ f0dd3a6c-a441-4734-a06e-596fa9f162a2
+heatmap(D[end-k].institutional_impacts[1].U)
 
 # ╔═╡ bd083dfa-eacb-44fb-9066-f20f4deadd40
-function Figure4(D)
+function Figure4(D;base=300)
 	# run scenario sims outside!
 	# just add a placement/title array for where the scenarios should be placed
-	f=Figure()
-	PH=CairoMakie.Axis(f[1,1], ylabel="Participation")
-	PL=CairoMakie.Axis(f[1,2])
-	SE=CairoMakie.Axis(f[2,1], ylabel="Participation")
-	SY=CairoMakie.Axis(f[2,2])
-	TE=CairoMakie.Axis(f[3,1], ylabel="Participation", xlabel="Resource Level")
-	TY=CairoMakie.Axis(f[3,2], xlabel="Resource Level")
-	PA=CairoMakie.Axis(f[1,3])
-	PAD=CairoMakie.Axis(f[1,4])
-	ETp=CairoMakie.Axis(f[2,3])
-	ESp=CairoMakie.Axis(f[2,4])
-	ETq=CairoMakie.Axis(f[3,3], xlabel="Resource Level")
-	ESq=CairoMakie.Axis(f[3,4], xlabel="Resource Level")
+	f=Figure(size=(base*4,base*3))
+	PH=CairoMakie.Axis(f[1,1], title="Permits for high",ylabel="Participation")
+	PL=CairoMakie.Axis(f[1,2], title="Permits for low")
+	SE=CairoMakie.Axis(f[2,1], title="Equal share effort", ylabel="Participation")
+	SY=CairoMakie.Axis(f[2,2], title="Equal share yield")
+	TE=CairoMakie.Axis(f[3,1], title="Tradable effort", ylabel="Participation", xlabel="Resource Level")
+	TY=CairoMakie.Axis(f[3,2], title="Tradable yield", xlabel="Resource Level")
+	PA=CairoMakie.Axis(f[1,3], title="Protected Area")
+	PAD=CairoMakie.Axis(f[1,4], title="Protected Area no incentives")
+	ETp=CairoMakie.Axis(f[2,3], title="Royalties p")
+	ESp=CairoMakie.Axis(f[2,4], title="Subsidies p")
+	ETq=CairoMakie.Axis(f[3,3], title="Tax on gear", xlabel="Resource Level")
+	ESq=CairoMakie.Axis(f[3,4], title="Subsidized gear", xlabel="Resource Level")
 	axes=[PH,PL,SE,SY,TE,TY,PA,PAD,ETp,ESp,ETq,ESq]
 	[hidespines!(ax) for ax in axes]
-	[hidedecorations!(ax, label=false) for ax in axes]
+	[hidedecorations!(ax, label=true) for ax in axes]
 
 	for (i,q) in enumerate(D)
 		d=deepcopy(q)
@@ -115,7 +128,7 @@ function Figure4(D)
 		sim!(d)
 		phaseplot!(axes[i],d)
 		
-		phaseplot!(axes[i],q, show_realized=true)
+		phaseplot!(axes[i],q, show_realized=true,show_exploitation=false)
 		#lines!(axes[i],q.institutional_impacts[1].y,sum(D[1].institutional_impacts[1].U,dims=1)[:]./sum(D[1].ū), color=:black)
 	end
 	
@@ -123,7 +136,7 @@ function Figure4(D)
 end
 
 # ╔═╡ ac474bad-48df-4697-aa38-449bf238f78c
-Figure4(D)
+Figure4(D,base=250)
 
 # ╔═╡ 4975bd4b-496b-4368-91e2-77c5cfc3e6c7
 
@@ -269,6 +282,13 @@ function Scenarios(;random=false,distribution=Uniform)
 		image="http://zahachtah.github.io/CAS/images/case3.png"
 	)
 	push!(S,s1)
+		s1=scenario(
+		w=sed(min=0.01,max=0.3,normalize=true;random,distribution),
+		q=sed(mean=0.3,sigma=0.0,normalize=true;random),
+		label="High inequality, and low impact",
+		image="http://zahachtah.github.io/CAS/images/case1.png"
+	)
+	push!(S,s1)
 end
 
 # ╔═╡ 2d1dc9a6-08b5-4c36-809f-cbbf1a580795
@@ -326,13 +346,15 @@ S[1].institutional_impacts
 # ╠═438f0a66-794c-4efc-89ef-0aaadfb8c148
 # ╠═dc2f5246-53ae-434a-9101-4a848bb215f0
 # ╠═ac474bad-48df-4697-aa38-449bf238f78c
+# ╟─684f9d00-6de3-4aad-92ae-33d7deb0a3c4
 # ╠═7e4435af-6408-451c-ac80-a579ce2a4ac2
-# ╠═35a9c7ed-1b9d-43e1-ab26-61766abd85b5
-# ╠═c9bd3302-a5fc-4f8c-a7cd-6db0a873fc1d
 # ╠═10dadc04-90e5-4eca-88f2-37878198835d
 # ╠═b2d48e5b-f7d7-4e0a-a962-e8d3bd963573
-# ╠═03278683-c09b-4b5b-b1bb-baac56d95f4f
+# ╠═5e7c662a-33ff-4457-b97a-28992a94bcae
 # ╠═afe2675b-3381-4765-b8fd-cf765f4e61a7
+# ╠═c2ef6546-7431-43eb-af5e-54083ea87f39
+# ╠═9dd14c7f-a27e-4140-97ee-c4f928396660
+# ╠═f0dd3a6c-a441-4734-a06e-596fa9f162a2
 # ╠═bd083dfa-eacb-44fb-9066-f20f4deadd40
 # ╠═5c3d7480-53d4-4be4-81b6-0f9280689be7
 # ╠═4975bd4b-496b-4368-91e2-77c5cfc3e6c7
