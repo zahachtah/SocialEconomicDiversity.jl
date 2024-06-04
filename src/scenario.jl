@@ -43,7 +43,7 @@ function Base.show(io::IO, scenario::Scenario)
     println(io, "Scenario:")
     println(io, "=========")
     println(io, "N: ", scenario.N)
-    println(io, "External Parameters: ", scenario.external)
+    !isempty(scenario.external) ? println(io, "External Parameters: ", scenario.external) : nothing
     println(io, "w: ", scenario.w)
     println(io, "q: ", scenario.q)
     println(io, "ē: ", scenario.ē)  # and so on for other fields...
@@ -56,10 +56,12 @@ function Base.show(io::IO, scenario::Scenario)
     println(io, "α: ", scenario.α)
     #println(io, "aw̃: ", scenario.aw̃)
     #println(io, "aū: ", scenario.aū)
+    if scenario.protected>0.0
     println(io, "protected: ", scenario.protected)
     println(io, "dispersal: ", scenario.dispersal)
+    end
     
-    println(io, "Institution: ", scenario.institution)
+    println(io, "Institution: ", isempty(scenario.institution) ? "Open access" : scenario.institution)
 end
 
 

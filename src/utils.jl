@@ -78,6 +78,8 @@ end
 
 
 
+
+
 function institutional_impact!(S;M=100, inst=1)
     !isa(S,Array) ? S=[S] : nothing
     for q in S

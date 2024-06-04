@@ -1,3 +1,4 @@
+* Seems like there is no TerminateSteadyState working atm
 * add aw and au to phaseplot for outcome plots. Same for incomes?
 * Add periodicity detection and averaging
 * Clean up dudt function from comments

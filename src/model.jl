@@ -80,13 +80,14 @@ Main function to run a simulation with parameters provided by a scenario.
 function sim!(p; tend=(0.0,2000.0), y0=1.0, dydt=1.0,u0=fill(0.0/p.N,p.N), p0=0.0,solution=false,terminate_steady_state=true)
 	t0=time()
     N=p.N
+	isa(p.institution,Array) ? nothing : p.institution=[p.institution]
 	[static_institution(inst,p) for inst in p.institution]
     # sets up the problem,
     prob = ODEProblem(dudt,[u0;y0;y0;p0],tend,p)
 	#prob = ODEProblem(dudt_old,[u0;y0;y0;p0],tend,p)
     # solves the ODESSPRK22
     #sol=solve(prob,adaptive=false, Euler(),saveat=0.1,callback=terminate_steady_state ? TerminateSteadyState(1e-6,1e-4) : nothing,dt=p.sim.dt)#  
-	sol=solve(prob,SSPRK43(;stage_limiter!),reltol=1e-8,callback=terminate_steady_state ? TerminateSteadyState(1e-6,1e-4) : nothing)
+	sol=solve(prob,SSPRK43(;stage_limiter!),callback=terminate_steady_state ? TerminateSteadyState(1e-6,1e-4) : nothing)
 	if sol.retcode != :Success && sol.retcode != :Terminated
 		println("Simulation failed with retcode: ", sol.retcode)
 		println((p.label,p.institution[1]))
