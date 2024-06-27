@@ -58,10 +58,12 @@ function phaseplot!(
             Q = findall(usum.<=u)
             n = length(Q)
             U = zeros(z.N + 3)
-
+            #=
             deltau = length(Q) > 0 ? usum[min(z.N, Q[end] + 1)] - u : 0
             if length(Q) > 0 U[Q] = z.ū[Q] end
             U[min(z.N, n + 1)] = deltau
+            =#
+            U[Q] .= z.ū[Q]
             U[z.N + 1] = y
             dudt(du, U, z, 0)
             radian_angle = atan(sum(du[1:z.N]), du[z.N + 1])
@@ -70,8 +72,9 @@ function phaseplot!(
         end
 
         if show_exploitation
-            poly!(A, Rect(0, 0, 0.5, 1), color=HSLA(10, 0.5, 0.5, 0.1))
-            poly!(A, Rect(0.5, 0, 0.5, 1), color=HSLA(180, 0.5, 0.5, 0.1))
+            poly!(A, Rect(0, 0, 0.5, 1), color=HSLA(10, 0.0, 0.5, 0.1))
+            #poly!(A, Rect(0, 0, 0.5, 1), color=HSLA(10, 0.5, 0.5, 0.1))
+            #poly!(A, Rect(0.5, 0, 0.5, 1), color=HSLA(180, 0.5, 0.5, 0.1))
         end
 
         c = override_color!= nothing ? override_color : s.color
@@ -232,7 +235,7 @@ function individual_u!(a,S;labels=true,rot=false)
 		heatmap!(a,S.w̃[id],S.t,rotl90(S.t_u[:,reverse(id)]),colormap=cgrad([:white,S.color]))
 		!labels ? hidedecorations!(a) : nothing
 	else
-        heatmap!(a,S.t,S.w̃[id],S.t_u[:,id],colormap=cgrad([:white,S.color]))
+        heatmap!(a,S.t.+1.0,S.w̃[id],S.t_u[:,id],colormap=cgrad([:white,S.color]))
         !labels ? hidedecorations!(a) : nothing
 	end
 	hidespines!(a)

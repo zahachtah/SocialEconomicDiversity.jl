@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.42
+# v0.19.43
 
 using Markdown
 using InteractiveUtils
@@ -125,7 +125,8 @@ function Figure4(D;base=300)
 	for (i,q) in enumerate(D)
 		d=deepcopy(q)
 		d.institution=[]
-		sim!(d)
+		
+		#sim!(d)
 		phaseplot!(axes[i],d)
 		
 		phaseplot!(axes[i],q, show_realized=true,show_exploitation=false)
@@ -236,7 +237,7 @@ function figure_institutional_analysis(S;dsize=250)
 		hidespines!(c)
 		hidexdecorations!(c, ticklabels=(i==length(S) ? false : true))
 		
-		#println(size(M))
+		println(size(M))
 		heatmap!(c,1:length(s.institutional_impacts),reverse(1:4),M,colormap=:bam,colorrange=(-1,1))
 		[text!(c,x,y,text=string(round(M[x,5-y]*100,digits=0))[1:end-2],align=(:center,:baseline), color=abs(M[x,5-y])<0.5 ? :black : :white) for x in 1:length(s.institutional_impacts), y in 1:4]
 		Legend(f[2,2],d, tellwidth=false,orientation=:vertical)
