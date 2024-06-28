@@ -44,7 +44,7 @@ function phaseplot!(
     show_trajectory=false, regulated_dot_reduction=0.3, attractor_size=30, show_attractor=true, 
     show_target=true, vector_field=false, vector_grid=20, show_vertical_potential=false, 
     attractor_color=nothing, show_legend=nothing, attractor_to_legend=false, show_exploitation=true, 
-    indicate_incentives=false, override_color=nothing
+    indicate_incentives=false, override_color=nothing, attractor_opacity=1.0
 )
 
     S = isa(S, Array) ? S : [S]
@@ -78,7 +78,7 @@ function phaseplot!(
         end
 
         c = override_color!= nothing ? override_color : s.color
-        scatter!(A, [s.y], [s.U], color=attractor_color === nothing ? HSLA(c.h, c.s, c.l, 0.3) : attractor_color, 
+        scatter!(A, [s.y], [s.U], color=attractor_color === nothing ? HSLA(c.h, c.s, c.l, attractor_opacity) : attractor_color, 
                  markersize=show_attractor ? attractor_size : 0, strokecolor=:transparent, strokewidth=0)
 
         if vector_field

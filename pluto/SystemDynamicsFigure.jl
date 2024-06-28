@@ -1,4 +1,22 @@
-function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize=12, cs=(low=ColorSchemes.tab20[1], medium=ColorSchemes.tab20[5], high=ColorSchemes.tab20[3]))
+### A Pluto.jl notebook ###
+# v0.19.43
+
+using Markdown
+using InteractiveUtils
+
+# ╔═╡ ede552f6-3535-11ef-3366-477f9b9b522e
+begin
+	using Pkg
+
+	# downloading latest package from private repo
+	Pkg.add(url="https://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@github.com/zahachtah/SocialEconomicDiversity.jl")
+	#Pkg.add(url="https://github.com/zahachtah/SocialEconomicDiversity.jl");
+	using SocialEconomicDiversity, CairoMakie, DataFrames, Colors,ColorSchemes, Statistics, Images, FileIO
+	set_theme!(theme_light())
+end;
+
+# ╔═╡ 404f5879-c9b0-4bbd-8ab8-9ab397bb4bea
+function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize=12, cs=(low=ColorSchemes.tab20[1], medium=ColorSchemes.tab20[5], high=ColorSchemes.tab20[3]), saveas="", show_attractor=true, attractor_size=10)
 
 	function get_deriv_vector2(y,u,z)
 		p=z.final.p
@@ -23,30 +41,30 @@ function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize
 	
 	N=200
 	fig3=Figure(size=(900,900))
-	impact_potential=Axis(fig3[1,2], title="Impact potential",yticks = 0:1,titlefont=font, limits=(0,1,0,1),aspect=1)#, titlecolor=:black
+	impact_potential=CairoMakie.Axis(fig3[1,2], title="Impact potential",yticks = 0:1,titlefont=font, limits=(0,1,0,1),aspect=1)#, titlecolor=:black
 	hidexdecorations!(impact_potential)
 	hidespines!(impact_potential)
 	hidexdecorations!(impact_potential)
-	covar_impact=Axis(fig3[2,2], title="Covariation Impact ~ Incentive ",yticks = 0:1,titlefont=font)
+	covar_impact=CairoMakie.Axis(fig3[2,2], title="Covariation Impact ~ Incentive ",yticks = 0:1,titlefont=font)
 	hidexdecorations!(covar_impact)
 	hidespines!(covar_impact)
-	Behavioural_adaptability=Axis(fig3[3,3], title="Behavioural adaptability",xticks = 0:1,yticks = 0:1,titlefont=font)
+	Behavioural_adaptability=CairoMakie.Axis(fig3[3,3], title="Behavioural adaptability",xticks = 0:1,yticks = 0:1,titlefont=font)
 	hideydecorations!(Behavioural_adaptability)
 	hidespines!(Behavioural_adaptability)
-	inequality=Axis(fig3[1,1], title="Inequality",titlefont=font)
+	inequality=CairoMakie.Axis(fig3[1,1], title="Inequality",titlefont=font)
 	hidexdecorations!(inequality)
 	hideydecorations!(inequality)
 	hidespines!(inequality)
-	development=Axis(fig3[3,1], title="Equal Development",titlefont=font)
+	development=CairoMakie.Axis(fig3[3,1], title="Equal Development",titlefont=font)
 	hidexdecorations!(development)
 	hideydecorations!(development)
 	hidespines!(development)
-	development_inequality=Axis(fig3[2,1], title="Increasing Development and Inequality",xticks = 0:1,titlefont=font)
+	development_inequality=CairoMakie.Axis(fig3[2,1], title="Increasing Development and Inequality",xticks = 0:1,titlefont=font)
 	hideydecorations!(development_inequality)
 	hidespines!(development_inequality)
-	vector_field=Axis(fig3[1,3], title="Phase plane dynamics",yticks = 0:1,xticks = 0:1,titlefont=font)
+	vector_field=CairoMakie.Axis(fig3[1,3], title="Phase plane dynamics",yticks = 0:1,xticks = 0:1,titlefont=font)
 	hidespines!(vector_field)
-	individual=Axis(fig3[2,3], xscale = log10,title="Individual actors use over time",titlefont=font, xlabel="time",ylabel="incentives, w̃")
+	individual=CairoMakie.Axis(fig3[2,3], xscale = log10,title="Actors resurce use over time",titlefont=font, xlabel="time →",ylabel="Actors sorted by incentive, w̃")
 	hidespines!(individual)
 	Income_distribution=fig3[3,2]=GridLayout(title="incomes")
 	#Axis(fig3[3,2],title="Income distribution",titlefont=font)
@@ -61,16 +79,19 @@ function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize
 	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.16,max=0.36, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
 	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.88, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
 =#
-	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.25,sigma=0.0, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.25,sigma=0.0, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
+	
+	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	
+	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
 
 
 	#text!(ax12_fig3,0.6,0.7,text="Some actors will\nnot participate\neven with max resource",font="Gloria Hallelujah", fontsize=10,align=(:left, :top), color=:black)
 
 	d1=scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.15,sigma=0.4, normalize=true, distribution=LogNormal),color=low;N)
-	d2=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N)
-	d3=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.35,sigma=0.4, normalize=true, distribution=LogNormal),color=high;N)
+	d2=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.35,sigma=0.22, normalize=true, distribution=LogNormal),color=medium;N)
+	d3=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.55,sigma=0.13, normalize=true, distribution=LogNormal),color=high;N)
+	
 	phaseplot!(development,d1,show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
 	phaseplot!(development,d2,show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
 	phaseplot!(development,d3,show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
@@ -110,25 +131,28 @@ function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize
 	phaseplot!(vector_field,s13,vector_field=true)
 
 	#Label(Income_distribution[0,1], "Income distributions", fontsize=fontsize, font=font, tellwidth=false)
-	i1=Axis(Income_distribution[1,1])
+	Label(Income_distribution[0,1],"Income Distributions", tellwidth=false)
+	i1=CairoMakie.Axis(Income_distribution[1,1])
 	hidedecorations!(i1)
 	hidespines!(i1)
 	incomes!(i1,d1, indexed=:w̃)
-	i2=Axis(Income_distribution[2,1])
+	i2=CairoMakie.Axis(Income_distribution[2,1])
 	hidedecorations!(i2)
 	hidespines!(i2)
 	incomes!(i2,d2, indexed=:w̃)
-	i3=Axis(Income_distribution[3,1])
+	i3=CairoMakie.Axis(Income_distribution[3,1])
 	hidedecorations!(i3)
 	hidespines!(i3)
 	incomes!(i3,d3, indexed=:w̃)
 	individual_u!(individual,s13)
- 
+ 	saveas!="" ? save(saveas,fig3) : nothing
 	fig3
 end
 
+# ╔═╡ 3c57eb3d-f1e5-4ae9-ad58-a1740b4ef5b4
+figure3(saveas="../figures/system_dynamic_figure.png")
 
-function figure4()
-	f=Figure()
-	
-end
+# ╔═╡ Cell order:
+# ╠═3c57eb3d-f1e5-4ae9-ad58-a1740b4ef5b4
+# ╠═404f5879-c9b0-4bbd-8ab8-9ab397bb4bea
+# ╠═ede552f6-3535-11ef-3366-477f9b9b522e

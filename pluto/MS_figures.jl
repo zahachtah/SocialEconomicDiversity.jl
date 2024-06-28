@@ -59,24 +59,30 @@ function institutional_examples()
 	iTY=Market(target=:yield)
 	iPA=Protected_area()
 	iPAD=Protected_area()
-	iETp=Economic_incentive(target=:p)
+	iETp=Economic_incentive(target=:p, max=0.5)
 	iESp=Economic_incentive(target=:p,subsidize=true)
-	iETq=Economic_incentive(target=:q)
+	iETq=Economic_incentive(target=:q, max=0.5)
 	iESq=Economic_incentive(target=:q,subsidize=true)
 	institution=[iPH,iPL,iSE,iSY,iTE,iTY,iPA,iPAD,iETp,iESp,iETq,iESq]
 	D=[]
 	for (i,inst) in enumerate(institution)
 		println(string(inst))
-		if i == 8
-			s=scenario(w=sed(min=0.01,max=0.5,distribution=LogNormal,normalize=true),q=sed(mean=2.5,sigma=0.0, normalize=true))
+		if i==10 || i==12
+			col=:forestgreen
 		else
-			s=scenario(w=sed(min=0.1,max=1.5,normalize=true),q=sed(mean=2.0,sigma=0.0, normalize=true))
+			col=:crimson
+		end
+		if i == 8
+			s=scenario(w=sed(min=0.01,max=0.5,distribution=LogNormal,normalize=true),q=sed(mean=2.5,sigma=0.0, normalize=true), color=col)
+		else
+			s=scenario(w=sed(min=0.1,max=1.5,normalize=true),q=sed(mean=2.0,sigma=0.0, normalize=true), color=col)
 		end
 		d=deepcopy(s)
 		d.institution=[inst]
 		# color
 		institutional_impact!(d)
 		d.institution[1].value=d.institutional_impacts[1].id_total
+
 		sim!(d)
 		push!(D,d)
 	end
@@ -86,6 +92,12 @@ end
 # ╔═╡ 10dadc04-90e5-4eca-88f2-37878198835d
 D=institutional_examples()
 
+# ╔═╡ 242181c9-47f1-4919-a3cc-e3c95235196d
+D[9].aw̃
+
+# ╔═╡ ec0da2ce-64d4-49b7-b835-2a7378d61905
+SocialEconomicDiversity.analytical(D[9])
+
 # ╔═╡ 5e7c662a-33ff-4457-b97a-28992a94bcae
 k=11
 
@@ -93,7 +105,10 @@ k=11
 D[end-k].institutional_impacts[1]
 
 # ╔═╡ c2ef6546-7431-43eb-af5e-54083ea87f39
-scatter(D[end-k].institutional_impacts[1].target,max.(0.0,D[end-k].institutional_impacts[1].total))
+scatter(D[end-k].institutional_impacts[1].target,max.(0.0,D[end-k].institutional_impacts[1].resource))
+
+# ╔═╡ b94dcf47-3e97-4d0b-90cd-7c4a6daa4aee
+D[end-k].institutional_impacts
 
 # ╔═╡ 9dd14c7f-a27e-4140-97ee-c4f928396660
 D[end-k].institutional_impacts[1].target[argmin(D[end-k].institutional_impacts[1].y)]
@@ -127,6 +142,7 @@ function Figure4(D;base=300)
 		d.institution=[]
 		
 		#sim!(d)
+		println(i)
 		phaseplot!(axes[i],d)
 		
 		phaseplot!(axes[i],q, show_realized=true,show_exploitation=false)
@@ -301,7 +317,7 @@ end
 f=figure_institutional_analysis(S)
 
 # ╔═╡ a902f794-0829-44ae-b364-1635289c2531
-save(homedir()*"/Desktop/Figure6.png",f)
+save("../figures/Figure6.png",f)
 
 # ╔═╡ a059afec-8816-4043-9ca5-0474c5697584
 md"
@@ -347,6 +363,8 @@ S[1].institutional_impacts
 # ╠═438f0a66-794c-4efc-89ef-0aaadfb8c148
 # ╠═dc2f5246-53ae-434a-9101-4a848bb215f0
 # ╠═ac474bad-48df-4697-aa38-449bf238f78c
+# ╠═242181c9-47f1-4919-a3cc-e3c95235196d
+# ╠═ec0da2ce-64d4-49b7-b835-2a7378d61905
 # ╟─684f9d00-6de3-4aad-92ae-33d7deb0a3c4
 # ╠═7e4435af-6408-451c-ac80-a579ce2a4ac2
 # ╠═10dadc04-90e5-4eca-88f2-37878198835d
@@ -354,6 +372,7 @@ S[1].institutional_impacts
 # ╠═5e7c662a-33ff-4457-b97a-28992a94bcae
 # ╠═afe2675b-3381-4765-b8fd-cf765f4e61a7
 # ╠═c2ef6546-7431-43eb-af5e-54083ea87f39
+# ╠═b94dcf47-3e97-4d0b-90cd-7c4a6daa4aee
 # ╠═9dd14c7f-a27e-4140-97ee-c4f928396660
 # ╠═f0dd3a6c-a441-4734-a06e-596fa9f162a2
 # ╠═bd083dfa-eacb-44fb-9066-f20f4deadd40
