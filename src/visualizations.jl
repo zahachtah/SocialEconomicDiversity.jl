@@ -44,7 +44,7 @@ function phaseplot!(
     show_trajectory=false, regulated_dot_reduction=0.3, attractor_size=30, show_attractor=true, 
     show_target=true, vector_field=false, vector_grid=20, show_vertical_potential=false, 
     attractor_color=nothing, show_legend=nothing, attractor_to_legend=false, show_exploitation=true, 
-    indicate_incentives=false, override_color=nothing, attractor_opacity=1.0
+    indicate_incentives=false, override_color=nothing, attractor_opacity=1.0, target_color=:black
 )
 
     S = isa(S, Array) ? S : [S]
@@ -98,9 +98,9 @@ function phaseplot!(
                 target, value = s.institution[1].target, s.institution[1].value
                 up=us[findall(y.<=(1-value))[end]]
                 if target == :yield
-                    lines!(A, y, up ./ y, color=:black, linewidth=0.5, linestyle=:dash)
+                    lines!(A, y, up ./ y, color=:black, linewidth=0.5, linestyle=:solid)
                 elseif target == :effort
-                    lines!(A, y, fill(up, length(y)), color=:black, linewidth=0.5, linestyle=:dash)
+                    lines!(A, y, fill(up, length(y)), color=:black, linewidth=0.5, linestyle=:solid)
                 end
             else
                 lines!(A, y, fill(mean(s.institution[1].value), length(y)), color=:black, linewidth=0.5, linestyle=:dash)
@@ -232,7 +232,7 @@ function individual_u!(a,S;labels=true,rot=false)
 	# divide by S.ū
 	id=sortperm(S.w̃)
 	if rot
-		heatmap!(a,S.w̃[id],S.t,rotl90(S.t_u[:,reverse(id)]),colormap=cgrad([:white,S.color]))
+		heatmap!(a,S.w̃[id],S.t.+1,rotl90(S.t_u[:,reverse(id)]),colormap=cgrad([:white,S.color]))
 		!labels ? hidedecorations!(a) : nothing
 	else
         heatmap!(a,S.t.+1.0,S.w̃[id],S.t_u[:,id],colormap=cgrad([:white,S.color]))

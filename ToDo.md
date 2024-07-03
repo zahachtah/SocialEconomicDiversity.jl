@@ -16,3 +16,4 @@
 * Insightful and understandable institutions documentation
 * better/more robust check in revenues! part of refactoring instiuttions as Array or not
 * make a figure that shows the incentive switch, for linear and for non-linear, i.e. double switch. Also one that illustrates how increased q without increased w can cause incentive shifts
+* make external drivers work and create DAG's

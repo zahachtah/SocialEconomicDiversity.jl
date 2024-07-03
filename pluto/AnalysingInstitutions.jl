@@ -18,6 +18,72 @@ end;
 # ╔═╡ f672748a-768b-4fb1-a105-e3be975164b8
 floor(1.1)
 
+# ╔═╡ 6cbfc59a-cbc2-4fb5-bf1f-8c141e7a7ea5
+function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png")
+	ci=[15,1,3,5,7,9,11,13,17,19,2,4,6,8,10,12,14]
+	f=Figure(size=(base*6,base*4))
+	L=["Open Access","Use rights","Tradable Quotas ","Protected Area", "Economic incentives"]
+	LL=[" ","Only selected actors get \npermits to use the resource","Surplus use rights are \ntraded on a market","Part of the resource area \nis no-use, resource \nmoves between areas","Tax on gear effectively reduces q \nwhich affects both ū and w̃"]
+
+	Label(f[0,1], "Example Institutions →", fontsize = 18, font=:bold, tellwidth=false)
+	Label(f[1,1], "Open Access", fontsize = 18, font=:bold, tellwidth=false)
+
+	## Heatmap
+	hx=CairoMakie.Axis(f[5,1], aspect=1, yticks=(1:3,["Resource","Total","Gini"]), xticks=(1:4,[rich(L[2],color=D[2].color),rich(L[3],color=D[3].color),rich(L[4],color=D[4].color),rich(L[5],color=D[5].color)]), title="% change from OA",xticklabelrotation=pi/5)
+	h=heatmap!(hx,rand(4,3), colormap=:grays)
+	
+	Colorbar(f[5,0],h,tellwidth=false,vertical=true)
+	for (i,q) in enumerate(D)
+		
+		d=deepcopy(q)
+		d.institution=[]
+		d.color=HSL(0,0.0,0.5)
+		sim!(d)
+		sim!(q)
+		q.color=convert(HSL,ColorSchemes.tab20[ci[i]])
+		if i>1
+			text!(hx,i-1,1,text=string(Int64(round(maximum(d.institutional_impacts[1].resource*100),digits=0))), align=(:center,:baseline), color=:white, font=:bold)
+			text!(hx,i-1,2,text=string(Int64(round(maximum(d.institutional_impacts[1].resource*100),digits=0))), align=(:center,:baseline), color=:white, font=:bold)
+			text!(hx,i-1,3,text=string(Int64(round(maximum(d.institutional_impacts[1].resource*100),digits=0))), align=(:center,:baseline), color=:white, font=:bold)
+			Label(f[0,i],rich(L[i] ,word_wrap_width=180,color=ColorSchemes.tab20[ci[i]], fontsize = 18, font=:bold), tellwidth=false)
+			
+			Label(f[1,i],rich(LL[i],word_wrap_width=180,color=ColorSchemes.tab20[ci[i]], fontsize = 12), tellwidth=false)
+			x=1.0 -d.institutional_impacts[1].id_total
+			
+			cx=CairoMakie.Axis(f[5,i], xticks=(0<x<1 ? [0,x,1] : [0,1],0<x<1 ? ["Open\nAccess","opt","Full"] : ["Open\nAccess","Full"]),height=base) 
+			
+			lines!(cx,[x,x],[0.0,0.6], color=:black)
+			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].resource, color=SocialEconomicDiversity.adjustColor(q.color,"l",0.8), linewidth=2) 
+			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].total, color=q.color, linewidth=3)
+			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].gini, color=SocialEconomicDiversity.adjustColor(q.color,"l",0.3), linewidth=1)
+		end
+		
+		#Label(f[3,2:5],"Regulation", tellheight=true, tellwidth=false,height=20,halign=:center,valign=:top)
+		#Label(f[3,1],"Open Access", tellheight=true, tellwidth=false,height=20, fontsize = 18, font=:bold)
+		Label(f[4,0],"Income\ndistribution",rotation=pi/2, halign=:right)
+		Label(f[3,0],"Phase plot\nwith realized use (points)",rotation=pi/2, halign=:right)
+		ax=CairoMakie.Axis(f[3,i])
+		hidedecorations!(ax)
+		phaseplot!(ax,d)
+		bx=CairoMakie.Axis(f[4,i], height=base/2, xlabel="w̃")
+		ylims!(bx,-0.003,0.018)
+		hidedecorations!(bx, label=i==3 ? false : true)
+		incomes!(bx,q,show_text=false;indexed)#:w̃
+		
+		
+		phaseplot!(ax,q, show_potential=i>8 ? true : false, show_sustained=i>8 ? true : false,show_realized=true,show_exploitation=false, show_target=true)
+
+#=
+		lines!(resource_revenues,d.institutional_impacts[1].target,d.institutional_impacts[1].resource, color=ColorSchemes.tab20[ci[i]])
+		lines!(total_revenues,d.institutional_impacts[1].target,d.institutional_impacts[1].total, color=ColorSchemes.tab20[ci[i]])
+		lines!(gini,d.institutional_impacts[1].target,d.institutional_impacts[1].gini, color=ColorSchemes.tab20[ci[i]])
+		lines!(comb,d.institutional_impacts[1].total,d.institutional_impacts[1].gini, color=ColorSchemes.tab20[ci[i]])
+=#
+	end
+	saveas!="" ? save(saveas,f) : nothing
+	f
+end
+
 # ╔═╡ d4fa0fe1-7343-4c67-b540-c81907c96f8f
 function Figure4b(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png")
 	ci=[15,1,3,5,7,9,11,13,17,19,2,4,6,8,10,12,14]
@@ -47,7 +113,7 @@ function Figure4b(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png"
 			x=1.0 -d.institutional_impacts[1].id_total
 			cx=CairoMakie.Axis(f[2,i], xticks=(0<x<1 ? [0,x,1] : [0,1],0<x<1 ? ["Open\nAccess","opt","Full"] : ["Open\nAccess","Full"]),height=base) 
 			
-			lines!(cx,[x,x],[0.0,0.6])
+			lines!(cx,[x,x],[0.0,0.6], color=:black)
 			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].resource, color=SocialEconomicDiversity.adjustColor(q.color,"l",0.8), linewidth=2) 
 			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].total, color=q.color, linewidth=3)
 			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].gini, color=SocialEconomicDiversity.adjustColor(q.color,"l",0.3), linewidth=1)
@@ -233,6 +299,9 @@ DD=selected_institutions(q=2.0)
 # ╔═╡ 18cd66e9-58bc-4e1e-9bbb-8594ad4ac253
 Figure4b(DD, indexed=true)
 
+# ╔═╡ b9a43e20-831e-4b59-81d0-59d348f527bb
+Figure4c(DD, indexed=true)
+
 # ╔═╡ 3c990432-abbf-4fc8-8f18-d9c7db5b33ef
 DD[2].institutional_impacts[1]
 
@@ -303,8 +372,10 @@ D[4].institutional_impacts
 # ╠═e397e05d-2557-433a-b404-6531f385d91c
 # ╠═64f65364-5ac5-46a9-b136-1df543d553b4
 # ╠═18cd66e9-58bc-4e1e-9bbb-8594ad4ac253
+# ╠═b9a43e20-831e-4b59-81d0-59d348f527bb
 # ╠═3c990432-abbf-4fc8-8f18-d9c7db5b33ef
 # ╠═f672748a-768b-4fb1-a105-e3be975164b8
+# ╠═6cbfc59a-cbc2-4fb5-bf1f-8c141e7a7ea5
 # ╠═d4fa0fe1-7343-4c67-b540-c81907c96f8f
 # ╠═d5063d51-8e41-4f22-9f6c-07a259a466e0
 # ╠═0bd5711c-b54e-43d6-9fb0-72bb18f5bb95

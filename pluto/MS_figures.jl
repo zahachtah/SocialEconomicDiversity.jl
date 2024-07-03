@@ -317,7 +317,7 @@ end
 f=figure_institutional_analysis(S)
 
 # ╔═╡ a902f794-0829-44ae-b364-1635289c2531
-save("../figures/Figure6.png",f)
+save("../figures/ContextDiversityInstitutionalAnalysis.png",f)
 
 # ╔═╡ a059afec-8816-4043-9ca5-0474c5697584
 md"
