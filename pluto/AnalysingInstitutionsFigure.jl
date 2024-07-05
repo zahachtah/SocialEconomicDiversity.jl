@@ -60,7 +60,7 @@ function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png"
 		
 		#Label(f[3,2:5],"Regulation", tellheight=true, tellwidth=false,height=20,halign=:center,valign=:top)
 		#Label(f[3,1],"Open Access", tellheight=true, tellwidth=false,height=20, fontsize = 18, font=:bold)
-		Label(f[4,0],"Income\ndistribution",rotation=pi/2, halign=:right)
+		Label(f[4,0],"Resulting \nIncome\ndistribution",rotation=pi/2, halign=:right)
 		Label(f[3,0],"Phase plot\nwith realized use (points)",rotation=pi/2, halign=:right)
 		ax=CairoMakie.Axis(f[3,i])
 		hidedecorations!(ax)

@@ -72,6 +72,7 @@ function figure3a(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 	hidespines!(Kuznets)
 	
 	individual=CairoMakie.Axis(fig3[2,3], yscale = log10,title="Actors resurce use over time",titlefont=font, ylabel="time →",xlabel="Actors sorted by incentive, w̃")
+	xlims!(individual,0,1)
 	hidespines!(individual)
 	
 	Income_distribution=fig3[3,3]=GridLayout(title="incomes", rowgap=0)
@@ -109,9 +110,11 @@ function figure3a(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
 	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=2.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
    
-
-	phaseplot!(Behavioural_adaptability,scenario(α=sed(mean=0.5,sigma=0.0, normalize=true),	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=true, show_exploitation=true;show_attractor,attractor_size)
-	phaseplot!(Behavioural_adaptability,scenario(α=sed(mean=2.0,sigma=0.0, normalize=true),ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=true, show_exploitation=false;show_attractor,attractor_size)
+	ba1=scenario(α=sed(mean=0.5,sigma=0.0, normalize=true),	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=low;N)
+	ba2=scenario(α=sed(mean=2.0,sigma=0.0, normalize=true),ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=high;N)
+	
+	phaseplot!(Behavioural_adaptability,ba1,show_trajectory=true, show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(Behavioural_adaptability,ba2,show_trajectory=true, show_exploitation=false;show_attractor,attractor_size)
 	
 
 		s13=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.25,max=0.55, normalize=true, distribution=LogNormal),color=high;N)
@@ -140,8 +143,8 @@ function figure3a(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 		incomes!(iax,s,show_text=false, indexed=:w̃, fix_xlim=false)
 	end
 	
-	
-	individual_u!(individual,s13, rot=true)
+	#println(s13.w̃.data)
+	individual_u!(individual,ba2, rot=true)
  	saveas!="" ? save(saveas,fig3) : nothing
 	fig3
 end
