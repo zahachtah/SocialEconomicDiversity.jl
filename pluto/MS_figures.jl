@@ -59,10 +59,10 @@ function institutional_examples()
 	iTY=Market(target=:yield)
 	iPA=Protected_area()
 	iPAD=Protected_area()
-	iETp=Economic_incentive(target=:p, max=0.5)
-	iESp=Economic_incentive(target=:p,subsidize=true)
-	iETq=Economic_incentive(target=:q, max=0.5)
-	iESq=Economic_incentive(target=:q,subsidize=true)
+	iETp=Economic_incentive(target=:p, max=0.8)
+	iESp=Economic_incentive(target=:p,subsidize=true, max=0.8)
+	iETq=Economic_incentive(target=:q,  max=0.8)
+	iESq=Economic_incentive(target=:q,subsidize=true, max=0.8)
 	institution=[iPH,iPL,iSE,iSY,iTE,iTY,iPA,iPAD,iETp,iESp,iETq,iESq]
 	D=[]
 	for (i,inst) in enumerate(institution)
@@ -247,6 +247,7 @@ function figure_institutional_analysis(S;dsize=250)
 			q=inst_impact.gini.^-0.5 .+ inst_impact.total.^1
 			M[k,4]=(maximum(q)-q[end])/q[end]
 		end
+		println(M)
 		xt=(1:length(s.institutional_impacts), [i.institution for i in S[1].institutional_impacts])
 		yt=(1:4,reverse(["Resource revenue","Total revenue","Gini","Mixed T + G"]))
 		c=CairoMakie.Axis(f[i+k,4:5],aspect=length(s.institutional_impacts)/3,xticks = xt, yticks=yt,xticklabelrotation=-pi/6, yaxisposition = :right)
@@ -337,7 +338,7 @@ image_file = download(S[1].image)
 
 # ╔═╡ e65aabad-06fd-448a-abd8-c01ebae950ee
 begin
-	I=[Market(target=:effort),Market(target=:yield), Protected_area(), Economic_incentive(target=:p),Economic_incentive(target=:q)]#, Dynamic_permit_allocation(criteria=:w), Dynamic_permit_allocation(criteria=:w, reverse=true)]
+	I=[Market(target=:effort),Market(target=:yield), Protected_area(), Economic_incentive(target=:p, max=0.9),Economic_incentive(target=:q, max=0.9)]#, Dynamic_permit_allocation(criteria=:w), Dynamic_permit_allocation(criteria=:w, reverse=true)]
 	for inst in I
 		for j in 1:length(S)
 			S[j].institution=[inst]

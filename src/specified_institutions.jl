@@ -21,7 +21,9 @@ mutable struct Dynamic_permit_allocation <: LimitInstitution
     reverse::Bool
     value::Float64
     fun::Function
-    function Dynamic_permit_allocation(;criteria::Symbol = :w̃, reverse::Bool = false,  value::Float64 = 1.0, fun::Function = dynamic_permits)
+    label::String
+    description::String
+    function Dynamic_permit_allocation(;criteria::Symbol = :w̃, reverse::Bool = false,  value::Float64 = 1.0, fun::Function = dynamic_permits, label::String="Dynamic permit allocation", description::String="Handles the dynamic allocation of permits based on the specified criteria and whether the order of allocation is reversed.")
         new(criteria, reverse,  value, fun)
     end
 end
@@ -82,9 +84,10 @@ mutable struct Equal_share_allocation <: LimitInstitution
     target::Symbol      # Target parameter for equal share allocation
     value::Float64      # Value used for allocation calculation
     fun::Function       # Function to execute equal share allocation
-
+    label::String
+    description::String
     # Constructor for `Equal_share_allocation` with default parameter values
-    function Equal_share_allocation(; target::Symbol = :yield, value::Float64 = 0.0, fun::Function = equal_share)
+    function Equal_share_allocation(; target::Symbol = :yield, value::Float64 = 0.0, fun::Function = equal_share, label::String="Equal share allocation", description::String="Handles the equal share allocation based on the specified target and value.")
         new(target, value, fun)
     end
 end
@@ -141,9 +144,10 @@ mutable struct Protected_area <: StaticInstitution
     dispersal::Float64  # Dispersal rate in the protected area
     value::Float64      # Proportion of the area that is protected
     fun::Function       # Function to configure the protected area
-
+    label::String
+    description::String
     # Constructor for `Protected_area` with default parameter values
-    function Protected_area(; dispersal::Float64 = 0.1, value::Float64 = 0.0, fun::Function = protected_area)
+    function Protected_area(; dispersal::Float64 = 0.1, value::Float64 = 0.0, fun::Function = protected_area, label::String="Protected area", description::String="Configures the protected area based on the specified dispersal rate and value.")
         new(dispersal, value, fun)
     end
 end
@@ -195,9 +199,10 @@ mutable struct Economic_incentive <: StaticInstitution
     subsidize::Bool       # subsidize=true or tax
     value::Float64      # Value used to determine the magnitude of the incentive
     fun::Function       # Function to execute the economic incentive configuration
-
+    label::String
+    description::String
     # Constructor for `Economic_incentive` with default parameter values
-    function Economic_incentive(; target::Symbol = :q, max::Float64 = 1.0, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive)
+    function Economic_incentive(; target::Symbol = :q, max::Float64 = 1.0, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive, label::String="Economic incentive", description::String="Configures the economic incentive based on the specified target, maximum value, reverse flag, and value.")
         new(target, max, subsidize, value, fun)
     end
 end
@@ -250,13 +255,16 @@ mutable struct Market <: DynamicInstitution
     value::Float64      # Total supply available in the market
     market_rate::Float64 # Rate of change in the tradable quota price
     fun::Function       # Function to execute the market mechanism
-
+    label::String
+    description::String
     # Constructor for `Market` with default parameter values
     function Market(;criteria::Symbol = :ϕ, 
                     target::Symbol = :effort, 
                     value::Float64 = 1.0, 
                     market_rate::Float64 = 0.01, 
-                    fun::Function = market)
+                    fun::Function = market,
+                    label::String="Market mechanism",
+                    description::String="Executes the market mechanism for allocating resources based on supply and demand.")
         new(criteria, target, value, market_rate,fun)
     end
 end
@@ -307,7 +315,9 @@ end
 mutable struct Open_access <: StaticInstitution
     fun::Function
     value::Float64
-    function Open_access(fun::Function = open_access, value::Float64 = 0.0)
+    label::String
+    description::String
+    function Open_access(fun::Function = open_access, value::Float64 = 0.0, label::String="Open access", description::String="Handles the open access scenario.")
         new(fun)
     end
 end

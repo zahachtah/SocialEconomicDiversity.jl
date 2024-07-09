@@ -15,6 +15,278 @@ begin
 	set_theme!(theme_light())
 end;
 
+# ╔═╡ 545cd41b-44d6-44a1-967a-fae9efcf88b6
+function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize=12, cs=(low=ColorSchemes.tab20[1], medium=ColorSchemes.tab20[5], high=ColorSchemes.tab20[3]), saveas="", show_attractor=true, attractor_size=10)
+
+	function get_deriv_vector2(y,u,z)
+		p=z.final.p
+		du=zeros(p.N+2)
+		usum=cumsum(p.ū)
+		Q=findall(usum.<=u)
+		n=length(Q)
+		deltau=usum[min(p.N,Q[end]+1)]-u
+		U=zeros(p.N+2)
+		U[Q]=p.ū[Q]
+		U[min(p.N,n+1)]=deltau
+		U[p.N+1]=y
+		dudt(du,U,p,0)
+		radian_angle = atan(sum(du[1:p.N]),du[p.N+1])
+    	#rad2deg(radian_angle)+180
+		#(du[p.N+1],sum(du[1:p.N]))
+		radian_angle-pi/2,sqrt(sum(du[1:p.N])^2+du[p.N+1]^2)
+	end
+
+	nc=10	
+	(low,medium,high)=cs
+	
+	N=200
+	B=300
+	fig3=Figure(size=(3.5*B,2*B))
+	
+	impact_potential=CairoMakie.Axis(fig3[1,3],yticks = 0:1,xticks = 0:1,titlefont=font, limits=(0,1,0,1),aspect=1)#, titlecolor=:black
+	hidexdecorations!(impact_potential, ticklabels=false)
+	hidespines!(impact_potential)
+	
+	covar_impact=CairoMakie.Axis(fig3[2,3],yticks = 0:1,xticks = 0:1,titlefont=font)
+	hidexdecorations!(covar_impact, ticklabels=false)
+	hidespines!(covar_impact)
+	
+	Behavioural_adaptability=CairoMakie.Axis(fig3[1,1],xticks = 0:1,yticks = 0:1,titlefont=font)
+	hideydecorations!(Behavioural_adaptability)
+	hidespines!(Behavioural_adaptability)
+	
+	inequality=CairoMakie.Axis(fig3[1,2],titlefont=font,yticks = 0:1,xticks = 0:1)
+	hidexdecorations!(inequality, ticklabels=false)
+	hideydecorations!(inequality)
+	hidespines!(inequality)
+	
+	development=CairoMakie.Axis(fig3[2,2],titlefont=font, ylabel="Participation",yticks = 0:1,xticks = 0:1)
+	hidexdecorations!(development, ticklabels=false)
+	hideydecorations!(development, label=false)
+	hidespines!(development)
+	
+	
+	Kuznets=CairoMakie.Axis(fig3[1,4],yticks = 0:1,xticks = 0:1,titlefont=font, xlabel="Resource Level")
+	hidespines!(Kuznets)
+	
+	individual=CairoMakie.Axis(fig3[2,1], yscale = log10,titlefont=font, ylabel="time →",xlabel="Actors sorted by incentive, w̃")
+	xlims!(individual,0,1)
+	hidespines!(individual)
+	
+	Income_distribution=fig3[2,4]=GridLayout( rowgap=0)
+
+	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.25,sigma=0.0, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
+	
+	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	
+	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+
+
+	#text!(ax12_fig3,0.6,0.7,text="Some actors will\nnot participate\neven with max resource",font="Gloria Hallelujah", fontsize=10,align=(:left, :top), color=:black)
+
+	d1=scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.15,sigma=0.4, normalize=true, distribution=LogNormal),color=low;N)
+	d2=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.35,sigma=0.22, normalize=true, distribution=LogNormal),color=medium;N)
+	d3=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.55,sigma=0.13, normalize=true, distribution=LogNormal),color=high;N)
+	
+	phaseplot!(development,d1,show_trajectory=false,show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(development,d2,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	phaseplot!(development,d3,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	
+
+   
+	phaseplot!(impact_potential,scenario(ū=sed(mean=0.5, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(impact_potential,scenario(ū=sed(mean=1.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	phaseplot!(impact_potential,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false,show_exploitation=false;show_attractor,attractor_size)
+   
+	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=-2.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=2.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+   
+	ba1=scenario(α=sed(mean=0.5,sigma=0.0, normalize=true),	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=low;N)
+	ba2=scenario(α=sed(mean=2.0,sigma=0.0, normalize=true),ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=high;N)
+	
+	phaseplot!(Behavioural_adaptability,ba1,show_trajectory=true, show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(Behavioural_adaptability,ba2,show_trajectory=true, show_exploitation=false;show_attractor,attractor_size)
+	
+
+		s13=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.25,max=0.55, normalize=true, distribution=LogNormal),color=high;N)
+	#Main Phaseplot
+    csc=ColorSchemes.magma
+	rand=false
+	s1=scenario(ū=sed(mean=0.5, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.25, normalize=true, distribution=LogNormal),color=csc[1];N)
+	s2=scenario(ū=sed(mean=1.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.05,max=0.65, normalize=true, distribution=LogNormal, random=rand),color=csc[33];N)
+	s3=scenario(ū=sed(mean=1.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.075,max=0.75, normalize=true, distribution=LogNormal, random=rand),color=csc[66];N)
+	s4=scenario(ū=sed(mean=2.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.1,max=0.95, normalize=true, distribution=LogNormal, random=rand),color=csc[100];N)
+	s5=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.15,max=1.55, normalize=true, distribution=LogNormal, random=rand),color=csc[150];N)
+	s6=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.2,max=2.55, normalize=true, distribution=LogNormal, random=rand),color=csc[200];N)
+	s7=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.4,max=4.55, normalize=true, distribution=LogNormal, random=rand),color=csc[250];N)
+
+	phaseplot!(Kuznets,s1; attractor_size)
+	phaseplot!(Kuznets,s2,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s3,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s4,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s5,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s6,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s7,show_exploitation=false;attractor_size)
+
+	for (i,s) in enumerate([s1,s3,s5,s7])
+		iax=CairoMakie.Axis(Income_distribution[i,1])
+		hidedecorations!(iax)
+		incomes!(iax,s,show_text=false, indexed=:w̃, fix_xlim=false)
+	end
+	fs=20
+	Label(fig3[0,1],text="Dynamics", tellwidth=false, fontsize=fs)
+	Label(fig3[0,2],text="Incentives", tellwidth=false, fontsize=fs)
+	Label(fig3[0,3],text="Impacts", tellwidth=false, fontsize=fs)
+	Label(fig3[0,4],text="Environmental Kuznets", tellwidth=false, fontsize=fs)
+	fst=18
+	text!(Behavioural_adaptability,0.05,0.9,text="a", fontsize=fst)
+	text!(individual,0.05,1000,text="b", fontsize=fst)
+	text!(individual,0.65,1000,text="Participation \nover time", fontsize=fst)
+	text!(inequality,0.05,0.9,text="c", fontsize=fst)
+	text!(development,0.05,0.9,text="d", fontsize=fst)
+	text!(impact_potential,0.05,0.9,text="e", fontsize=fst)
+	text!(covar_impact,0.05,0.9,text="f", fontsize=fst)
+	#println(s13.w̃.data)
+	individual_u!(individual,ba2, rot=true)
+ 	saveas!="" ? save(saveas,fig3) : nothing
+	fig3
+end
+
+# ╔═╡ fdbe88f9-d515-4ee1-8d30-ad6e636314a2
+figure3d(saveas="../figures/system_dynamic_figure.png")
+
+# ╔═╡ d6124a1f-4b50-47ba-899c-904742a0cce5
+function figure3c(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize=12, cs=(low=ColorSchemes.tab20[1], medium=ColorSchemes.tab20[5], high=ColorSchemes.tab20[3]), saveas="", show_attractor=true, attractor_size=10)
+
+	function get_deriv_vector2(y,u,z)
+		p=z.final.p
+		du=zeros(p.N+2)
+		usum=cumsum(p.ū)
+		Q=findall(usum.<=u)
+		n=length(Q)
+		deltau=usum[min(p.N,Q[end]+1)]-u
+		U=zeros(p.N+2)
+		U[Q]=p.ū[Q]
+		U[min(p.N,n+1)]=deltau
+		U[p.N+1]=y
+		dudt(du,U,p,0)
+		radian_angle = atan(sum(du[1:p.N]),du[p.N+1])
+    	#rad2deg(radian_angle)+180
+		#(du[p.N+1],sum(du[1:p.N]))
+		radian_angle-pi/2,sqrt(sum(du[1:p.N])^2+du[p.N+1]^2)
+	end
+
+	nc=10	
+	(low,medium,high)=cs
+	
+	N=200
+	B=300
+	fig3=Figure(size=(2*B,3.5*B))
+	
+	impact_potential=CairoMakie.Axis(fig3[3,1],yticks = 0:1,xticks = 0:1,titlefont=font, limits=(0,1,0,1),aspect=1)#, titlecolor=:black
+	hidexdecorations!(impact_potential, ticklabels=false)
+	hidespines!(impact_potential)
+	
+	covar_impact=CairoMakie.Axis(fig3[3,2],yticks = 0:1,xticks = 0:1,titlefont=font)
+	hidexdecorations!(covar_impact, ticklabels=false)
+	hidespines!(covar_impact)
+	
+	Behavioural_adaptability=CairoMakie.Axis(fig3[1,1],xticks = 0:1,yticks = 0:1,titlefont=font)
+	hideydecorations!(Behavioural_adaptability)
+	hidespines!(Behavioural_adaptability)
+	
+	inequality=CairoMakie.Axis(fig3[2,1],titlefont=font,yticks = 0:1,xticks = 0:1)
+	hidexdecorations!(inequality, ticklabels=false)
+	hideydecorations!(inequality)
+	hidespines!(inequality)
+	
+	development=CairoMakie.Axis(fig3[2,2],titlefont=font, ylabel="Participation",yticks = 0:1,xticks = 0:1)
+	hidexdecorations!(development, ticklabels=false)
+	hideydecorations!(development, label=false)
+	hidespines!(development)
+	
+	
+	Kuznets=CairoMakie.Axis(fig3[4,1],yticks = 0:1,xticks = 0:1,titlefont=font, xlabel="Resource Level")
+	hidespines!(Kuznets)
+	
+	individual=CairoMakie.Axis(fig3[1,2], yscale = log10,titlefont=font, ylabel="time →",xlabel="Actors sorted by incentive, w̃")
+	xlims!(individual,0,1)
+	hidespines!(individual)
+	
+	Income_distribution=fig3[4,2]=GridLayout( rowgap=0)
+
+	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.25,sigma=0.0, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
+	
+	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	
+	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+
+
+	#text!(ax12_fig3,0.6,0.7,text="Some actors will\nnot participate\neven with max resource",font="Gloria Hallelujah", fontsize=10,align=(:left, :top), color=:black)
+
+	d1=scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.15,sigma=0.4, normalize=true, distribution=LogNormal),color=low;N)
+	d2=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.35,sigma=0.22, normalize=true, distribution=LogNormal),color=medium;N)
+	d3=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.55,sigma=0.13, normalize=true, distribution=LogNormal),color=high;N)
+	
+	phaseplot!(development,d1,show_trajectory=false,show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(development,d2,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	phaseplot!(development,d3,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	
+
+   
+	phaseplot!(impact_potential,scenario(ū=sed(mean=0.5, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(impact_potential,scenario(ū=sed(mean=1.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	phaseplot!(impact_potential,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false,show_exploitation=false;show_attractor,attractor_size)
+   
+	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=-2.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=2.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+   
+	ba1=scenario(α=sed(mean=0.5,sigma=0.0, normalize=true),	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=low;N)
+	ba2=scenario(α=sed(mean=2.0,sigma=0.0, normalize=true),ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=high;N)
+	
+	phaseplot!(Behavioural_adaptability,ba1,show_trajectory=true, show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(Behavioural_adaptability,ba2,show_trajectory=true, show_exploitation=false;show_attractor,attractor_size)
+	
+
+		s13=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.25,max=0.55, normalize=true, distribution=LogNormal),color=high;N)
+	#Main Phaseplot
+    csc=ColorSchemes.magma
+	rand=false
+	s1=scenario(ū=sed(mean=0.5, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.25, normalize=true, distribution=LogNormal),color=csc[1];N)
+	s2=scenario(ū=sed(mean=1.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.05,max=0.65, normalize=true, distribution=LogNormal, random=rand),color=csc[33];N)
+	s3=scenario(ū=sed(mean=1.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.075,max=0.75, normalize=true, distribution=LogNormal, random=rand),color=csc[66];N)
+	s4=scenario(ū=sed(mean=2.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.1,max=0.95, normalize=true, distribution=LogNormal, random=rand),color=csc[100];N)
+	s5=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.15,max=1.55, normalize=true, distribution=LogNormal, random=rand),color=csc[150];N)
+	s6=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.2,max=2.55, normalize=true, distribution=LogNormal, random=rand),color=csc[200];N)
+	s7=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.4,max=4.55, normalize=true, distribution=LogNormal, random=rand),color=csc[250];N)
+
+	phaseplot!(Kuznets,s1; attractor_size)
+	phaseplot!(Kuznets,s2,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s3,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s4,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s5,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s6,show_exploitation=false;attractor_size)
+	phaseplot!(Kuznets,s7,show_exploitation=false;attractor_size)
+
+	for (i,s) in enumerate([s1,s3,s5,s7])
+		iax=CairoMakie.Axis(Income_distribution[i,1])
+		hidedecorations!(iax)
+		incomes!(iax,s,show_text=false, indexed=:w̃, fix_xlim=false)
+	end
+	fs=20
+	Label(fig3[1,0],text="Dynamics",rotation=pi/2, tellheight=false, fontsize=fs)
+	Label(fig3[2,0],text="Incentives",rotation=pi/2, tellheight=false, fontsize=fs)
+	Label(fig3[3,0],text="Impacts",rotation=pi/2, tellheight=false, fontsize=fs)
+	Label(fig3[4,0],text="Environmental Kuznets",rotation=pi/2, tellheight=false, fontsize=fs)
+	
+	#println(s13.w̃.data)
+	individual_u!(individual,ba2, rot=true)
+ 	saveas!="" ? save(saveas,fig3) : nothing
+	fig3
+end
+
 # ╔═╡ 54c44bd0-db85-40af-934c-adb9a372a9c8
 function figure3a(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize=12, cs=(low=ColorSchemes.tab20[1], medium=ColorSchemes.tab20[5], high=ColorSchemes.tab20[3]), saveas="", show_attractor=true, attractor_size=10)
 
@@ -148,9 +420,6 @@ function figure3a(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
  	saveas!="" ? save(saveas,fig3) : nothing
 	fig3
 end
-
-# ╔═╡ fdbe88f9-d515-4ee1-8d30-ad6e636314a2
-figure3a(saveas="../figures/system_dynamic_figure.png")
 
 # ╔═╡ 404f5879-c9b0-4bbd-8ab8-9ab397bb4bea
 function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize=12, cs=(low=ColorSchemes.tab20[1], medium=ColorSchemes.tab20[5], high=ColorSchemes.tab20[3]), saveas="", show_attractor=true, attractor_size=10)
@@ -290,6 +559,8 @@ figure3(saveas="../figures/system_dynamic_figure.png")
 # ╔═╡ Cell order:
 # ╠═3c57eb3d-f1e5-4ae9-ad58-a1740b4ef5b4
 # ╠═fdbe88f9-d515-4ee1-8d30-ad6e636314a2
+# ╠═545cd41b-44d6-44a1-967a-fae9efcf88b6
+# ╠═d6124a1f-4b50-47ba-899c-904742a0cce5
 # ╠═54c44bd0-db85-40af-934c-adb9a372a9c8
 # ╠═404f5879-c9b0-4bbd-8ab8-9ab397bb4bea
 # ╠═ede552f6-3535-11ef-3366-477f9b9b522e

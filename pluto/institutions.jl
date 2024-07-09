@@ -16,7 +16,7 @@ begin
 end;
 
 # ╔═╡ ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
-s=scenario(ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:q,value=-1.0))
+s=scenario(ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:q,value=-1.0, max=0.99))
 
 # ╔═╡ 533abaf9-8b4f-49e1-89ec-46417ac31cd4
 institutional_impact!(s)
@@ -34,7 +34,7 @@ s.aw̃
 scatter(s.institutional_impacts[1].target,s.institutional_impacts[1].total)
 
 # ╔═╡ 56564230-1a0c-4aef-9084-ac8f92795b67
-maximum(s.institutional_impacts[1].total)
+s.institutional_impacts[1].total
 
 # ╔═╡ d487ea7b-07d0-4032-b3f5-207315fa962d
 argmax(s.institutional_impacts[1].total)
