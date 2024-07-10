@@ -96,7 +96,7 @@ function institutional_impact!(S;M=100, inst=1)
             s.institution[inst].value=t[i]
             sim!(s)
             
-            push!(total,sum(s.total_revenue))
+            push!(total,sum(s.total_revenue)./(sum(s.w̃*s.aw̃)))
             push!(resource,sum(s.resource_revenue))
             push!(gini,s.gini)
             push!(y,s.y)
