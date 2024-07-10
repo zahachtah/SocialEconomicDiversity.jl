@@ -16,29 +16,10 @@ begin
 end;
 
 # ╔═╡ ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
-s=scenario(ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:w,subsidize=true,value=0.5, max=0.99))
+s=scenario(ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:w,subsidize=false,value=0.5, max=0.99))
 
 # ╔═╡ b57b09da-fd00-481e-9c72-a747bd3b0ee3
 q=Economic_incentive(target=:w,subsidize=true,value=0.5, max=0.99,label="one", description="two")
-
-# ╔═╡ be6ae928-8046-4273-9348-23c362c52eda
-typename = typeof(q)
-    
-
-# ╔═╡ 794e0ef5-b7af-4f78-a2ea-119fb147160c
-fields = fieldnames(typename)
-
-# ╔═╡ 728b68fb-73df-449e-b8d8-19d08445e87f
- println("$(typename):")
-
-# ╔═╡ 47e1eb0e-99a4-417b-b252-93225475fefa
-for field in fields
-        value = getfield(q, field)
-	println(value)
-end
-
-# ╔═╡ eec17110-2293-4fdc-8038-3cdd64c6012e
-q.value
 
 # ╔═╡ 533abaf9-8b4f-49e1-89ec-46417ac31cd4
 institutional_impact!(s)
@@ -67,11 +48,6 @@ phaseplot(s)
 # ╔═╡ Cell order:
 # ╠═ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
 # ╠═b57b09da-fd00-481e-9c72-a747bd3b0ee3
-# ╠═794e0ef5-b7af-4f78-a2ea-119fb147160c
-# ╠═be6ae928-8046-4273-9348-23c362c52eda
-# ╠═728b68fb-73df-449e-b8d8-19d08445e87f
-# ╠═47e1eb0e-99a4-417b-b252-93225475fefa
-# ╠═eec17110-2293-4fdc-8038-3cdd64c6012e
 # ╠═533abaf9-8b4f-49e1-89ec-46417ac31cd4
 # ╠═ee9407fa-3141-451f-8710-69e1653899ea
 # ╠═b054678b-a1e0-4620-8335-7fdeb559d451

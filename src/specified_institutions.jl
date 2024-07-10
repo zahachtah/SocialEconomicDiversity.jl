@@ -229,6 +229,10 @@ function economic_incentive(institution::Economic_incentive, s)
         s.aū = ones(s.N) .*(1 + institution.max * institution.value * (institution.subsidize ? 1.0 : -1.0))
         # Normalize aw̃ based on the incentive effect
         s.aw̃ = ones(s.N)  ./ (1 + institution.max * institution.value * (institution.subsidize ? 1.0 : -1.0))
+    elseif institution.target == :w
+        # Normalize aw̃ based on the incentive effect
+        s.aw̃ = ones(s.N)  ./ (1 + institution.max * institution.value * (institution.subsidize ? 1.0 : -1.0))
+      
     end
 end
 
