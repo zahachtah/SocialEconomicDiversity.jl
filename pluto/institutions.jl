@@ -18,6 +18,15 @@ end;
 # ╔═╡ ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
 s=scenario(ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:w,subsidize=true,value=0.7, max=0.99));
 
+# ╔═╡ d3068553-dd29-47d5-916d-ebf45ad931f3
+md"
+For price manipulations an economic incentive would be dynamic and depend on E * x as this is what the price refers to. so price subsidy of p+0.1 would result in a social cost of E * x * p+0.1
+
+For alternative income manipulation we could assume the societal cost is the increase in sum(w) unless it is externa. If it is external (development aid) then the society gains and the developed world takes the cost?
+
+for q its more tricky I think? should we assume that the increase in value that can be extracted is proportional to the cost of increasing q?
+"
+
 # ╔═╡ b57b09da-fd00-481e-9c72-a747bd3b0ee3
 q=Economic_incentive(target=:w,subsidize=true,value=0.0, max=0.99,label="one", description="two")
 
@@ -47,6 +56,7 @@ phaseplot(s)
 
 # ╔═╡ Cell order:
 # ╠═ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
+# ╠═d3068553-dd29-47d5-916d-ebf45ad931f3
 # ╠═b57b09da-fd00-481e-9c72-a747bd3b0ee3
 # ╠═533abaf9-8b4f-49e1-89ec-46417ac31cd4
 # ╠═ee9407fa-3141-451f-8710-69e1653899ea
