@@ -3,33 +3,7 @@ function gini(x)
     sum([abs(x[i]-x[j]) for i in 1:length(x), j in 1:length(x)])/(2*length(x)*sum(x))
 end
 
-#=
-function analytical(p)
-    Y=range(0.0,stop=max(1.0,maximum(p.w̃))	,length=1000)
-    us=sum.(u_sust.(Y,Ref(p)))/p.N
-    ur=sum.(u_real.(Y,Ref(p)))/p.N
-    return (us,ur,Y)
-end
 
-
-function u_sust(y,p)
-    id=sortperm(p.w̃)
-    cu=cumsum(p.ū[id])
-    f=sum(cu.<(1.0-y))
-    if f==0
-        f=(1.0-y)/p.ū[id[1]]
-    elseif f<p.N
-        f=f+((1-y)-cu[f])/p.ū[id[f+1]]
-    end
-    return f
-end
-
-function u_real(y,p)
-    id=sortperm(p.w̃) # if w_bar's are not in ascending order
-    f=sum(p.w̃[id].<y) # how many are participating
-    return f
-end
-=#
 function analytical(p)
     w̃ = p.w̃ .* p.aw̃
     ū = p.ū .* p.aū
@@ -77,6 +51,23 @@ function adjustColor(C,f,v)
 end
 
 
+function revenues!(S::Scenario)
+    #dimensional revenues
+    c̃=0 #Yo, add c to scenario!
+    S.wage_revenue = (S.ū.*S.aū .- S.u) .* S.w̃.*S.aw̃.*S.r.*S.p.*S.K;
+    S.resource_revenue = S.u.*(S.y*(1.0-S.protected) .- c̃).*S.r.*S.p.*S.K;
+    S.trade_revenue=zeros(S.N)
+    
+    if isa(S.institution,Array) && length(S.institution)>0
+        
+        if typeof(S.institution[1])==Market 
+            
+            S.trade_revenue=(S.institution[1].value./(S.y*(1.0-S.protected))./S.N.-S.u).*S.ϕ.*S.r.*S.p.*S.K;
+        end
+    end
+    #R̃ₕᵣ= S.u.*(S.y .- S.w̃);
+    S.total_revenue = S.wage_revenue .+  S.resource_revenue .+S.trade_revenue.+S.institution[1].cost(S.institution[1].value)
+end
 
 
 

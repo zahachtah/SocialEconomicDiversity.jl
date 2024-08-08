@@ -204,23 +204,6 @@ function dist!(s::Scenario)
     end
 end
 
-function revenues!(S::Scenario)
-    #dimensional revenues
-    c̃=0 #Yo, add c to scenario!
-    S.wage_revenue = (S.ū.*S.aū .- S.u) .* S.w̃.*S.aw̃.*S.r.*S.p.*S.K;
-    S.resource_revenue = S.u.*(S.y*(1.0-S.protected) .- c̃).*S.r.*S.p.*S.K;
-    S.trade_revenue=zeros(S.N)
-    
-    if isa(S.institution,Array) && length(S.institution)>0
-        
-        if typeof(S.institution[1])==Market 
-            
-            S.trade_revenue=(S.institution[1].value./(S.y*(1.0-S.protected))./S.N.-S.u).*S.ϕ.*S.r.*S.p.*S.K;
-        end
-    end
-    #R̃ₕᵣ= S.u.*(S.y .- S.w̃);
-    S.total_revenue = S.wage_revenue .+  S.resource_revenue .+S.trade_revenue
-end
 
 
 function update(scenario::Scenario; kwargs...)

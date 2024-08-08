@@ -33,6 +33,9 @@ for q its more tricky I think? should we assume that the increase in value that 
 # ╔═╡ b57b09da-fd00-481e-9c72-a747bd3b0ee3
 q=Economic_incentive(target=:w,subsidize=true,value=0.0, max=0.99,label="one", description="two")
 
+# ╔═╡ e3b17d51-f786-44b9-b069-cc64a8d069b7
+q.cost(0.1)
+
 # ╔═╡ 533abaf9-8b4f-49e1-89ec-46417ac31cd4
 institutional_impact!(s)
 
@@ -74,6 +77,7 @@ lines(s.t_u[:,26])
 # ╠═a4dfcace-2a9c-406b-a2ae-a56a9bdaba5c
 # ╠═d3068553-dd29-47d5-916d-ebf45ad931f3
 # ╠═b57b09da-fd00-481e-9c72-a747bd3b0ee3
+# ╠═e3b17d51-f786-44b9-b069-cc64a8d069b7
 # ╠═533abaf9-8b4f-49e1-89ec-46417ac31cd4
 # ╠═ee9407fa-3141-451f-8710-69e1653899ea
 # ╠═b054678b-a1e0-4620-8335-7fdeb559d451
