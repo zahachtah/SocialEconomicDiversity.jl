@@ -206,7 +206,7 @@ mutable struct Economic_incentive <: StaticInstitution
     description::String
     cost::Function
     # Constructor for `Economic_incentive` with default parameter values
-    function Economic_incentive(; target::Symbol = :q, max::Float64 = 1.0, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive, label::String="Economic incentive", description::String="Configures the economic incentive based on the specified target, maximum value, reverse flag, and value.", cost=x->x)
+    function Economic_incentive(; target::Symbol = :q, max::Float64 = 1.0, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive, label::String="Economic incentive", description::String="Configures the economic incentive based on the specified target, maximum value, reverse flag, and value.", cost=x->subsidize ? -x : x)
         new(target, max, subsidize, value, fun, label,description,cost)
     end
 end

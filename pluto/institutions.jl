@@ -49,10 +49,7 @@ s.institutional_impacts[1]
 s.aw̃
 
 # ╔═╡ d975d84f-2adf-49f3-a53a-aedbee4528f4
-scatter(s.institutional_impacts[1].target,s.institutional_impacts[1].total.-s.institutional_impacts[1].target)
-
-# ╔═╡ 0a0ae064-522f-4a5e-aeb5-1669c3517bf0
-s.institutional_impacts[1].target.^2
+scatter(s.institutional_impacts[1].target,s.institutional_impacts[1].total)
 
 # ╔═╡ 47eddb2d-2491-4b91-9a48-f668201b97c9
 scatter(s.institutional_impacts[1].target,s.institutional_impacts[1].resource)
@@ -83,7 +80,6 @@ lines(s.t_u[:,26])
 # ╠═b054678b-a1e0-4620-8335-7fdeb559d451
 # ╠═cf8368d1-fdf2-4f3c-8dcb-a3156af92c9d
 # ╠═d975d84f-2adf-49f3-a53a-aedbee4528f4
-# ╠═0a0ae064-522f-4a5e-aeb5-1669c3517bf0
 # ╠═47eddb2d-2491-4b91-9a48-f668201b97c9
 # ╠═1bc9fd6a-aae6-478c-9f0b-973364997d67
 # ╠═56564230-1a0c-4aef-9084-ac8f92795b67
