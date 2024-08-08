@@ -16,10 +16,7 @@ begin
 end;
 
 # ╔═╡ ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
-s=scenario(ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:w,subsidize=true,value=0.6, max=0.99));
-
-# ╔═╡ a4dfcace-2a9c-406b-a2ae-a56a9bdaba5c
-s.sim
+s=scenario(ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:w,subsidize=true,value=0.6, max=0.99, cost=x->-1.0*x));
 
 # ╔═╡ d3068553-dd29-47d5-916d-ebf45ad931f3
 md"
@@ -46,7 +43,7 @@ heatmap(s.institutional_impacts[1].U)
 s.institutional_impacts[1]
 
 # ╔═╡ cf8368d1-fdf2-4f3c-8dcb-a3156af92c9d
-s.aw̃
+argmax(s.institutional_impacts[1].total)
 
 # ╔═╡ d975d84f-2adf-49f3-a53a-aedbee4528f4
 scatter(s.institutional_impacts[1].target,s.institutional_impacts[1].total)
@@ -71,7 +68,6 @@ lines(s.t_u[:,26])
 
 # ╔═╡ Cell order:
 # ╠═ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
-# ╠═a4dfcace-2a9c-406b-a2ae-a56a9bdaba5c
 # ╠═d3068553-dd29-47d5-916d-ebf45ad931f3
 # ╠═b57b09da-fd00-481e-9c72-a747bd3b0ee3
 # ╠═e3b17d51-f786-44b9-b069-cc64a8d069b7
