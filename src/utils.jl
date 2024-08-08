@@ -57,16 +57,17 @@ function revenues!(S::Scenario)
     S.wage_revenue = (S.ū.*S.aū .- S.u) .* S.w̃.*S.aw̃.*S.r.*S.p.*S.K;
     S.resource_revenue = S.u.*(S.y*(1.0-S.protected) .- c̃).*S.r.*S.p.*S.K;
     S.trade_revenue=zeros(S.N)
-    
+    inst_cost=0.0
     if isa(S.institution,Array) && length(S.institution)>0
         
         if typeof(S.institution[1])==Market 
             
             S.trade_revenue=(S.institution[1].value./(S.y*(1.0-S.protected))./S.N.-S.u).*S.ϕ.*S.r.*S.p.*S.K;
         end
+        inst_cost=typeof(S.institution[1]) <: SocialEconomicDiversity.Institution ? S.institution[1].cost(S.institution[1].value)./S.N : 0.0
     end
     #R̃ₕᵣ= S.u.*(S.y .- S.w̃);
-    S.total_revenue = S.wage_revenue .+  S.resource_revenue .+S.trade_revenue.+ typeof(S.institution[1]) <: SocialEconomicDiversity.Institution ? S.institution[1].cost(S.institution[1].value)./S.N : 0.0
+    S.total_revenue = S.wage_revenue .+  S.resource_revenue .+S.trade_revenue.+ inst_cost
 end
 
 
