@@ -23,8 +23,9 @@ mutable struct Dynamic_permit_allocation <: LimitInstitution
     fun::Function
     label::String
     description::String
-    function Dynamic_permit_allocation(;criteria::Symbol = :w̃, reverse::Bool = false,  value::Float64 = 1.0, fun::Function = dynamic_permits, label::String="Dynamic permit allocation", description::String="Handles the dynamic allocation of permits based on the specified criteria and whether the order of allocation is reversed.")
-        new(criteria, reverse,  value, fun, label,description)
+    cost::Function
+    function Dynamic_permit_allocation(;criteria::Symbol = :w̃, reverse::Bool = false,  value::Float64 = 1.0, fun::Function = dynamic_permits, label::String="Dynamic permit allocation", description::String="Handles the dynamic allocation of permits based on the specified criteria and whether the order of allocation is reversed.", cost=x->0)
+        new(criteria, reverse,  value, fun, label,description, cost)
     end
 end
 
@@ -86,9 +87,10 @@ mutable struct Equal_share_allocation <: LimitInstitution
     fun::Function       # Function to execute equal share allocation
     label::String
     description::String
+    cost::Function
     # Constructor for `Equal_share_allocation` with default parameter values
-    function Equal_share_allocation(; target::Symbol = :yield, value::Float64 = 0.0, fun::Function = equal_share, label::String="Equal share allocation", description::String="Handles the equal share allocation based on the specified target and value.")
-        new(target, value, fun, label,description)
+    function Equal_share_allocation(; target::Symbol = :yield, value::Float64 = 0.0, fun::Function = equal_share, label::String="Equal share allocation", description::String="Handles the equal share allocation based on the specified target and value.", cost=x->0)
+        new(target, value, fun, label,description,cost)
     end
 end
 
@@ -146,9 +148,10 @@ mutable struct Protected_area <: StaticInstitution
     fun::Function       # Function to configure the protected area
     label::String
     description::String
+    cost::Function
     # Constructor for `Protected_area` with default parameter values
-    function Protected_area(; dispersal::Float64 = 0.1, value::Float64 = 0.0, fun::Function = protected_area, label::String="Protected area", description::String="Configures the protected area based on the specified dispersal rate and value.")
-        new(dispersal, value, fun, label,description)
+    function Protected_area(; dispersal::Float64 = 0.1, value::Float64 = 0.0, fun::Function = protected_area, label::String="Protected area", description::String="Configures the protected area based on the specified dispersal rate and value.", cost=x->0)
+        new(dispersal, value, fun, label,description,cost)
     end
 end
 
@@ -201,9 +204,10 @@ mutable struct Economic_incentive <: StaticInstitution
     fun::Function       # Function to execute the economic incentive configuration
     label::String
     description::String
+    cost::Function
     # Constructor for `Economic_incentive` with default parameter values
-    function Economic_incentive(; target::Symbol = :q, max::Float64 = 1.0, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive, label::String="Economic incentive", description::String="Configures the economic incentive based on the specified target, maximum value, reverse flag, and value.")
-        new(target, max, subsidize, value, fun, label,description)
+    function Economic_incentive(; target::Symbol = :q, max::Float64 = 1.0, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive, label::String="Economic incentive", description::String="Configures the economic incentive based on the specified target, maximum value, reverse flag, and value.", cost=x->x)
+        new(target, max, subsidize, value, fun, label,description,cost)
     end
 end
 
@@ -261,6 +265,7 @@ mutable struct Market <: DynamicInstitution
     fun::Function       # Function to execute the market mechanism
     label::String
     description::String
+    cost::Function
     # Constructor for `Market` with default parameter values
     function Market(;criteria::Symbol = :ϕ, 
                     target::Symbol = :effort, 
@@ -268,8 +273,9 @@ mutable struct Market <: DynamicInstitution
                     market_rate::Float64 = 0.01, 
                     fun::Function = market,
                     label::String="Market mechanism",
-                    description::String="Executes the market mechanism for allocating resources based on supply and demand.")
-        new(criteria, target, value, market_rate,fun, label,description)
+                    description::String="Executes the market mechanism for allocating resources based on supply and demand.", 
+                    cost=x->0)
+        new(criteria, target, value, market_rate,fun, label,description,cost)
     end
 end
 """
@@ -321,8 +327,9 @@ mutable struct Open_access <: StaticInstitution
     value::Float64
     label::String
     description::String
-    function Open_access(fun::Function = open_access, value::Float64 = 0.0, label::String="Open access", description::String="Handles the open access scenario.")
-        new(fun, value, label,description)
+    cost::Function
+    function Open_access(fun::Function = open_access, value::Float64 = 0.0, label::String="Open access", description::String="Handles the open access scenario.", cost=x->0)
+        new(fun, value, label,description,cost)
     end
 end
 
