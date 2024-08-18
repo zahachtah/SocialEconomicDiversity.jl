@@ -81,7 +81,6 @@ function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100
         I::Array{Float64}=[]
         y::Array{Float64}=[]
         t=range(0.0,stop=1.0,length=M)
-        told=s.institution[inst].value
         U=zeros(s.N,M)
         for i in 1:M
             s.institution[1].value=t[i]
@@ -97,7 +96,6 @@ function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100
             dudt(du,vcat(s.u,s.y,0.0,s.ϕ),s,0.0)
             push!(I,sum(max.(0.0,du[1:s.N])))
         end
-        s.institution[inst].value=told
         #id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_ginnig=t[argmin(gini)],
         push!(q.institutional_impacts,(target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],id_y=t[argmin((y.-0.5).^2)],total=total,resource=resource,gini=gini,I=I,y=y,U=U, institution=string(typeof(S[1].institution[1]))[25:end]*" "*string((hasfield(typeof(S[1].institution[1]),:target) ? S[1].institution[1].target : ""))))
     end 

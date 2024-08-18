@@ -373,10 +373,10 @@ D[4].institutional_impacts
 # ╔═╡ 85968d8e-e31f-4556-b416-27f8ce45f7ab
 begin
 	q=scenario()
-	q.institution=[Equal_share_allocation(target=:effort)]
-	institutional_impact!(q)
-	q.institution=[Equal_share_allocation(target=:yield)]
-	institutional_impact!(q)
+	#q.institution=[Equal_share_allocation(target=:effort)]
+	institutional_impact!(q,Equal_share_allocation(target=:effort))
+	#q.institution=[Equal_share_allocation(target=:yield)]
+	institutional_impact!(q,Equal_share_allocation(target=:yield))
 end
 
 # ╔═╡ 05471f9c-a132-4f0a-8fa8-67d570f1493a
