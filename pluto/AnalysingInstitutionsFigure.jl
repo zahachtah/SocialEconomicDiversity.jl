@@ -17,7 +17,13 @@ end;
 
 # ╔═╡ a5e74431-a1e1-4782-8418-714951520882
 md"
-# somethings fishy with the direction of regulation in economic incentives"
+## public economics and tax cost/benefits"
+
+# ╔═╡ 027e3be5-2804-405c-bec3-74410fea209c
+md"
+* heatmap gives true values in right places, green above, violett below oa, in %
+* Make multiple rows for resource, total, gini and stock! heatrow for each!
+"
 
 # ╔═╡ 6cbfc59a-cbc2-4fb5-bf1f-8c141e7a7ea5
 function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png")
@@ -30,16 +36,16 @@ function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png"
 	Label(f[1,1], "Open Access", fontsize = 18, font=:bold, tellwidth=false)
 
 	## Heatmap
-	hx=CairoMakie.Axis(f[5,1], aspect=1, yticks=(1:3,["Private","Society","Equity"]), xticks=(1:4,[rich(L[2],color=D[2].color),rich(L[3],color=D[3].color),rich(L[4],color=D[4].color),rich(L[5],color=D[5].color)]), title="% change from OA",xticklabelrotation=pi/5)
+	hx=CairoMakie.Axis(f[5,1], aspect=1, yticks=(1:3,["Private","Society","Equity"]), xticks=(1:5,[rich(L[2],color=D[2].color),rich(L[3],color=D[3].color),rich(L[4],color=D[4].color),rich(L[5],color=D[5].color),rich(L[6],color=D[6].color)]), title="% change from OA",xticklabelrotation=pi/5)
 
 	H=zeros(length(D)-1,3)
 	for i in 2:length(L)
-		H[i-1,1]=maximum(D[i].institutional_impacts[1].resource)/D[i].institutional_impacts[1].resource[end]
-		H[i-1,2]=maximum(D[i].institutional_impacts[1].total)/D[i].institutional_impacts[1].total[end]
-		H[i-1,3]=minimum(D[i].institutional_impacts[1].gini)/D[i].institutional_impacts[1].gini[end]
+		H[i-1,1]=(maximum(D[i].institutional_impacts[1].resource)/D[i].institutional_impacts[1].resource[end].-1).*100
+		H[i-1,2]=(maximum(D[i].institutional_impacts[1].total)/D[i].institutional_impacts[1].total[end].-1).*100
+		H[i-1,3]=abs(minimum(D[i].institutional_impacts[1].gini)/D[i].institutional_impacts[1].gini[end].-1).*100
 	end
 	println(H)
-	h=heatmap!(hx,H, colormap=:grays)
+	h=heatmap!(hx,H, colormap=Makie.Reverse(:grays))
 	
 	Colorbar(f[5,0],h,tellwidth=false,vertical=true)
 	for (i,q) in enumerate(D)
@@ -51,7 +57,7 @@ function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png"
 		sim!(q)
 		q.color=convert(HSL,ColorSchemes.tab20[ci[i]])
 		if i>1
-			text!(hx,i-1,1,text=string(Int64(round(maximum(d.institutional_impacts[1].resource*100),digits=0))), align=(:center,:baseline), color=:white, font=:bold)
+			text!(hx,i-1,1,text=string(Int64(round(H[i,1],digits=0))), align=(:center,:baseline), color=:white, font=:bold)
 			text!(hx,i-1,2,text=string(Int64(round(maximum(d.institutional_impacts[1].total*100),digits=0))), align=(:center,:baseline), color=:white, font=:bold)
 			text!(hx,i-1,3,text=string(Int64(round(maximum(d.institutional_impacts[1].gini*100),digits=0))), align=(:center,:baseline), color=:white, font=:bold)
 			Label(f[0,i],rich(L[i] ,word_wrap_width=180,color=ColorSchemes.tab20[ci[i]], fontsize = 18, font=:bold), tellwidth=false)
@@ -222,7 +228,7 @@ function selected_institutions(;distribution=LogNormal,q=1.5,S=scenario(w=sed(mi
 	iTY=Market(target=:yield)
 	iTE=Market(target=:effort)
 	iPA=Protected_area(dispersal=0.4)
-	iESq=Economic_incentive(target=:q,subsidize=S.y>0.5 ? true : false, max=0.99)
+	iESq=Economic_incentive(target=:q,subsidize=S.y>0.5 ? true : false, max=0.99, cost=x->x*0.15)
 		institution=[iOA,iPH,iTY,iTE,iPA,iESq]
 	D=[]
 	for (i,inst) in enumerate(institution)
@@ -273,6 +279,41 @@ DD[4].institutional_impacts
 
 # ╔═╡ eaaa1136-9ac4-41fb-9801-b35179f7f43d
 length(DD[1].institutional_impacts)+1
+
+# ╔═╡ a3eee5a2-79d7-4c33-977f-e30e81ac37d0
+heatmap([maximum(DD[i].institutional_impacts[1].resource./DD[2].institutional_impacts[1].resource[end].-1.0) for i in 2:6, j in 1:1])
+
+# ╔═╡ 7501971a-0d13-487f-bbd9-a72c63bd6418
+[maximum(DD[i].institutional_impacts[1].resource./DD[2].institutional_impacts[1].resource[end].-1.0) for i in 2:6]
+
+# ╔═╡ cddff3dc-303d-4777-92ff-94b6b9e9bd14
+heatmap([maximum(DD[i].institutional_impacts[1].total./DD[2].institutional_impacts[1].total[end].-1.0) for i in 2:6, j in 1:1])
+
+# ╔═╡ aadd362d-43b4-49a2-8b70-0352cd60e9a9
+heatmap([abs(minimum(DD[i].institutional_impacts[1].gini./DD[2].institutional_impacts[1].gini[end].-1.0)) for i in 2:6, j in 1:1])
+
+# ╔═╡ 3bf3cdcc-a354-42a5-b299-df9d3ac408cb
+begin
+		H=zeros(length(DD)-1,3)
+	for i in 2:length(DD)
+		H[i-1,1]=(maximum(DD[i].institutional_impacts[1].resource)/DD[i].institutional_impacts[1].resource[end].-1).*100
+		H[i-1,2]=(maximum(DD[i].institutional_impacts[1].total)/DD[i].institutional_impacts[1].total[end].-1).*100
+		H[i-1,3]=abs(minimum(DD[i].institutional_impacts[1].gini)/DD[i].institutional_impacts[1].gini[end].-1).*100
+	end
+	heatmap(H, colormap=Makie.Reverse(:grays))
+end
+
+# ╔═╡ 0e8078c5-27d9-4ee4-adb3-c25c944b503d
+H
+
+# ╔═╡ 3152fc29-ffc7-41ca-8ee8-308b51d7e5f1
+DD[6].institutional_impacts[1]
+
+# ╔═╡ 876a1422-936b-42de-a4ad-d167a5152cac
+scatter(DD[6].institutional_impacts[1].resource)
+
+# ╔═╡ 60770a2a-4f46-46c6-bfa5-a8b55997a554
+scatter(DD[4].institutional_impacts[1].gini./DD[4].institutional_impacts[1].gini[end])
 
 # ╔═╡ b1e057b6-1714-4aa3-9451-9a2e06bffa0b
 function institutional_examples(;distribution=LogNormal,q=1.5)
@@ -379,9 +420,6 @@ SS=selected_institutions(S=S[3])
 # ╔═╡ 2d46208e-7a84-4f47-a56b-798997ccaac7
 Figure4c(SS, indexed=true)
 
-# ╔═╡ 027e3be5-2804-405c-bec3-74410fea209c
-S
-
 # ╔═╡ f0073ed2-7fff-4e47-9f4d-751b77fddca4
 
 
@@ -407,6 +445,15 @@ S
 # ╠═945211f6-e63e-44cb-a411-fc89d1057c64
 # ╠═a923a615-d697-4c27-a3e1-c524eed1e700
 # ╠═7e20af05-6d5e-4b3c-8b99-79217c7a3e44
+# ╠═a3eee5a2-79d7-4c33-977f-e30e81ac37d0
+# ╠═7501971a-0d13-487f-bbd9-a72c63bd6418
+# ╠═cddff3dc-303d-4777-92ff-94b6b9e9bd14
+# ╠═aadd362d-43b4-49a2-8b70-0352cd60e9a9
+# ╠═3bf3cdcc-a354-42a5-b299-df9d3ac408cb
+# ╠═3152fc29-ffc7-41ca-8ee8-308b51d7e5f1
+# ╠═0e8078c5-27d9-4ee4-adb3-c25c944b503d
+# ╠═876a1422-936b-42de-a4ad-d167a5152cac
+# ╠═60770a2a-4f46-46c6-bfa5-a8b55997a554
 # ╠═b5d9584c-c7c5-4c59-85b0-3716c5ce4f7f
 # ╠═b1e057b6-1714-4aa3-9451-9a2e06bffa0b
 # ╠═769db856-aea3-4489-8659-b7e390e42489

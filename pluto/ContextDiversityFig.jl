@@ -15,6 +15,11 @@ begin
 	set_theme!(theme_light())
 end;
 
+# ╔═╡ 2dff8a04-6bff-4b5c-8aeb-fdc74b82f756
+md"
+## Add test-institutions to main repo and use for both inst figs
+"
+
 # ╔═╡ 7bc11f71-6583-4010-8db5-c27cb3a32a84
 function figure_institutional_analysis(S;dsize=250)
 	f=Figure(size=(dsize*5,length(S)*dsize))
@@ -143,6 +148,7 @@ S[end].institution[1].subsidize=true
 S[1].aū
 
 # ╔═╡ Cell order:
+# ╠═2dff8a04-6bff-4b5c-8aeb-fdc74b82f756
 # ╠═05667aa8-4b3a-4b09-92f0-1bfbdbe8421f
 # ╠═5f6b8b05-c5d8-4c6a-b611-7f66f512d671
 # ╠═e4692397-5db3-41c6-b4a1-e9ad064e4944

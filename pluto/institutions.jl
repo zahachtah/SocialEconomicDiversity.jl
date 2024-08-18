@@ -16,7 +16,7 @@ begin
 end;
 
 # ╔═╡ ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
-s=scenario(ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:w,subsidize=true,value=0.6, max=0.99, cost=x->-1.0*x));
+s=scenario(N=1000,ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:w,subsidize=true,value=0.6, max=1.00, cost=x->-1.0*x));
 
 # ╔═╡ d3068553-dd29-47d5-916d-ebf45ad931f3
 md"
