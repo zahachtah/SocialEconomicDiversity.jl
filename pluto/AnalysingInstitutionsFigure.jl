@@ -382,6 +382,15 @@ end
 # ╔═╡ 05471f9c-a132-4f0a-8fa8-67d570f1493a
 q.institutional_impacts
 
+# ╔═╡ c3f6d2be-8a8d-4536-8aa9-8672a1f2d4f7
+d=Equal_share_allocation(target=:effort)
+
+# ╔═╡ 9bf61753-5287-402a-99d7-3d92001770ed
+d.value=1.0
+
+# ╔═╡ 78d711a0-9e84-4f22-b3c4-88d1424aeeb4
+Market(target=:effort)
+
 # ╔═╡ 1f5dab9a-63f4-4638-bf83-d897c57cf941
 function Scenarios(;random=false,distribution=Uniform)
 	S=[]
@@ -426,7 +435,7 @@ end
 S=Scenarios()
 
 # ╔═╡ 24788ea8-ad44-4e29-a76d-e853f05d5bb5
-SS=selected_institutions(S=S[5])
+SS=selected_institutions(S=S[3])
 
 # ╔═╡ 2d46208e-7a84-4f47-a56b-798997ccaac7
 Figure4c(SS, indexed=true)
@@ -467,6 +476,9 @@ Figure4c(SS, indexed=true)
 # ╠═b1e057b6-1714-4aa3-9451-9a2e06bffa0b
 # ╠═85968d8e-e31f-4556-b416-27f8ce45f7ab
 # ╠═05471f9c-a132-4f0a-8fa8-67d570f1493a
+# ╠═c3f6d2be-8a8d-4536-8aa9-8672a1f2d4f7
+# ╠═9bf61753-5287-402a-99d7-3d92001770ed
+# ╠═78d711a0-9e84-4f22-b3c4-88d1424aeeb4
 # ╠═769db856-aea3-4489-8659-b7e390e42489
 # ╠═1f5dab9a-63f4-4638-bf83-d897c57cf941
 # ╠═8ac51240-3454-11ef-2d81-c51a2580ca5b

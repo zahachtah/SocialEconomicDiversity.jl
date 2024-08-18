@@ -91,7 +91,7 @@ function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100
             push!(gini,s.gini)
             push!(y,s.y)
             U[:,i]=s.resource_revenue
-            s.institution[inst].value=0
+            s.institution[1].value=0
             du=zeros(s.N+3)
             dudt(du,vcat(s.u,s.y,0.0,s.ϕ),s,0.0)
             push!(I,sum(max.(0.0,du[1:s.N])))
