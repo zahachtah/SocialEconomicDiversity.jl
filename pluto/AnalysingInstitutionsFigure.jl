@@ -21,16 +21,20 @@ md"
 
 # ╔═╡ 027e3be5-2804-405c-bec3-74410fea209c
 md"
-* heatmap gives true values in right places, green above, violett below oa, in %
+* heatmap gives true values in right places
+* think of coherent way toimplement regulation vs _value_
 * Make multiple rows for resource, total, gini and stock! heatrow for each!
+* push all institutions onto one scenario.institutional_impact array
+* single phaseplot with institution/OA
+* single institutional_impact plot! based on array in institutional_impact of scenario
 "
 
 # ╔═╡ 6cbfc59a-cbc2-4fb5-bf1f-8c141e7a7ea5
 function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png")
 	ci=[15,1,3,5,7,9,11,13,17,19,2,4,6,8,10,12,14]
-	f=Figure(size=(base*7,base*4))
-	L=["Open Access","Use rights greed","Tradable Quotas ","Tradable Effort ","Protected Area", "Economic incentives"]
-	LL=[" ","Only selected actors get \npermits to use the resource","Surplus use rights are \ntraded on a market","Surplus use rights are \ntraded on a market","Part of the resource area \nis no-use, resource \nmoves between areas","Tax on gear effectively reduces q \nwhich affects both ū and w̃"]
+	f=Figure(size=(base*(length(D)+1),base*4))
+	L=["Open Access","Use rights greed","Use rights need","Tradable Quotas ","Tradable Effort ","Protected Area", "Economic incentives"]
+	LL=[" ","Only selected actors get \npermits to use the resource","Only selected actors get \npermits to use the resource","Surplus use rights are \ntraded on a market","Surplus use rights are \ntraded on a market","Part of the resource area \nis no-use, resource \nmoves between areas","Tax on gear effectively reduces q \nwhich affects both ū and w̃"]
 
 	Label(f[0,1], "Example Institutions →", fontsize = 18, font=:bold, tellwidth=false)
 	Label(f[1,1], "Open Access", fontsize = 18, font=:bold, tellwidth=false)
@@ -57,16 +61,16 @@ function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png"
 		sim!(q)
 		q.color=convert(HSL,ColorSchemes.tab20[ci[i]])
 		if i>1
-			text!(hx,i-1,1,text=string(Int64(round(H[i,1],digits=0))), align=(:center,:baseline), color=:white, font=:bold)
-			text!(hx,i-1,2,text=string(Int64(round(maximum(d.institutional_impacts[1].total*100),digits=0))), align=(:center,:baseline), color=:white, font=:bold)
-			text!(hx,i-1,3,text=string(Int64(round(maximum(d.institutional_impacts[1].gini*100),digits=0))), align=(:center,:baseline), color=:white, font=:bold)
+			text!(hx,i-1,1,text=string(Int64(round(H[i-1,1],digits=0))), align=(:center,:baseline), color=:white, font=:bold)
+			text!(hx,i-1,2,text=string(Int64(round(H[i-1,2],digits=0))), align=(:center,:baseline), color=:white, font=:bold)
+			text!(hx,i-1,3,text=string(Int64(round(H[i-1,3],digits=0))), align=(:center,:baseline), color=:white, font=:bold)
 			Label(f[0,i],rich(L[i] ,word_wrap_width=180,color=ColorSchemes.tab20[ci[i]], fontsize = 18, font=:bold), tellwidth=false)
 			
 			Label(f[1,i],rich(LL[i],word_wrap_width=180,color=ColorSchemes.tab20[ci[i]], fontsize = 12), tellwidth=false)
 			x=1.0 -d.institutional_impacts[1].id_total
 			
 			cx=CairoMakie.Axis(f[5,i], xticks=(0<x<1 ? [0,x,1] : [0,1],0<x<1 ? ["Open\nAccess","opt","Full"] : ["Open\nAccess","Full"]),height=base) 
-			
+			ylims!(cx,(0.0,0.8))
 			lines!(cx,[x,x],[0.0,0.6], color=:black)
 			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].resource, color=SocialEconomicDiversity.adjustColor(q.color,"l",0.8), linewidth=2) 
 			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].total, color=q.color, linewidth=3)
@@ -225,11 +229,12 @@ end
 function selected_institutions(;distribution=LogNormal,q=1.5,S=scenario(w=sed(min=0.1,max=1.0,normalize=true;distribution),q=sed(mean=q,sigma=0.0, normalize=true), color=:crimson))
 	iOA=Open_access()
 	iPH=Dynamic_permit_allocation(criteria=:w, reverse=true)
+	iPL=Dynamic_permit_allocation(criteria=:w, reverse=false)
 	iTY=Market(target=:yield)
 	iTE=Market(target=:effort)
 	iPA=Protected_area(dispersal=0.4)
-	iESq=Economic_incentive(target=:q,subsidize=S.y>0.5 ? true : false, max=0.99, cost=x->x*0.15)
-		institution=[iOA,iPH,iTY,iTE,iPA,iESq]
+	iESq=Economic_incentive(target=:q,subsidize=S.y>0.5 ? true : false, max=0.99, cost=x->x*0.05)
+		institution=[iOA,iPH,iPL,iTY,iTE,iPA,iESq]
 	D=[]
 	for (i,inst) in enumerate(institution)
 		println(string(inst))
@@ -268,17 +273,11 @@ DD[5].institutional_impacts[1]
 # ╔═╡ b9a43e20-831e-4b59-81d0-59d348f527bb
 Figure4c(DD, indexed=true)
 
-# ╔═╡ 3c990432-abbf-4fc8-8f18-d9c7db5b33ef
-lines(DD[4].institutional_impacts[1].target,DD[4].institutional_impacts[1].total.+DD[4].institutional_impacts[1].y.*0.08)
-
-# ╔═╡ f672748a-768b-4fb1-a105-e3be975164b8
-lines(DD[2].institutional_impacts[1].total)
-
 # ╔═╡ d34f1871-8a22-47e1-9ae7-aeaeda5e4a77
 DD[4].institutional_impacts
 
 # ╔═╡ eaaa1136-9ac4-41fb-9801-b35179f7f43d
-length(DD[1].institutional_impacts)+1
+length(DD)
 
 # ╔═╡ a3eee5a2-79d7-4c33-977f-e30e81ac37d0
 heatmap([maximum(DD[i].institutional_impacts[1].resource./DD[2].institutional_impacts[1].resource[end].-1.0) for i in 2:6, j in 1:1])
@@ -310,7 +309,7 @@ H
 DD[6].institutional_impacts[1]
 
 # ╔═╡ 876a1422-936b-42de-a4ad-d167a5152cac
-scatter(DD[6].institutional_impacts[1].resource)
+scatter(DD[6].institutional_impacts[1].gini)
 
 # ╔═╡ 60770a2a-4f46-46c6-bfa5-a8b55997a554
 scatter(DD[4].institutional_impacts[1].gini./DD[4].institutional_impacts[1].gini[end])
@@ -371,6 +370,18 @@ Figure4(D)
 # ╔═╡ 945211f6-e63e-44cb-a411-fc89d1057c64
 D[4].institutional_impacts
 
+# ╔═╡ 85968d8e-e31f-4556-b416-27f8ce45f7ab
+begin
+	q=scenario()
+	q.institution=[Equal_share_allocation(target=:effort)]
+	institutional_impact!(q)
+	q.institution=[Equal_share_allocation(target=:yield)]
+	institutional_impact!(q)
+end
+
+# ╔═╡ 05471f9c-a132-4f0a-8fa8-67d570f1493a
+q.institutional_impacts
+
 # ╔═╡ 1f5dab9a-63f4-4638-bf83-d897c57cf941
 function Scenarios(;random=false,distribution=Uniform)
 	S=[]
@@ -415,7 +426,7 @@ end
 S=Scenarios()
 
 # ╔═╡ 24788ea8-ad44-4e29-a76d-e853f05d5bb5
-SS=selected_institutions(S=S[3])
+SS=selected_institutions(S=S[5])
 
 # ╔═╡ 2d46208e-7a84-4f47-a56b-798997ccaac7
 Figure4c(SS, indexed=true)
@@ -433,8 +444,6 @@ Figure4c(SS, indexed=true)
 # ╠═24788ea8-ad44-4e29-a76d-e853f05d5bb5
 # ╠═027e3be5-2804-405c-bec3-74410fea209c
 # ╠═b9a43e20-831e-4b59-81d0-59d348f527bb
-# ╠═3c990432-abbf-4fc8-8f18-d9c7db5b33ef
-# ╠═f672748a-768b-4fb1-a105-e3be975164b8
 # ╠═d34f1871-8a22-47e1-9ae7-aeaeda5e4a77
 # ╠═eaaa1136-9ac4-41fb-9801-b35179f7f43d
 # ╠═6cbfc59a-cbc2-4fb5-bf1f-8c141e7a7ea5
@@ -456,6 +465,8 @@ Figure4c(SS, indexed=true)
 # ╠═60770a2a-4f46-46c6-bfa5-a8b55997a554
 # ╠═b5d9584c-c7c5-4c59-85b0-3716c5ce4f7f
 # ╠═b1e057b6-1714-4aa3-9451-9a2e06bffa0b
+# ╠═85968d8e-e31f-4556-b416-27f8ce45f7ab
+# ╠═05471f9c-a132-4f0a-8fa8-67d570f1493a
 # ╠═769db856-aea3-4489-8659-b7e390e42489
 # ╠═1f5dab9a-63f4-4638-bf83-d897c57cf941
 # ╠═8ac51240-3454-11ef-2d81-c51a2580ca5b
