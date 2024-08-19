@@ -434,12 +434,6 @@ end
 # ╔═╡ 769db856-aea3-4489-8659-b7e390e42489
 S=Scenarios()
 
-# ╔═╡ 24788ea8-ad44-4e29-a76d-e853f05d5bb5
-SS=selected_institutions(S=S[3])
-
-# ╔═╡ 2d46208e-7a84-4f47-a56b-798997ccaac7
-Figure4c(SS, indexed=true)
-
 # ╔═╡ f0073ed2-7fff-4e47-9f4d-751b77fddca4
 
 
@@ -449,8 +443,6 @@ Figure4c(SS, indexed=true)
 # ╠═64f65364-5ac5-46a9-b136-1df543d553b4
 # ╠═3044b724-297c-444c-9a6c-d8b4b18a86d9
 # ╠═a5e74431-a1e1-4782-8418-714951520882
-# ╠═2d46208e-7a84-4f47-a56b-798997ccaac7
-# ╠═24788ea8-ad44-4e29-a76d-e853f05d5bb5
 # ╠═027e3be5-2804-405c-bec3-74410fea209c
 # ╠═b9a43e20-831e-4b59-81d0-59d348f527bb
 # ╠═d34f1871-8a22-47e1-9ae7-aeaeda5e4a77

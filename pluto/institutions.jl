@@ -15,6 +15,99 @@ begin
 	set_theme!(theme_light())
 end;
 
+# ╔═╡ 8dc1246f-47ac-4a41-af25-bdbf4bad30c7
+md"
+## First we setup the main scenarios:
+"
+
+# ╔═╡ 1a452997-4471-4803-93e7-7b4c66fd676f
+begin
+	random=false
+	distribution=LogNormal
+	
+	s1=scenario(
+		w=sed(min=0.01,max=0.3,normalize=true;random,distribution),
+		q=sed(mean=1.0,sigma=0.0,normalize=true;random),
+		label="Few income opportunities, and moderate impact",
+		image="http://zahachtah.github.io/CAS/images/case1.png"
+	)
+	
+	s2=scenario(
+		w=sed(min=0.4,max=0.9,normalize=true;random,distribution),
+		q=sed(mean=2.5,sigma=0.0,normalize=true;random),
+		label="Moderate income opportunities, and high impact",
+		image="http://zahachtah.github.io/CAS/images/case2.png"
+	)
+	
+	s3=scenario(
+		w=sed(min=0.1,max=0.4,normalize=true,distribution=LogNormal;random),
+		q=sed(mean=0.8,sigma=0.0,normalize=true;random),
+		label="Few income opportunities, and high impact",
+		image="http://zahachtah.github.io/CAS/images/case3.png"
+	)
+	
+	s4=scenario(
+		w=sed(min=0.5,max=1.9,normalize=true,distribution=LogNormal;random),
+		q=sed(mean=2.9,sigma=2.5,normalize=true;random),
+		label="Few income opportunities, and high impact,revq",
+		image="http://zahachtah.github.io/CAS/images/case3.png"
+	)
+	
+		s5=scenario(
+		w=sed(min=0.01,max=0.3,normalize=true;random,distribution),
+		q=sed(mean=0.3,sigma=0.0,normalize=true;random),
+		label="High inequality, and low impact",
+		image="http://zahachtah.github.io/CAS/images/case1.png"
+	)
+	Scenarios=[s1,s2,s3,s4,s5]
+end
+
+# ╔═╡ b7319260-9458-4405-b255-03d05a0cbc2a
+begin
+	f_scenarios=Figure(size=(length(Scenarios)*210,630))
+	for (i,s) in enumerate(Scenarios)
+		phaseplot!(CairoMakie.Axis(f_scenarios[3,i]),s)
+		image_file = download(s.image)
+		image = load(image_file)
+		a=CairoMakie.Axis(f_scenarios[2,i],aspect=1)
+		hidespines!(a)
+		hidedecorations!(a)
+		image!(a,rotr90(image))
+		b=CairoMakie.Axis(f_scenarios[1,i],aspect=1)
+		hidespines!(b)
+		hidedecorations!(b)
+		text!(b,s.label,word_wrap_width=170,align = (:center, :bottom))
+	end
+f_scenarios
+end
+
+# ╔═╡ ef32418a-b12f-4cb2-a0e0-1a917fbde77f
+md"
+## Next we define the institutions we want to test"
+
+# ╔═╡ c6a1ff96-8c69-463e-a8d5-b38629095507
+begin
+	iPH=Dynamic_permit_allocation(criteria=:w, reverse=true)
+	iPL=Dynamic_permit_allocation(criteria=:w, reverse=false)
+	iSE=Equal_share_allocation(target=:effort)
+	iSY=Equal_share_allocation(target=:yield)
+	iTE=Market(target=:effort)
+	iTY=Market(target=:yield)
+	iPA=Protected_area()
+	iPAD=Protected_area()
+	iEp=Economic_incentive(target=:p)
+	iEq=Economic_incentive(target=:q)
+	institutions=[iPH,iPL,iSE,iSY,iTE,iTY,iPA,iPAD,iEp,iEq]
+end
+
+# ╔═╡ 0d46317e-fa03-4a9c-b238-27b675ff4ed0
+scenario(
+		w=sed(min=0.01,max=0.3,normalize=true),
+		q=sed(mean=1.0,sigma=0.0,normalize=true),
+		label="Few income opportunities, and moderate impact",
+		image="http://zahachtah.github.io/CAS/images/case1.png"
+	)
+
 # ╔═╡ ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
 s=scenario(N=1000,ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:w,subsidize=true,value=0.6, max=1.00, cost=x->-1.0*x));
 
@@ -60,13 +153,13 @@ s.institutional_impacts[1].target[68]
 # ╔═╡ d487ea7b-07d0-4032-b3f5-207315fa962d
 argmax(s.institutional_impacts[1].resource)
 
-# ╔═╡ 86b4c695-a9b0-4020-a6df-5c588a9d6b72
-phaseplot(s, show_trajectory=true, show_attractor=false)
-
-# ╔═╡ fae2a81e-243d-422c-9b0e-7cbb2237cadf
-lines(s.t_u[:,26])
-
 # ╔═╡ Cell order:
+# ╟─8dc1246f-47ac-4a41-af25-bdbf4bad30c7
+# ╠═1a452997-4471-4803-93e7-7b4c66fd676f
+# ╟─b7319260-9458-4405-b255-03d05a0cbc2a
+# ╟─ef32418a-b12f-4cb2-a0e0-1a917fbde77f
+# ╠═c6a1ff96-8c69-463e-a8d5-b38629095507
+# ╠═0d46317e-fa03-4a9c-b238-27b675ff4ed0
 # ╠═ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
 # ╠═d3068553-dd29-47d5-916d-ebf45ad931f3
 # ╠═b57b09da-fd00-481e-9c72-a747bd3b0ee3
@@ -80,6 +173,4 @@ lines(s.t_u[:,26])
 # ╠═1bc9fd6a-aae6-478c-9f0b-973364997d67
 # ╠═56564230-1a0c-4aef-9084-ac8f92795b67
 # ╠═d487ea7b-07d0-4032-b3f5-207315fa962d
-# ╠═86b4c695-a9b0-4020-a6df-5c588a9d6b72
-# ╠═fae2a81e-243d-422c-9b0e-7cbb2237cadf
 # ╠═aafff548-39d3-11ef-39ed-d166b0a452b7

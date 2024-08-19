@@ -543,3 +543,17 @@ phaseplot!(s, show_trajectory=true, vector_field=true)
         SEDplot!(a,S,vx,vy; show_density, sort, markersize, labels, icons, icon_size, color)
         f
     end
+
+    function institutional_analysis!(a, s; goals=["resource","total","gini"])
+        H=zeros(length(goals),length(s.institutional_impacts))
+        for (i,ii) in enumerate(s.institutional_impacts)
+            for (j,g) in enumerate(goals)
+                g=="resource" ? H[j,i]=(maximum(s.institutional_impacts[i].resource)/s.institutional_impacts[i].resource[end].-1).*100 : nothing
+                g=="total" ? H[j,i]=(maximum(s.institutional_impacts[i].total)/s.institutional_impacts[i].total[end].-1).*100 : nothing
+                g=="gini" ? H[j,i]=abs(minimum(s.institutional_impacts[i].gini)/s.institutional_impacts[i].gini[end].-1).*100 : nothing
+            end
+        end
+        H=H./maximum(H,dims=2)
+        heatmap!(a,H'[:, end:-1:1],colormap=:BuGn)
+        H
+    end

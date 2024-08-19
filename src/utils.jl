@@ -75,6 +75,9 @@ function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100
     for q in S
         s=deepcopy(q)
         s.institution=[inst]
+        if typeof(inst) <: SocialEconomicDiversity.Economic_incentive
+            s.y>0.5 ? inst.subsidize=true : inst.subsidize=false
+        end
         total::Array{Float64}=[]
         resource::Array{Float64}=[]
         gini::Array{Float64}=[]
@@ -97,7 +100,7 @@ function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100
             push!(I,sum(max.(0.0,du[1:s.N])))
         end
         #id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_ginnig=t[argmin(gini)],
-        push!(q.institutional_impacts,(target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],id_y=t[argmin((y.-0.5).^2)],total=total,resource=resource,gini=gini,I=I,y=y,U=U, institution=string(typeof(S[1].institution[1]))[25:end]*" "*string((hasfield(typeof(S[1].institution[1]),:target) ? S[1].institution[1].target : ""))))
+        push!(q.institutional_impacts,(target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],id_y=t[argmin((y.-0.5).^2)],total=total,resource=resource,gini=gini,I=I,y=y,U=U, institution=inst))#string(typeof(S[1].institution[1]))[25:end]*" "*string((hasfield(typeof(S[1].institution[1]),:target) ? S[1].institution[1].target : ""))))
     end 
 
 end
