@@ -100,16 +100,59 @@ begin
 	institutions=[iPH,iPL,iSE,iSY,iTE,iTY,iPA,iPAD,iEp,iEq]
 end
 
-# ╔═╡ 0d46317e-fa03-4a9c-b238-27b675ff4ed0
-scenario(
-		w=sed(min=0.01,max=0.3,normalize=true),
-		q=sed(mean=1.0,sigma=0.0,normalize=true),
-		label="Few income opportunities, and moderate impact",
-		image="http://zahachtah.github.io/CAS/images/case1.png"
-	)
+# ╔═╡ 196ec14a-cb05-4d7a-80f7-14bfaf1e9b39
+md"
+Lets check how these institutions work for one scenario. First we do an institutioinal impact simulation for all institutions."
 
-# ╔═╡ ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
-s=scenario(N=1000,ū=sed(mean=2.0,sigma=0.0, normalize=true),institution=Economic_incentive(target=:w,subsidize=true,value=0.6, max=1.00, cost=x->-1.0*x));
+# ╔═╡ f498234d-58ac-4fd2-98fc-ed6aa7e53189
+function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100)
+    !isa(S,Array) ? S=[S] : nothing
+    for q in S
+        s=deepcopy(q)
+        s.institution=[inst]
+        if typeof(inst) <: SocialEconomicDiversity.Economic_incentive
+            s.y>0.5 ? inst.subsidize=true : inst.subsidize=false
+        end
+        total::Array{Float64}=[]
+        resource::Array{Float64}=[]
+        gini::Array{Float64}=[]
+        I::Array{Float64}=[]
+        y::Array{Float64}=[]
+        t=range(0.0,stop=1.0,length=M)
+        U=zeros(s.N,M)
+        for i in 1:M
+            s.institution[1].value=t[i]
+            sim!(s)
+            
+            push!(total,sum(s.total_revenue))
+            push!(resource,sum(s.resource_revenue))
+            push!(gini,s.gini)
+            push!(y,s.y)
+            U[:,i]=s.resource_revenue
+            s.institution[1].value=0
+            du=zeros(s.N+3)
+            SocialEconomicDiversity.dudt(du,vcat(s.u,s.y,0.0,s.ϕ),s,0.0)
+            push!(I,sum(max.(0.0,du[1:s.N])))
+        end
+        #id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_ginnig=t[argmin(gini)],
+        push!(q.institutional_impacts,(target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],id_y=t[argmin((y.-0.5).^2)],total=total,resource=resource,gini=gini,I=I,y=y,U=U, institution=inst))#string(typeof(S[1].institution[1]))[25:end]*" "*string((hasfield(typeof(S[1].institution[1]),:target) ? S[1].institution[1].target : ""))))
+    end 
+
+end
+
+# ╔═╡ d8780d88-9152-49a8-8618-7f61077a7b6f
+
+
+# ╔═╡ 9bfe0351-1104-4eb6-9442-64e14c92ef09
+[institutional_impact!(s2,inst) for inst in institutions]
+
+# ╔═╡ cefb72ec-13a2-4015-ab4e-6b5a607e3af7
+begin
+	f_inst_an=Figure()
+	d=CairoMakie.Axis(f_inst_an[1,1])
+	SocialEconomicDiversity.institutional_analysis!(d,s2)
+	f_inst_an
+end
 
 # ╔═╡ d3068553-dd29-47d5-916d-ebf45ad931f3
 md"
@@ -159,8 +202,11 @@ argmax(s.institutional_impacts[1].resource)
 # ╟─b7319260-9458-4405-b255-03d05a0cbc2a
 # ╟─ef32418a-b12f-4cb2-a0e0-1a917fbde77f
 # ╠═c6a1ff96-8c69-463e-a8d5-b38629095507
-# ╠═0d46317e-fa03-4a9c-b238-27b675ff4ed0
-# ╠═ebfca2b0-90ba-44f5-8d73-4fc21d8ca338
+# ╟─196ec14a-cb05-4d7a-80f7-14bfaf1e9b39
+# ╠═f498234d-58ac-4fd2-98fc-ed6aa7e53189
+# ╠═d8780d88-9152-49a8-8618-7f61077a7b6f
+# ╠═9bfe0351-1104-4eb6-9442-64e14c92ef09
+# ╠═cefb72ec-13a2-4015-ab4e-6b5a607e3af7
 # ╠═d3068553-dd29-47d5-916d-ebf45ad931f3
 # ╠═b57b09da-fd00-481e-9c72-a747bd3b0ee3
 # ╠═e3b17d51-f786-44b9-b069-cc64a8d069b7

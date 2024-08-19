@@ -553,7 +553,6 @@ phaseplot!(s, show_trajectory=true, vector_field=true)
                 g=="gini" ? H[j,i]=abs(minimum(s.institutional_impacts[i].gini)/s.institutional_impacts[i].gini[end].-1).*100 : nothing
             end
         end
-        H=H./maximum(H,dims=2)
         heatmap!(a,H'[:, end:-1:1],colormap=:BuGn)
         H
     end
