@@ -17,7 +17,7 @@ end
 
 function limit_institution(institution::LimitInstitution,s,integrator)
 
-    institution.fun(institution, integrator.du,view(integrator.u,1:s.N),s, integrator.t)
+    institution.fun(institution, integrator.du,integrator.u,s, integrator.t)
 end
 
 function limit_institution(institution::Union{DynamicInstitution,StaticInstitution},s,integrator)

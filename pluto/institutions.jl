@@ -22,7 +22,7 @@ md"
 
 # ╔═╡ 1a452997-4471-4803-93e7-7b4c66fd676f
 begin
-	random=true
+	random=false
 	distribution=LogNormal
 	
 	s1=scenario(
