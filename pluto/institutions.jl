@@ -111,7 +111,7 @@ Lets check how these institutions work for one scenario. First we do an institut
 # ╔═╡ d8780d88-9152-49a8-8618-7f61077a7b6f
 begin
 	s=deepcopy(s4)
-	s.institution=iPL
+	s.institution=iPH
 	s.institution.value=0.6
 	sim!(s)
 	phaseplot(s, show_trajectory=true)

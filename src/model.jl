@@ -29,7 +29,7 @@ function dudt(dx,x,p,t)
 	dx[N+1]=dydt*(((1 -y)-sum(u)/(1-p.protected)) *y+((1-p.protected)!=0 ? p.protected/(1-p.protected)*p.dispersal*(yp-y) : 0))	
 	dx[N+2]=dydt*(((1 -yp)) *yp+(p.protected!=0 ? (1-p.protected)/p.protected*p.dispersal*(y-yp) : 0))
 	dx[N+3]=0.0
-	[dynamic_institution(inst,du,u,p,t) for inst in p.institution]
+	[dynamic_institution(inst,dx,x,p,t) for inst in p.institution]
 end
 
 
