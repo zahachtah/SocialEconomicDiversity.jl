@@ -1,4 +1,4 @@
-constrain(du,u,minu,maxu,dt)=du.*dt.+u.<minu ? -u : du.*dt.+u.>maxu ? maxu-u : du
+#constrain(du,u,minu,maxu,dt)=du.*dt.+u.<minu ? -u : du.*dt.+u.>maxu ? maxu-u : du
 
 function dudt(dx,x,p,t)
 	
@@ -15,6 +15,7 @@ function dudt(dx,x,p,t)
     
     # extract the variables from state vector
     u=view(x,1:N)   # actions
+	du=view(dx,1:N) 
     #y=mean(x[N+1:end-1]) # if one wants to use spatial models of resource dynamics 		
     y=x[N+1]  
 	yp=x[N+2]      # resource level
@@ -28,7 +29,7 @@ function dudt(dx,x,p,t)
 	dx[N+1]=dydt*(((1 -y)-sum(u)/(1-p.protected)) *y+((1-p.protected)!=0 ? p.protected/(1-p.protected)*p.dispersal*(yp-y) : 0))	
 	dx[N+2]=dydt*(((1 -yp)) *yp+(p.protected!=0 ? (1-p.protected)/p.protected*p.dispersal*(y-yp) : 0))
 	dx[N+3]=0.0
-	[dynamic_institution(inst,dx,x,p,t) for inst in p.institution]
+	[dynamic_institution(inst,du,u,p,t) for inst in p.institution]
 end
 
 
@@ -87,7 +88,7 @@ function sim!(p; tend=(0.0,2000.0), y0=1.0, dydt=1.0,u0=fill(0.0/p.N,p.N), p0=0.
 	#prob = ODEProblem(dudt_old,[u0;y0;y0;p0],tend,p)
     # solves the ODESSPRK22
     #sol=solve(prob,adaptive=false, Euler(),saveat=0.1,callback=terminate_steady_state ? TerminateSteadyState(1e-6,1e-4) : nothing,dt=p.sim.dt)#  
-	sol=solve(prob,SSPRK43(;stage_limiter!),callback=terminate_steady_state ? TerminateSteadyState(1e-6,1e-4) : nothing, reltol=1e-5)
+	sol=solve(prob,SSPRK432(;stage_limiter!),callback=terminate_steady_state ? TerminateSteadyState(1e-6,1e-4) : nothing, reltol=1e-5)
 	if sol.retcode != :Success && sol.retcode != :Terminated
 		println("Simulation failed with retcode: ", sol.retcode)
 		println((p.label,p.institution[1]))

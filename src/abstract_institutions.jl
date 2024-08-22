@@ -7,7 +7,6 @@ abstract type StaticInstitution <: Institution end
 abstract type LimitInstitution <: Institution end
 
 function dynamic_institution(institution::DynamicInstitution,du,u,s,t)
-    
     institution.fun(institution,du,u,s,t)
 end
 
@@ -18,7 +17,7 @@ end
 
 function limit_institution(institution::LimitInstitution,s,integrator)
 
-    institution.fun(institution, integrator.du,integrator.u,s, integrator.t)
+    institution.fun(institution, integrator.du,view(integrator.u,1:s.N),s, integrator.t)
 end
 
 function limit_institution(institution::Union{DynamicInstitution,StaticInstitution},s,integrator)

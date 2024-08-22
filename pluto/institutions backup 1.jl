@@ -22,7 +22,7 @@ md"
 
 # ╔═╡ 1a452997-4471-4803-93e7-7b4c66fd676f
 begin
-	random=true
+	random=false
 	distribution=LogNormal
 	
 	s1=scenario(
@@ -48,9 +48,9 @@ begin
 	
 	s4=scenario(
 		w=sed(min=0.5,max=1.9,normalize=true,distribution=LogNormal;random),
-		q=sed(mean=2.9,sigma=1.5,normalize=true;random),
+		q=sed(mean=2.9,sigma=2.5,normalize=true;random),
 		label="Few income opportunities, and high impact,revq",
-		image="http://zahachtah.github.io/CAS/images/case4.png"
+		image="http://zahachtah.github.io/CAS/images/case3.png"
 	)
 	
 		s5=scenario(
@@ -60,27 +60,23 @@ begin
 		image="http://zahachtah.github.io/CAS/images/case1.png"
 	)
 	Scenarios=[s1,s2,s3,s4,s5]
-
-
 end
 
 # ╔═╡ b7319260-9458-4405-b255-03d05a0cbc2a
 begin
 	f_scenarios=Figure(size=(length(Scenarios)*210,630))
 	for (i,s) in enumerate(Scenarios)
-		phaseplot!(CairoMakie.Axis(f_scenarios[4,i]),s)
+		phaseplot!(CairoMakie.Axis(f_scenarios[3,i]),s)
 		image_file = download(s.image)
 		image = load(image_file)
 		a=CairoMakie.Axis(f_scenarios[2,i],aspect=1)
 		hidespines!(a)
 		hidedecorations!(a)
 		image!(a,rotr90(image))
-		b=CairoMakie.Axis(f_scenarios[3,i],aspect=1)
-		scatter!(b,s.w,s.q,markersize=2)
-		c=CairoMakie.Axis(f_scenarios[1,i],aspect=1)
-		hidespines!(c)
-		hidedecorations!(c)
-		text!(c,s.label,word_wrap_width=170,align = (:center, :bottom))
+		b=CairoMakie.Axis(f_scenarios[1,i],aspect=1)
+		hidespines!(b)
+		hidedecorations!(b)
+		text!(b,s.label,word_wrap_width=170,align = (:center, :bottom))
 	end
 f_scenarios
 end
@@ -91,7 +87,7 @@ md"
 
 # ╔═╡ c6a1ff96-8c69-463e-a8d5-b38629095507
 begin
-	iPH=Dynamic_permit_allocation(criteria=:w, reverse=true)
+	#iPH=Dynamic_permit_allocation(criteria=:w, reverse=true)
 	iPL=Dynamic_permit_allocation(criteria=:w, reverse=false)
 	iSE=Equal_share_allocation(target=:effort)
 	iSY=Equal_share_allocation(target=:yield)
@@ -101,7 +97,7 @@ begin
 	iPAD=Protected_area()
 	iEp=Economic_incentive(target=:p)
 	iEq=Economic_incentive(target=:q)
-	institutions=[iPH,iPL,iSE,iSY,iTE,iTY,iPA,iPAD,iEp,iEq] #iPL
+	institutions=[iPL,iSE,iSY,iTE,iTY,iPA,iPAD,iEp,iEq] #iPL
 end
 
 # ╔═╡ 196ec14a-cb05-4d7a-80f7-14bfaf1e9b39
@@ -110,34 +106,38 @@ Lets check how these institutions work for one scenario. First we do an institut
 
 # ╔═╡ d8780d88-9152-49a8-8618-7f61077a7b6f
 begin
-	s=deepcopy(s4)
-	s.institution=iPL
+	s=deepcopy(s2)
+	s.institution=iPH
 	s.institution.value=0.6
 	sim!(s)
 	phaseplot(s, show_trajectory=true)
 end
 
+# ╔═╡ 25d5f289-fee4-492e-a538-7ac1a8b2129d
+heatmap(s.t_u[120000:end,:])
+
+# ╔═╡ e1981766-0a67-4d26-b5f9-66febba7f54a
+scatter(s.t_y[120000:end])
+
+# ╔═╡ 9217376c-4a39-4c34-ac7c-520ddd2789e8
+scatter(s.t_y,s.t_U,markersize=2)
+
+# ╔═╡ b1207424-6fea-4655-ad04-45fd6c2282cf
+s.t
+
 # ╔═╡ 9bfe0351-1104-4eb6-9442-64e14c92ef09
 [institutional_impact!(s,inst) for inst in institutions, s in Scenarios]
 
-# ╔═╡ 3bea23bf-6fd7-480e-a95e-7d16b463943d
-881/60
-
 # ╔═╡ cefb72ec-13a2-4015-ab4e-6b5a607e3af7
 begin
-	f_inst_an=Figure(size=(600,1000))
-	for (i,s) in enumerate(Scenarios)
-		a=CairoMakie.Axis(f_inst_an[i,1])
-		SocialEconomicDiversity.institutional_analysis!(a,s)
-	end
+	f_inst_an=Figure()
+	d=CairoMakie.Axis(f_inst_an[1,1])
+	SocialEconomicDiversity.institutional_analysis!(d,s2)
 	f_inst_an
 end
 
-# ╔═╡ 72edff09-b442-4373-bc63-58376ede8e35
-[s.y for s in Scenarios]
-
 # ╔═╡ e5bb31e1-762c-41c9-b640-a2b8b26433f3
-[s.institutional_impacts[end-1].institution.subsidize for s in Scenarios]
+s2.institutional_impacts[1].institution.label
 
 # ╔═╡ d3068553-dd29-47d5-916d-ebf45ad931f3
 md"
@@ -155,7 +155,9 @@ q=Economic_incentive(target=:w,subsidize=true,value=0.0, max=0.99,label="one", d
 q.cost(0.1)
 
 # ╔═╡ 533abaf9-8b4f-49e1-89ec-46417ac31cd4
+#=╠═╡
 institutional_impact!(s)
+  ╠═╡ =#
 
 # ╔═╡ b054678b-a1e0-4620-8335-7fdeb559d451
 s.institutional_impacts
@@ -178,27 +180,20 @@ s.institutional_impacts[1].target[68]
 # ╔═╡ d487ea7b-07d0-4032-b3f5-207315fa962d
 argmax(s.institutional_impacts[1].resource)
 
-# ╔═╡ d6b400b3-cc55-463c-9027-8138a982f6a1
-	w1=scenario(
-		w=sed(min=0.5,max=1.9,normalize=true,distribution=LogNormal;random),
-		q=sed(mean=2.9,sigma=2.5,normalize=true;random),
-		label="Few income opportunities, and high impact,revq",
-		image="http://zahachtah.github.io/CAS/images/case3.png"
-	)
-	weirdScenarios=[w1]
-
 # ╔═╡ Cell order:
 # ╟─8dc1246f-47ac-4a41-af25-bdbf4bad30c7
 # ╠═1a452997-4471-4803-93e7-7b4c66fd676f
-# ╠═b7319260-9458-4405-b255-03d05a0cbc2a
+# ╟─b7319260-9458-4405-b255-03d05a0cbc2a
 # ╟─ef32418a-b12f-4cb2-a0e0-1a917fbde77f
 # ╠═c6a1ff96-8c69-463e-a8d5-b38629095507
 # ╟─196ec14a-cb05-4d7a-80f7-14bfaf1e9b39
 # ╠═d8780d88-9152-49a8-8618-7f61077a7b6f
+# ╠═25d5f289-fee4-492e-a538-7ac1a8b2129d
+# ╠═e1981766-0a67-4d26-b5f9-66febba7f54a
+# ╠═9217376c-4a39-4c34-ac7c-520ddd2789e8
+# ╠═b1207424-6fea-4655-ad04-45fd6c2282cf
 # ╠═9bfe0351-1104-4eb6-9442-64e14c92ef09
-# ╠═3bea23bf-6fd7-480e-a95e-7d16b463943d
 # ╠═cefb72ec-13a2-4015-ab4e-6b5a607e3af7
-# ╠═72edff09-b442-4373-bc63-58376ede8e35
 # ╠═e5bb31e1-762c-41c9-b640-a2b8b26433f3
 # ╠═d3068553-dd29-47d5-916d-ebf45ad931f3
 # ╠═b57b09da-fd00-481e-9c72-a747bd3b0ee3
@@ -211,5 +206,4 @@ argmax(s.institutional_impacts[1].resource)
 # ╠═1bc9fd6a-aae6-478c-9f0b-973364997d67
 # ╠═56564230-1a0c-4aef-9084-ac8f92795b67
 # ╠═d487ea7b-07d0-4032-b3f5-207315fa962d
-# ╠═d6b400b3-cc55-463c-9027-8138a982f6a1
 # ╠═aafff548-39d3-11ef-39ed-d166b0a452b7

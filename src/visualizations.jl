@@ -525,7 +525,7 @@ phaseplot!(s, show_trajectory=true, vector_field=true)
         a=Axis(f[1,1], xlabel="Actor index", ylabel="Revenue")
         hidespines!(a)
         incomes!(a,S;indexed)
-        axislegend(a, position=:lt)
+        axislegend(a, position=:lt, framevisible=false)
         f
     end
 

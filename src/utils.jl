@@ -70,7 +70,7 @@ function revenues!(S::Scenario)
     S.total_revenue = S.wage_revenue .+  S.resource_revenue .+S.trade_revenue.+ inst_cost
 end
 
-function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100)
+function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100,plot=false)
     !isa(S,Array) ? S=[S] : nothing
     for q in S
         s=deepcopy(q)
@@ -85,10 +85,16 @@ function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100
         y::Array{Float64}=[]
         t=range(0.0,stop=1.0,length=M)
         U=zeros(s.N,M)
+        y0=1.0
+        u0=fill(0.0/s.N,s.N)
         for i in 1:M
+            println(i)
             s.institution[1].value=t[i]
-            sim!(s)
-            
+            sim!(s,u0=u0,y0=y0)
+            #plot ? display(phaseplot(s,show_trajectory=true)) : nothing
+            plot ? display(incomes(s)) : nothing
+            y0=s.y
+            u0=s.u
             push!(total,sum(s.total_revenue))
             push!(resource,sum(s.resource_revenue))
             push!(gini,s.gini)
