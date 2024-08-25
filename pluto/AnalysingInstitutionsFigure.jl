@@ -30,9 +30,9 @@ md"
 "
 
 # ╔═╡ 6cbfc59a-cbc2-4fb5-bf1f-8c141e7a7ea5
-function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png")
+function Figure4c(D,base=130; indexed=:w̃, saveas="../figures/Institutions.png")
 	ci=[15,1,3,5,7,9,11,13,17,19,2,4,6,8,10,12,14]
-	f=Figure(size=(base*(length(D)+1),base*4))
+	f=Figure(size=(base*(length(D)+2),base*7))
 	L=["Open Access","Use rights greed","Use rights need","Tradable Quotas ","Tradable Effort ","Protected Area", "Economic incentives"]
 	LL=[" ","Only selected actors get \npermits to use the resource","Only selected actors get \npermits to use the resource","Surplus use rights are \ntraded on a market","Surplus use rights are \ntraded on a market","Part of the resource area \nis no-use, resource \nmoves between areas","Tax on gear effectively reduces q \nwhich affects both ū and w̃"]
 
@@ -40,7 +40,7 @@ function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png"
 	Label(f[1,1], "Open Access", fontsize = 18, font=:bold, tellwidth=false)
 
 	## Heatmap
-	hx=CairoMakie.Axis(f[5,1], aspect=1, yticks=(1:3,["Private","Society","Equity"]), xticks=(1:5,[rich(L[2],color=D[2].color),rich(L[3],color=D[3].color),rich(L[4],color=D[4].color),rich(L[5],color=D[5].color),rich(L[6],color=D[6].color)]), title="% change from OA",xticklabelrotation=pi/5)
+	hx=CairoMakie.Axis(f[7:8,1], aspect=1, yticks=(1:3,["Private","Society","Equity"]), xticks=(1:5,[rich(L[2],color=D[2].color),rich(L[3],color=D[3].color),rich(L[4],color=D[4].color),rich(L[5],color=D[5].color),rich(L[6],color=D[6].color)]), title="% change from OA",xticklabelrotation=pi/5)
 
 	H=zeros(length(D)-1,3)
 	for i in 2:length(L)
@@ -69,13 +69,20 @@ function Figure4c(D,base=180; indexed=:w̃, saveas="../figures/Institutions.png"
 			Label(f[1,i],rich(LL[i],word_wrap_width=180,color=ColorSchemes.tab20[ci[i]], fontsize = 12), tellwidth=false)
 			x=1.0 -d.institutional_impacts[1].id_total
 			
-			cx=CairoMakie.Axis(f[5,i], xticks=(0<x<1 ? [0,x,1] : [0,1],0<x<1 ? ["Open\nAccess","opt","Full"] : ["Open\nAccess","Full"]),height=base) 
-			ylims!(cx,(0.0,0.8))
-			lines!(cx,[x,x],[0.0,0.6], color=:black)
+			cx=CairoMakie.Axis(f[5,i],height=base/2) 
+			hidedecorations!(cx)
+			#ylims!(cx,(0.0,0.8))
+			#lines!(cx,[x,x],[0.0,0.6], color=:black)
 			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].resource, color=SocialEconomicDiversity.adjustColor(q.color,"l",0.8), linewidth=2) 
-			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].total, color=q.color, linewidth=3)
-			lines!(cx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].gini, color=SocialEconomicDiversity.adjustColor(q.color,"l",0.3), linewidth=1)
-			lines!(cx,reverse(d.institutional_impacts[1].target),abs.(0.5.-d.institutional_impacts[1].y), color=:black, linewidth=1)
+			dx=CairoMakie.Axis(f[6,i], height=base/2) 
+			hidedecorations!(dx)
+			lines!(dx,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].total, color=q.color, linewidth=3)
+			ex=CairoMakie.Axis(f[7,i], height=base/2) 
+			hidedecorations!(ex)
+			lines!(ex,reverse(d.institutional_impacts[1].target),d.institutional_impacts[1].gini, color=SocialEconomicDiversity.adjustColor(q.color,"l",0.3), linewidth=1)
+			fx=CairoMakie.Axis(f[8,i], xticks=(0<x<1 ? [0,x,1] : [0,1],0<x<1 ? ["Open\nAccess","opt","Full"] : ["Open\nAccess","Full"]),height=base/2) 
+			hideydecorations!(fx,label=false)
+			lines!(fx,reverse(d.institutional_impacts[1].target),abs.(0.5.-d.institutional_impacts[1].y), color=:black, linewidth=1)
 		end
 		
 		#Label(f[3,2:5],"Regulation", tellheight=true, tellwidth=false,height=20,halign=:center,valign=:top)

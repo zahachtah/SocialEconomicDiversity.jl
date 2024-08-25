@@ -39,8 +39,9 @@ function figure_institutional_analysis(S;dsize=250)
 		image!(a,rotr90(image))
 
 		d=CairoMakie.Axis(f[i+k,2],aspect=1)
-		l1=lines!(d,s.w, linewidth=3,label="Alternative opportunities")
-		l2=lines!(d,s.q,linewidth=3, label="Extraction potential")
+		lines!(s.w,s.q,linewidth=3, label="")
+		#l1=lines!(d,s.w, linewidth=3,label="Alternative opportunities")
+		#l2=lines!(d,s.q,linewidth=3, label="Extraction potential")
 
 		b=CairoMakie.Axis(f[i+k,3],aspect=1, xlabel="Resource level", ylabel="Participation")
 		hidedecorations!(b,label=false)
@@ -119,7 +120,7 @@ end
 
 # ╔═╡ 45eb7519-8d4c-4896-b009-23dcc9b2bd88
 begin
-	S=Scenarios()
+	S=Scenarios(random=true)
 	I=[Market(target=:effort),Market(target=:yield), Protected_area(), Economic_incentive(target=:p, max=0.9),Economic_incentive(target=:q, max=0.9)]#, Dynamic_permit_allocation(criteria=:w), Dynamic_permit_allocation(criteria=:w, reverse=true)]
 	for inst in I
 		for j in 1:length(S)

@@ -291,7 +291,7 @@ function incomes!(
 	end
 	#barplot!(a,collect(1:z.N),z.total_revenue[id],color=c, width=mw)
     if show_text
-		incometext=anntext*"\nT:" * string(round(sum(z.total_revenue), digits=2)) * " R:" * string(round(sum(z.resource_revenue), digits=2)) * " G:" * string(round(gini(z.total_revenue), digits=2))
+		incometext=anntext*"\nT:" * string(Int64(round(sum(z.total_revenue)*100))) * " R:" * string(Int64(round(sum(z.resource_revenue)*100))) * " G:" * string(Int64(round(gini(z.total_revenue)*100)))
         a.title=incometext
 		a.titlesize=annotation_size
 		#a.titlefont="Arial"
@@ -552,6 +552,13 @@ phaseplot!(s, show_trajectory=true, vector_field=true)
                 g=="total" ? H[j,i]=(maximum(s.institutional_impacts[i].total)/s.institutional_impacts[i].total[end].-1).*100 : nothing
                 g=="gini" ? H[j,i]=abs(minimum(s.institutional_impacts[i].gini)/s.institutional_impacts[i].gini[end].-1).*100 : nothing
             end
+        end
+        H[findall(isnan.(H))].=0.0
+        H[findall(H.==Inf)].=0.0
+        println(size(H))
+        println(size(maximum(H,dims=2)[:]))
+        for i in 1:size(H,1)
+            H[i,:].=H[i,:]./maximum(H[i,:])
         end
         heatmap!(a,H'[:, end:-1:1],colormap=:BuGn)
         H

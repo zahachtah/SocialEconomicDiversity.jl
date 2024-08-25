@@ -70,9 +70,10 @@ function revenues!(S::Scenario)
     S.total_revenue = S.wage_revenue .+  S.resource_revenue .+S.trade_revenue.+ inst_cost
 end
 
-function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100,plot=false)
+function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100,plot=false,reltol=1e-5)
     !isa(S,Array) ? S=[S] : nothing
-    for q in S
+    lS=length(S)
+    for (j,q) in enumerate(S)
         s=deepcopy(q)
         s.institution=[inst]
         if typeof(inst) <: SocialEconomicDiversity.Economic_incentive
@@ -88,6 +89,7 @@ function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100
         y0=1.0
         u0=fill(0.0/s.N,s.N)
         for i in 1:M
+            print("\rProgress: $i% for $i/$lS")
             println(i)
             s.institution[1].value=t[i]
             sim!(s,u0=u0,y0=y0)

@@ -49,12 +49,13 @@ Handles the dynamic allocation of permits based on the specified criteria and wh
 """
 function dynamic_permits(institution::Dynamic_permit_allocation,du,u,s,t)
     n=Int64(round(institution.value.*s.N)) # number of allowed permitholders (can we do this at scenario creation)
-    id=findall(u.>0.0)      # get all who would like to use resource since this is after applying+du its essentially u_t+1
+    id=findall(u[1:s.N].>0.0)      # get all who would like to use resource since this is after applying+du its essentially u_t+1
     l=length(id)                  # number of potential resource users 
     if l>n  # if number of actors that want to use resource are more than number of permits 
         #println(p.target)
         if institution.reverse
-            r=l-n+1:l   # select the permit holders (given to high w)
+            #r=max(1,l-n+1):l 
+            r=(l-n+1):l   # select the permit holders (given to high w)
         else
             r=1:n # select the permit holders (given to low w)
         end
@@ -225,11 +226,17 @@ Configures the economic incentive based on the specified target, maximum value, 
 - If the target is `:q`, it adjusts both `s.aū` and `s.aw̃` by adding the incentive effect to `s.aū` and normalizing `s.aw̃`.
 """
 function economic_incentive(institution::Economic_incentive, s)
+    temp=s.institution[1]
+    s.institution=[]
+    sim!(s)
    if s.y>0.5
         institution.subsidize=true
+        println("subsidy")
     else
         institution.subsidize=false
+        println("tax")
     end
+    s.institution=[temp]
     if institution.target == :p
         # Adjust aw̃ by adding the incentive effect
         s.aw̃ = ones(s.N)  ./ (1 + institution.max * (1.0-institution.value) * (institution.subsidize ? 1.0 : -1.0))
