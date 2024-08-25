@@ -227,7 +227,10 @@ compare_institutions(Scenarios[1])
 compare_institutions(Scenarios[2])
 
 # ╔═╡ 1dc905af-0899-4ceb-b9d5-953b8c6b5d27
-compare_institutions(Scenarios[3])
+f=compare_institutions(Scenarios[3])
+
+# ╔═╡ c547cdff-35e5-470c-94f0-31ce65bdb3fc
+save("../figures/Institutions.png",f)
 
 # ╔═╡ 666ef234-89f7-42ae-a8c0-cbe8e28550e5
 compare_institutions(Scenarios[4])
@@ -247,6 +250,7 @@ compare_institutions(Scenarios[4])
 # ╠═b0b502bd-7dd6-441a-a078-d911bd440baf
 # ╠═4201b03c-4c8c-41a3-8325-437f31387b9a
 # ╠═1dc905af-0899-4ceb-b9d5-953b8c6b5d27
+# ╠═c547cdff-35e5-470c-94f0-31ce65bdb3fc
 # ╠═666ef234-89f7-42ae-a8c0-cbe8e28550e5
 # ╠═1adea7d5-9294-4455-bee2-984ee3e60620
 # ╠═f9516319-f5f7-4e06-9c0d-749e99d3f91a
