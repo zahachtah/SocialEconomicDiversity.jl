@@ -61,8 +61,8 @@ function revenues!(S::Scenario)
     if isa(S.institution,Array) && length(S.institution)>0
         
         if typeof(S.institution[1])==Market 
-            
-            S.trade_revenue=(S.institution[1].value./(S.y*(1.0-S.protected))./S.N.-S.u).*S.ϕ.*S.r.*S.p.*S.K;
+            T=S.institution[1]==:target ? (S.y*(1.0-S.protected)).*S.N : S.N
+            S.trade_revenue=(S.institution[1].value./T.-S.u).*S.ϕ.*S.r.*S.p.*S.K;
         end
         inst_cost=typeof(S.institution[1]) <: SocialEconomicDiversity.Institution ? S.institution[1].cost(S.institution[1].value)./S.N : 0.0
     end

@@ -91,17 +91,16 @@ md"
 
 # ╔═╡ c6a1ff96-8c69-463e-a8d5-b38629095507
 begin
-	iPH=Dynamic_permit_allocation(criteria=:w, reverse=true)
-	iPL=Dynamic_permit_allocation(criteria=:w, reverse=false)
-	iSE=Equal_share_allocation(target=:effort)
-	iSY=Equal_share_allocation(target=:yield)
-	iTE=Market(target=:effort)
-	iTY=Market(target=:yield)
+	iPH=Dynamic_permit_allocation(criteria=:w, reverse=true, label="Use rights\nGreed")
+	iPL=Dynamic_permit_allocation(criteria=:w, reverse=false, label="Use rights\nNeed")
+	iSE=Equal_share_allocation(target=:effort, label="Equal share\neffort")
+	iSY=Equal_share_allocation(target=:yield, label="Equal share\nyield")
+	iTE=Market(target=:effort, label="Tradable\neffort")
+	iTY=Market(target=:yield, label="Tradable\nyield")
 	iPA=Protected_area()
-	iPAD=Protected_area()
 	iEp=Economic_incentive(target=:p,max=0.9)
 	iEq=Economic_incentive(target=:q,max=0.9)
-	institutions=[iPH,iPL,iSE,iSY,iTE,iTY,iPA,iPAD] #iPL,iEp
+	institutions=[iPH,iPL,iSE,iSY,iTE,iTY,iPA] #iPL,iEp
 end
 
 # ╔═╡ 196ec14a-cb05-4d7a-80f7-14bfaf1e9b39
@@ -151,7 +150,7 @@ function compare_institutions(s;base=130, indexed=:w̃, saveas="../figures/Insti
 	vlc=:black
 	glw=4
 	f=Figure(size=((1+length(I))*base,(5+3)*base))
-	q=3
+	q=1
 	A=[]
 	B=[]
 	C=[]
@@ -164,10 +163,13 @@ function compare_institutions(s;base=130, indexed=:w̃, saveas="../figures/Insti
 	mR=maximum([maximum(i.resource) for i in I])
 	mT=maximum([maximum(i.total) for i in I])
 	mG=minimum([minimum(i.gini) for i in I])
-	
+	Label(f[0,1:length(I)],"Policy Instruments:", fontsize = 22, font=:bold, tellwidth=false)
+	Label(f[2:4,0],"Outcomes of goal variables", fontsize = 18, font=:bold, tellwidth=true, rotation=pi/2)
+	Label(f[5:7,0],"Income distribution at optimal regulation", fontsize = 18, font=:bold, tellwidth=true, rotation=pi/2)
+	Label(f[8,0],"Participation", fontsize = 18, font=:bold, tellwidth=true, rotation=pi/2)
 	for i =1:length(I)
-		Label(f[1,i],I[i].institution.label, fontsize = 12, font=:bold, tellwidth=false)
-		push!(A,CairoMakie.Axis(f[q,i]))
+		Label(f[1,i],I[i].institution.label, fontsize = 16, font=:bold, tellwidth=false,color=convert(HSL,ColorSchemes.tab20[ci[i]]))
+		push!(A,CairoMakie.Axis(f[q+7,i]))
 		hidedecorations!(A[i])
 		sc.institution=[I[i].institution]
 		sc.institution[1].value=I[i].target[argmax(I[i].resource)]
