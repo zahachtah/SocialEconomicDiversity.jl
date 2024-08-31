@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.43
+# v0.19.45
 
 using Markdown
 using InteractiveUtils
@@ -85,8 +85,8 @@ function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 	#text!(ax12_fig3,0.6,0.7,text="Some actors will\nnot participate\neven with max resource",font="Gloria Hallelujah", fontsize=10,align=(:left, :top), color=:black)
 
 	d1=scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.15,sigma=0.4, normalize=true, distribution=LogNormal),color=low;N)
-	d2=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.35,sigma=0.22, normalize=true, distribution=LogNormal),color=medium;N)
-	d3=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.55,sigma=0.13, normalize=true, distribution=LogNormal),color=high;N)
+	d2=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.45,sigma=0.22, normalize=true, distribution=LogNormal),color=medium;N)
+	d3=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.75,sigma=0.13, normalize=true, distribution=LogNormal),color=high;N)
 	
 	phaseplot!(development,d1,show_trajectory=false,show_exploitation=true;show_attractor,attractor_size)
 	phaseplot!(development,d2,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
@@ -111,7 +111,7 @@ function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 
 		s13=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.25,max=0.55, normalize=true, distribution=LogNormal),color=high;N)
 	#Main Phaseplot
-    csc=ColorSchemes.magma
+    csc=ColorSchemes.:davos#bam#magma
 	rand=false
 	s1=scenario(ū=sed(mean=0.5, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.25, normalize=true, distribution=LogNormal),color=csc[1];N)
 	s2=scenario(ū=sed(mean=1.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.05,max=0.65, normalize=true, distribution=LogNormal, random=rand),color=csc[33];N)
@@ -134,6 +134,9 @@ function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 		hidedecorations!(iax)
 		incomes!(iax,s,show_text=false, indexed=:w̃, fix_xlim=false)
 	end
+
+	Colorbar(fig3[1,5], label="Time",ticks=([0,1],["start","end"]),colormap=ColorSchemes.davos,tellwidth=true)
+	
 	fs=20
 	Label(fig3[0,1],text="Dynamics", tellwidth=false, fontsize=fs)
 	Label(fig3[0,2],text="Incentives", tellwidth=false, fontsize=fs)

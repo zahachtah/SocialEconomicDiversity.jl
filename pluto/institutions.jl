@@ -40,7 +40,7 @@ begin
 	)
 	
 	s3=scenario(
-		w=sed(min=0.1,max=0.4,normalize=true,distribution=LogNormal;random),
+		w=sed(min=0.1,max=0.3,normalize=true,distribution=LogNormal;random),
 		q=sed(mean=0.8,sigma=-1.0,normalize=true;random),
 		label="Few income opportunities, and high impact",
 		image="http://zahachtah.github.io/CAS/images/case3.png"
@@ -54,8 +54,8 @@ begin
 	)
 	
 		s5=scenario(
-		w=sed(min=0.01,max=0.3,normalize=true;random,distribution),
-		q=sed(mean=0.3,sigma=0.0,normalize=true;random),
+		w=sed(min=0.01,max=90.3,normalize=true;random,distribution),
+		q=sed(mean=3.5,sigma=1.0,normalize=true;random),
 		label="High inequality, and low impact",
 		image="http://zahachtah.github.io/CAS/images/case1.png"
 	)
@@ -111,7 +111,7 @@ Lets check how these institutions work for one scenario. First we do an institut
 [institutional_impact!(s,inst) for inst in institutions, s in Scenarios]
 
 # ╔═╡ 30976e77-1f49-4e89-810c-6414ff0f8292
-isnan(NaN)
+186/60
 
 # ╔═╡ 72edff09-b442-4373-bc63-58376ede8e35
 [s.y for s in Scenarios]
@@ -132,11 +132,10 @@ md"# Income distributions as options!
 ## somethings fishy with trade revenues for market effort
 "
 
-# ╔═╡ 1adea7d5-9294-4455-bee2-984ee3e60620
-I=Scenarios[1].institutional_impacts
-
-# ╔═╡ f9516319-f5f7-4e06-9c0d-749e99d3f91a
-typeof(CairoMakie.Axis)
+# ╔═╡ 2ce64071-bcf2-431e-8ab6-e9d6a1da2cea
+md"
+# Cross context/scenario comparison of institutional performance
+"
 
 # ╔═╡ 9c5d3d93-17c6-4d15-bd91-abb31f0868cb
 function compare_institutions(s;base=130, indexed=:w̃, saveas="../figures/Institutions.png")
@@ -164,7 +163,7 @@ function compare_institutions(s;base=130, indexed=:w̃, saveas="../figures/Insti
 	mT=maximum([maximum(i.total) for i in I])
 	mG=minimum([minimum(i.gini) for i in I])
 	Label(f[0,1:length(I)],"Policy Instruments:", fontsize = 22, font=:bold, tellwidth=false)
-	Label(f[2:4,0],"Outcomes of goal variables", fontsize = 18, font=:bold, tellwidth=true, rotation=pi/2)
+	Label(f[2:4,0],"Governance performance goals", fontsize = 18, font=:bold, tellwidth=true, rotation=pi/2)
 	Label(f[5:7,0],"Income distribution at optimal regulation", fontsize = 18, font=:bold, tellwidth=true, rotation=pi/2)
 	Label(f[8,0],"Participation", fontsize = 18, font=:bold, tellwidth=true, rotation=pi/2)
 	for i =1:length(I)
@@ -178,20 +177,21 @@ function compare_institutions(s;base=130, indexed=:w̃, saveas="../figures/Insti
 		phaseplot!(A[i],s)
 		phaseplot!(A[i],sc,show_realized=true, show_potential=false)
 		
-		push!(B,CairoMakie.Axis(f[q+1,i],backgroundcolor=HSL(0,0,maximum(I[i].resource)/mR), ylabel="Resource",ylabelfont=:bold))
+		push!(B,CairoMakie.Axis(f[q+1,i],xreversed=true,backgroundcolor=HSL(0,0,maximum(I[i].resource)/mR), ylabel="Resource",ylabelfont=:bold))
 		i==1 ? hidexdecorations!(B[i]) : hidedecorations!(B[i])
 		lines!(B[i],I[i].target,getfield(I[i],:resource), color=ColorSchemes.tab20[ci[i]], linewidth=glw)
 		vlines!(B[i],I[i].target[argmax(I[i].resource)], color=vlc, linewidth=vlw)
 		
 
-		push!(C,CairoMakie.Axis(f[q+2,i],backgroundcolor=HSL(0,0,maximum(I[i].total)/mT), ylabel="Total",ylabelfont=:bold))
+		push!(C,CairoMakie.Axis(f[q+2,i],xreversed=true,backgroundcolor=HSL(0,0,maximum(I[i].total)/mT), ylabel="Total",ylabelfont=:bold))
 		i==1 ? hidexdecorations!(C[i]) : hidedecorations!(C[i])
 		lines!(C[i],I[i].target,getfield(I[i],:total), color=ColorSchemes.tab20[ci[i]], linewidth=glw)
 		vlines!(C[i],I[i].target[argmax(I[i].total)], color=vlc, linewidth=vlw)
 		
 
-		push!(D,CairoMakie.Axis(f[q+3,i],backgroundcolor=HSL(0,0,mG/minimum(I[i].gini)), ylabel="Gini",ylabelfont=:bold))
-		i==1 ? hidexdecorations!(D[i]) : hidedecorations!(D[i])
+		push!(D,CairoMakie.Axis(f[q+3,i],xreversed=true,backgroundcolor=HSL(0,0,mG/minimum(I[i].gini)), ylabel="Gini",ylabelfont=:bold, xticks=([0,1],["Full","OA"]),xlabel="Regulation level"))
+		i>1 ? hideydecorations!(D[i]) : nothing
+		hidexdecorations!(D[i], ticklabels=false, label=i==4 ? false : true)#hidexdecorations!(D[i])
 		lines!(D[i],I[i].target,getfield(I[i],:gini), color=ColorSchemes.tab20[ci[i]], linewidth=glw)
 		vlines!(D[i],I[i].target[argmin(I[i].gini)], color=vlc, linewidth=vlw)
 		
@@ -211,6 +211,7 @@ function compare_institutions(s;base=130, indexed=:w̃, saveas="../figures/Insti
 		sim!(sc)
 		push!(G,CairoMakie.Axis(f[q+6,i], ylabel="Gini",ylabelfont=:bold))
 		i==1 ? nothing : hideydecorations!(G[i])
+		i==1 ? hidexdecorations!(G[i]) : hidedecorations!(G[i])
 		incomes!(G[i],sc)
 		
 		
@@ -237,6 +238,100 @@ save("../figures/Institutions.png",f)
 # ╔═╡ 666ef234-89f7-42ae-a8c0-cbe8e28550e5
 compare_institutions(Scenarios[4])
 
+# ╔═╡ 5920f1db-1ad1-4ed2-b877-57add06b843c
+function context_diversity(S;dsize=250,w=[0.0,1.0,-0.2])
+	f=Figure(size=(dsize*5,length(S)*dsize))
+	ci=[1,3,5,7,9,11,13,17,19,2,4,6,8,10,12,14]
+	k=1
+	#Label(f[1,1:2],text="Socio-economic Diversity\n ",tellwidth=false, color=:black,fontsize=24)
+	#Label(f[1,3:length(S[1].institutional_impacts)],text="Outcomes\n ",tellwidth=false, color=:black,fontsize=24)
+	Label(f[1,1],text="Scenarios or Context?",tellwidth=false, color=:black)
+	
+	Label(f[1,5],text="Participation Plot",tellwidth=false, color=:black,fontsize=16)
+	Label(f[1,3:4],text="Institutional Performance Fingerprint",tellwidth=false,color=:black,fontsize=16)
+	Label(f[1,6],text="Income distributions",color=:black,tellwidth=false,fontsize=16)
+	for (i,sc) in enumerate(S)
+		s=deepcopy(sc)
+		image_file = download(s.image)
+		image = load(image_file)
+		a=CairoMakie.Axis(f[i+k,1],aspect=1)
+		hidespines!(a)
+		hidedecorations!(a)
+		image!(a,rotr90(image))
+
+		d=CairoMakie.Axis(f[i+k,2],aspect=1)
+		#lines!(s.w,s.q,linewidth=3, label="")
+		l1=lines!(d,s.w, linewidth=3,color=:black,label="Alternative opportunities")
+		l2=lines!(d,s.q,linewidth=3,color=:lightgray, label="Extraction potential")
+
+		b=CairoMakie.Axis(f[i+k,5],aspect=1, xlabel="Resource level", ylabel="Participation")
+		hidedecorations!(b,label=false)
+		phaseplot!(b,s,show_realized=false)
+
+		
+		M=zeros(length(s.institutional_impacts),4)
+		mr=maximum([maximum(i.resource) for i in s.institutional_impacts])
+		mt=maximum([maximum(i.total) for i in s.institutional_impacts])
+		mg=minimum([minimum(i.gini) for i in s.institutional_impacts])
+		mq=maximum([maximum(i.resource.^w[1].*i.total.^w[2].*i.gini.^w[3]) for i in s.institutional_impacts])
+		for (k,inst_impact) in enumerate(s.institutional_impacts)
+			M[k,1]=(maximum(inst_impact.resource))/mr
+			M[k,2]=(maximum(inst_impact.total))/mt
+			M[k,3]=mg/(minimum(inst_impact.gini))
+			q=inst_impact.resource.^w[1].*inst_impact.total.^w[2].* inst_impact.gini.^w[3]
+			M[k,4]=(maximum(q))/mq
+		end
+		
+		xt=(1:length(s.institutional_impacts), [rich(replace(i.institution.label,"\n"=>" "),color=ColorSchemes.tab20[ci[j]]) for (j,i) in enumerate(S[1].institutional_impacts)])
+		yt=(1:4,reverse(["Resource revenue","Total revenue","Gini",L"R^{%$(w[1])} T^{%$(w[2])} G^{%$(w[3])}"]))
+		
+		c=CairoMakie.Axis(f[i+k,3:4],aspect=length(s.institutional_impacts)/3,xticks = xt, yticks=yt,xticklabelrotation=-pi/6, yaxisposition = :right, yticklabelsize=18)
+		hidespines!(c)
+		hidexdecorations!(c, ticklabels=(i==length(S) ? false : true))
+		
+		heatmap!(c,1:length(s.institutional_impacts),reverse(1:4),M,colormap=:grays,colorrange=(0,1))
+		winInst=argmax(M[:,4])
+		s.color=convert(HSL,ColorSchemes.tab20[ci[winInst]])
+		[text!(c,x,y-0.05,text=string(round(M[x,5-y]*100,digits=0))[1:end-2],align=(:center,:baseline), font = (x==winInst && y==1 ) ? :bold : :regular, fontsize = (x==winInst && y==1 ) ? 20 : 14, color=(x==winInst && y==1 ) ? ColorSchemes.tab20[ci[x]] : abs(M[x,5-y])>0.5 ? :black : :white) for x in 1:length(s.institutional_impacts), y in 1:4]
+		Legend(f[1,2],d, tellwidth=false,orientation=:vertical)
+
+		eG=GridLayout(f[i+k,6])
+
+		e=CairoMakie.Axis(eG[1,1], ylabel="OA")
+		hidespines!(e)
+		hidexdecorations!(e, ticklabels=(i==length(S) ? false : true))
+		hideydecorations!(e, label=false)
+		s.color=HSL(0,0,0.5)
+		incomes!(e,s)
+		
+		ee=CairoMakie.Axis(eG[2,1], ylabel=rich("Optimal",color=ColorSchemes.tab20[ci[winInst]]))
+		hidespines!(ee)
+		hidexdecorations!(ee, ticklabels=(i==length(S) ? false : true))
+		hideydecorations!(ee, label=false)
+		
+		s.institution=[s.institutional_impacts[argmax(M[:,4])].institution]
+		inst_impact=s.institutional_impacts[argmax(M[:,4])]
+		q=inst_impact.resource.^w[1].*inst_impact.total.^w[2].* inst_impact.gini.^w[3]
+		s.institution[1].value=s.institutional_impacts[argmax(M[:,4])].target[argmax(q)]
+		s.color=convert(HSL,ColorSchemes.tab20[ci[winInst]])
+		sim!(s)
+		incomes!(ee,s)
+		phaseplot!(b,s,show_realized=true, show_potential=false,show_sustained=false)
+			
+		
+
+	end
+	
+	#Legend(f[2,2],text="Dimensional",tellwidth=false)
+	f
+end
+
+# ╔═╡ 1adea7d5-9294-4455-bee2-984ee3e60620
+c=context_diversity(Scenarios[1:4],w=[0.0,1.0,-0.25])
+
+# ╔═╡ 8f49c68a-7fa2-4c4a-a338-249db821b57d
+save("../figures/Contexts.png",c)
+
 # ╔═╡ Cell order:
 # ╟─8dc1246f-47ac-4a41-af25-bdbf4bad30c7
 # ╠═1a452997-4471-4803-93e7-7b4c66fd676f
@@ -254,7 +349,9 @@ compare_institutions(Scenarios[4])
 # ╠═1dc905af-0899-4ceb-b9d5-953b8c6b5d27
 # ╠═c547cdff-35e5-470c-94f0-31ce65bdb3fc
 # ╠═666ef234-89f7-42ae-a8c0-cbe8e28550e5
+# ╟─2ce64071-bcf2-431e-8ab6-e9d6a1da2cea
 # ╠═1adea7d5-9294-4455-bee2-984ee3e60620
-# ╠═f9516319-f5f7-4e06-9c0d-749e99d3f91a
+# ╠═8f49c68a-7fa2-4c4a-a338-249db821b57d
 # ╠═9c5d3d93-17c6-4d15-bd91-abb31f0868cb
+# ╠═5920f1db-1ad1-4ed2-b877-57add06b843c
 # ╠═aafff548-39d3-11ef-39ed-d166b0a452b7
