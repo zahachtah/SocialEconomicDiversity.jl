@@ -91,7 +91,7 @@ function sim!(p; tend=(0.0,2000.0), y0=1.0, dydt=1.0,u0=fill(0.0/p.N,p.N), p0=0.
 	sol=solve(prob,SSPRK432(;stage_limiter!),callback=terminate_steady_state ? TerminateSteadyState(1e-6,1e-4) : nothing; reltol)
 	if sol.retcode != :Success && sol.retcode != :Terminated
 		println("Simulation failed with retcode: ", sol.retcode)
-		println((p.label,p.institution[1]))
+		println((p.label,length(p.institution)==0 ? "OA" : p.institution[1]))
 	end
 	poa=deepcopy(p)
     poa.institution=[]
