@@ -144,3 +144,4 @@ function institutional_impact!(S;M=100, inst=1)
         push!(q.institutional_impacts,(target=collect(t),id_total=t[argmax(total)],id_resource=t[argmax(resource)],id_gini=t[argmin(gini)],id_y=t[argmin((y.-0.5).^2)],total=total,resource=resource,gini=gini,I=I,y=y,U=U, institution=string(typeof(S[1].institution[1]))[25:end]*" "*string((hasfield(typeof(S[1].institution[1]),:target) ? S[1].institution[1].target : ""))))
     end 
 end
+

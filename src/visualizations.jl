@@ -563,3 +563,52 @@ phaseplot!(s, show_trajectory=true, vector_field=true)
         heatmap!(a,H'[:, end:-1:1],colormap=:BuGn)
         H
     end
+
+    	# Function to normalize a vector
+	function normalize_vec(v::Tuple{Float64, Float64})
+	    norm = sqrt(v[1]^2 + v[2]^2)  # Calculate the magnitude of the vector
+	    return (v[1] / norm, v[2] / norm)  # Normalize by dividing each component by the magnitude
+	end
+	
+	# Function to subtract two points and return a tuple
+	function point_to_vec(p1::Point2f, p2::Point2f)
+	    return (p1[1] - p2[1], p1[2] - p2[2])
+	end
+	
+	# Function to rotate a vector by an angle
+	function rotate_vector(v::Tuple{Float64, Float64}, angle::Float64)
+	    x, y = v
+	    cos_angle = cos(angle)
+	    sin_angle = sin(angle)
+	    return (x * cos_angle - y * sin_angle, x * sin_angle + y * cos_angle)
+	end
+	
+	# Function to create an arc with an arrow at the start or end
+	function arcarrow!(ax, center::Point2f, radius::Float64, start_angle::Float64, end_angle::Float64;
+	                   begin_arrow::Bool=false, end_arrow::Bool=true, color=:black)
+	
+	    # Draw the arc
+	    arc!(ax, center, radius, start_angle, end_angle, linewidth=2; color)
+	
+	    # Compute the start and end points of the arc
+	    start_point = center .+ radius .* Point2f(cos(start_angle), sin(start_angle))
+	    end_point = center .+ radius .* Point2f(cos(end_angle), sin(end_angle))
+	
+	    # Arrow at the start of the arc
+	    if begin_arrow
+	        # Direction tangent to the arc at the start (rotated by π/2 to get tangent)
+	        arrow_dir = normalize_vec(rotate_vector((-sin(start_angle), cos(start_angle)), 0.0))
+	        # Place the arrow using scatter! with :utriangle symbol
+	        scatter!(ax, [start_point[1]], [start_point[2]], marker=:rtriangle, markersize=15, 
+	                 rotation=start_angle - π/2+π;color)  # Rotate to match the direction
+	    end
+	
+	    # Arrow at the end of the arc
+	    if end_arrow
+	        # Direction tangent to the arc at the end (rotated by π/2 to get tangent)
+	        arrow_dir = normalize_vec(rotate_vector((-sin(end_angle), cos(end_angle)), 0.0))
+	        # Place the arrow using scatter! with :utriangle symbol
+	        scatter!(ax, [end_point[1]], [end_point[2]], marker=:rtriangle, markersize=15,
+	                 rotation=end_angle - π/2;color)  # Rotate to match the direction
+	    end
+	end

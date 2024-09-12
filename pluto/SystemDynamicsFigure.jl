@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.45
+# v0.19.46
 
 using Markdown
 using InteractiveUtils
@@ -15,26 +15,13 @@ begin
 	set_theme!(theme_light())
 end;
 
+# ╔═╡ 673e48e4-89fd-4443-a59f-f985b68589a7
+using MakieExtra
+
 # ╔═╡ 545cd41b-44d6-44a1-967a-fae9efcf88b6
 function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize=12, cs=(low=ColorSchemes.tab20[1], medium=ColorSchemes.tab20[5], high=ColorSchemes.tab20[3]), saveas="", show_attractor=true, attractor_size=10)
 
-	function get_deriv_vector2(y,u,z)
-		p=z.final.p
-		du=zeros(p.N+2)
-		usum=cumsum(p.ū)
-		Q=findall(usum.<=u)
-		n=length(Q)
-		deltau=usum[min(p.N,Q[end]+1)]-u
-		U=zeros(p.N+2)
-		U[Q]=p.ū[Q]
-		U[min(p.N,n+1)]=deltau
-		U[p.N+1]=y
-		dudt(du,U,p,0)
-		radian_angle = atan(sum(du[1:p.N]),du[p.N+1])
-    	#rad2deg(radian_angle)+180
-		#(du[p.N+1],sum(du[1:p.N]))
-		radian_angle-pi/2,sqrt(sum(du[1:p.N])^2+du[p.N+1]^2)
-	end
+arc
 
 	nc=10	
 	(low,medium,high)=cs
@@ -81,7 +68,7 @@ function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 	
 	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
 
-
+	arc!(inequality,Point2f(0.2,0.5), 0.4, π/4, π/2)
 	#text!(ax12_fig3,0.6,0.7,text="Some actors will\nnot participate\neven with max resource",font="Gloria Hallelujah", fontsize=10,align=(:left, :top), color=:black)
 
 	d1=scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.15,sigma=0.4, normalize=true, distribution=LogNormal),color=low;N)
@@ -91,16 +78,26 @@ function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 	phaseplot!(development,d1,show_trajectory=false,show_exploitation=true;show_attractor,attractor_size)
 	phaseplot!(development,d2,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
 	phaseplot!(development,d3,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	xs=[0.2]; ys=[0.5]
+	arrow_fun(x) = Point2f(0.5,0.0)
+	strength=0.5
+	arrows!(development, xs, ys, arrow_fun, arrowsize = 10, lengthscale = 0.3)
 	
 
    
 	phaseplot!(impact_potential,scenario(ū=sed(mean=0.5, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
 	phaseplot!(impact_potential,scenario(ū=sed(mean=1.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
 	phaseplot!(impact_potential,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false,show_exploitation=false;show_attractor,attractor_size)
-   
-	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=-2.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
-	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
-	phaseplot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=2.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	arc!(impact_potential,Point2f(1.0,0.0), 0.7, π*0.9, π*0.6)
+
+	covstr=4
+	coscneg=scenario(ū=sed(mean=2.0, sigma=-covstr, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N)
+	coscbase=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N)
+	coscpos=scenario(ū=sed(mean=2.0, sigma=covstr,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N)
+	phaseplot!(covar_impact,coscneg,show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
+	phaseplot!(covar_impact,coscbase,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	phaseplot!(covar_impact,coscpos,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
+	phaseplot!(CairoMakie.Axis(fig3[2,4]),coscneg)
    
 	ba1=scenario(α=sed(mean=0.5,sigma=0.0, normalize=true),	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=low;N)
 	ba2=scenario(α=sed(mean=2.0,sigma=0.0, normalize=true),ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=high;N)
@@ -111,15 +108,16 @@ function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 
 		s13=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.25,max=0.55, normalize=true, distribution=LogNormal),color=high;N)
 	#Main Phaseplot
-    csc=ColorSchemes.:davos#bam#magma
+    csc=ColorSchemes.:grays#bam#magma
+	cl=length(csc)
 	rand=false
-	s1=scenario(ū=sed(mean=0.5, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.25, normalize=true, distribution=LogNormal),color=csc[1];N)
-	s2=scenario(ū=sed(mean=1.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.05,max=0.65, normalize=true, distribution=LogNormal, random=rand),color=csc[33];N)
-	s3=scenario(ū=sed(mean=1.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.075,max=0.75, normalize=true, distribution=LogNormal, random=rand),color=csc[66];N)
-	s4=scenario(ū=sed(mean=2.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.1,max=0.95, normalize=true, distribution=LogNormal, random=rand),color=csc[100];N)
-	s5=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.15,max=1.55, normalize=true, distribution=LogNormal, random=rand),color=csc[150];N)
-	s6=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.2,max=2.55, normalize=true, distribution=LogNormal, random=rand),color=csc[200];N)
-	s7=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.4,max=4.55, normalize=true, distribution=LogNormal, random=rand),color=csc[250];N)
+	s1=scenario(ū=sed(mean=0.5, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.25, normalize=true, distribution=LogNormal),color=csc[30];N)
+	s2=scenario(ū=sed(mean=1.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.05,max=0.65, normalize=true, distribution=LogNormal, random=rand),color=csc[40];N)
+	s3=scenario(ū=sed(mean=1.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.075,max=0.75, normalize=true, distribution=LogNormal, random=rand),color=csc[50];N)
+	s4=scenario(ū=sed(mean=2.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.1,max=0.95, normalize=true, distribution=LogNormal, random=rand),color=csc[60];N)
+	s5=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.15,max=1.55, normalize=true, distribution=LogNormal, random=rand),color=csc[70];N)
+	s6=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.2,max=2.55, normalize=true, distribution=LogNormal, random=rand),color=csc[90];N)
+	s7=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.4,max=4.55, normalize=true, distribution=LogNormal, random=rand),color=csc[100];N)
 
 	phaseplot!(Kuznets,s1; attractor_size)
 	phaseplot!(Kuznets,s2,show_exploitation=false;attractor_size)
@@ -128,14 +126,14 @@ function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 	phaseplot!(Kuznets,s5,show_exploitation=false;attractor_size)
 	phaseplot!(Kuznets,s6,show_exploitation=false;attractor_size)
 	phaseplot!(Kuznets,s7,show_exploitation=false;attractor_size)
-
+#=
 	for (i,s) in enumerate([s1,s3,s5,s7])
 		iax=CairoMakie.Axis(Income_distribution[i,1])
 		hidedecorations!(iax)
-		incomes!(iax,s,show_text=false, indexed=:w̃, fix_xlim=false)
+		#incomes!(iax,s,show_text=false, indexed=:w̃, fix_xlim=false)
 	end
-
-	Colorbar(fig3[1,5], label="Time",ticks=([0,1],["start","end"]),colormap=ColorSchemes.davos,tellwidth=true)
+=#
+	Colorbar(fig3[1,5], label="Time",ticks=([0,1],["start","end"]),colormap=ColorSchemes.grays,tellwidth=true)
 	
 	fs=20
 	Label(fig3[0,1],text="Dynamics", tellwidth=false, fontsize=fs)
@@ -562,6 +560,7 @@ figure3(saveas="../figures/system_dynamic_figure.png")
 # ╔═╡ Cell order:
 # ╠═3c57eb3d-f1e5-4ae9-ad58-a1740b4ef5b4
 # ╠═fdbe88f9-d515-4ee1-8d30-ad6e636314a2
+# ╠═673e48e4-89fd-4443-a59f-f985b68589a7
 # ╠═545cd41b-44d6-44a1-967a-fae9efcf88b6
 # ╠═d6124a1f-4b50-47ba-899c-904742a0cce5
 # ╠═54c44bd0-db85-40af-934c-adb9a372a9c8
