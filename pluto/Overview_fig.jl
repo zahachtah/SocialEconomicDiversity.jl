@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.45
+# v0.19.46
 
 using Markdown
 using InteractiveUtils
@@ -45,7 +45,7 @@ end
 save("../figures/distributions_correlations.png",f)
 
 # ╔═╡ a0ae2b9f-2928-4ea8-a9cf-184c699f005b
-S=scenario(q=sed(mean=1.0,sigma=0.5, normalize=true, random=true,distribution=LogNormal),w=sed(min=0.1,max=0.7, random=true,distribution=LogNormal,normalize=true),N=1000)
+S=scenario(q=sed(mean=1.0,sigma=0.0, normalize=true, random=false,distribution=LogNormal),w=sed(min=0.1,max=0.7, random=false,distribution=LogNormal,normalize=true),N=1000)
 
 # ╔═╡ 53b7917e-e1d9-4357-8354-e4a75c91706f
 phaseplot(S)
@@ -53,8 +53,8 @@ phaseplot(S)
 # ╔═╡ 96ae536b-13fb-4552-84c7-f10eceb7c321
 begin
 	g=Figure(size=(300,600))
-	a=CairoMakie.Axis(g[1,1], ylabel="Participation", xlabelcolor=:crimson, ylabelcolor=:crimson,ylabelfont=:bold)
-	b=CairoMakie.Axis(g[2,1], ylabel="Participation",xlabel="Resource level", xlabelcolor=:forestgreen, ylabelcolor=:crimson,ylabelfont=:bold,xlabelfont=:bold)
+	a=CairoMakie.Axis(g[1,1])
+	b=CairoMakie.Axis(g[2,1])
 	hist!(b,S.w̃,normalization=:probability, bins=20,color=:gray)
 	phaseplot!(a,S, show_potential=false, show_attractor=false, show_exploitation=false)
 	phaseplot!(b,S, show_sustained=false, show_attractor=false, show_exploitation=false)
@@ -63,11 +63,39 @@ begin
 	g
 end
 
+# ╔═╡ f9449414-0ca1-41ad-96e2-4dfbc115af91
+begin
+	hh=Figure(size=(600,300))
+	ah=CairoMakie.Axis(hh[1,1])
+	bh=CairoMakie.Axis(hh[1,2])
+	hist!(bh,S.w̃,normalization=:probability, bins=20,color=:gray)
+	#phaseplot!(ah,S, show_potential=false, show_attractor=false, show_exploitation=false)
+	#phaseplot!(bh,S, show_sustained=false, show_attractor=false, show_exploitation=false)
+	
+	
+	hh
+end
+
+# ╔═╡ 0a7e7ea3-f31b-48e8-b276-ee6eda2e28b1
+save("../figures/incentives_impact_vert.png",hh)
+
 # ╔═╡ c9b1a750-2d0a-4f9b-8a00-6b13ab9ad4a4
 save("../figures/incentives_impact.png",g)
 
 # ╔═╡ 90ee4fb3-2b35-4c84-a264-9b4d4868b4fe
-hist(S.w̃,bins=20)
+begin
+	c=Figure(size=(300,400))
+	ac=CairoMakie.Axis(c[1,1], ylabel="Participation",  xlabel="Resource level")
+	bc=CairoMakie.Axis(c[2,1], height=70, xlabel="Incentives", ylabel="Incomes")
+	hideydecorations!(bc, label=false)
+	hidexdecorations!(bc, label=false,ticks=false,ticklabels=false)
+	phaseplot!(ac,S,show_trajectory=false)
+	incomes!(bc,S,indexed=:w̃, show_text=false)
+	c
+end
+
+# ╔═╡ 085b739a-f7b0-4e8d-a791-2bc8b39915a9
+save("../figures/incentive_&_impact.png",c)
 
 # ╔═╡ Cell order:
 # ╠═d69786f8-fd35-4305-aed0-7cd2308b473f
@@ -75,6 +103,9 @@ hist(S.w̃,bins=20)
 # ╠═a0ae2b9f-2928-4ea8-a9cf-184c699f005b
 # ╠═53b7917e-e1d9-4357-8354-e4a75c91706f
 # ╠═96ae536b-13fb-4552-84c7-f10eceb7c321
+# ╠═f9449414-0ca1-41ad-96e2-4dfbc115af91
+# ╠═0a7e7ea3-f31b-48e8-b276-ee6eda2e28b1
 # ╠═c9b1a750-2d0a-4f9b-8a00-6b13ab9ad4a4
 # ╠═90ee4fb3-2b35-4c84-a264-9b4d4868b4fe
+# ╠═085b739a-f7b0-4e8d-a791-2bc8b39915a9
 # ╠═5bd4ce7c-6443-11ef-0dbe-0f796c635152

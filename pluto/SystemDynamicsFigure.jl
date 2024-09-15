@@ -15,13 +15,16 @@ begin
 	set_theme!(theme_light())
 end;
 
-# ╔═╡ 19664c9e-29e4-4fb2-bd89-6067a07fd68a
-[scenario(ū=sed(mean=3*c, sigma=1.0,  normalize=true),w=sed(median=2*c,sigma=0.5*c, normalize=true, distribution=LogNormal)) for c in range(0.0,stop=1.0,length=10)]
+# ╔═╡ cc0aebe2-dbb9-4159-b91f-2ef9475ad435
+begin 
+	str = "M 130 110 C 160 110, 150 180, 190 180"
+	bp = BezierPath(str, fit = true)
+	scatter([1],[1], marker = bp, markersize = 20, color=:transparent, strokewidth=2,strokecolor=:black)
+end
 
 # ╔═╡ 545cd41b-44d6-44a1-967a-fae9efcf88b6
-function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize=12, cs=(low=ColorSchemes.tab20[1], medium=ColorSchemes.tab20[5], high=ColorSchemes.tab20[3]), saveas="", show_attractor=true, attractor_size=10)
+function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize=12, cs=(low=ColorSchemes.tab20[1], medium=ColorSchemes.tab20[5], high=ColorSchemes.tab20[3]), saveas="", show_attractor=true, attractor_size=12)
 
-arc
 
 	nc=10	
 	(low,medium,high)=cs
@@ -30,24 +33,24 @@ arc
 	B=300
 	fig3=Figure(size=(3.5*B,2*B))
 	
-	impact_potential=CairoMakie.Axis(fig3[1,3],yticks = 0:1,xticks = 0:1,titlefont=font, limits=(0,1,0,1),aspect=1)#, titlecolor=:black
+	impact_potential=CairoMakie.Axis(fig3[1,2],yticks = 0:1,xticks = 0:1,titlefont=font, limits=(0,1,0,1),aspect=1)#, titlecolor=:black
 	hidexdecorations!(impact_potential, ticklabels=false)
 	hidespines!(impact_potential)
 	
-	covar_impact=CairoMakie.Axis(fig3[2,3],yticks = 0:1,xticks = 0:1,titlefont=font)
+	covar_impact=CairoMakie.Axis(fig3[2,2],yticks = 0:1,xticks = 0:1,titlefont=font)
 	hidexdecorations!(covar_impact, ticklabels=false)
 	hidespines!(covar_impact)
 	
-	Behavioural_adaptability=CairoMakie.Axis(fig3[1,1],xticks = 0:1,yticks = 0:1,titlefont=font)
+	Behavioural_adaptability=CairoMakie.Axis(fig3[1,3],xticks = 0:1,yticks = 0:1,titlefont=font)
 	hideydecorations!(Behavioural_adaptability)
 	hidespines!(Behavioural_adaptability)
 	
-	inequality=CairoMakie.Axis(fig3[1,2],titlefont=font,yticks = 0:1,xticks = 0:1)
+	inequality=CairoMakie.Axis(fig3[1,1],titlefont=font,yticks = 0:1,xticks = 0:1)
 	hidexdecorations!(inequality, ticklabels=false)
 	hideydecorations!(inequality)
 	hidespines!(inequality)
 	
-	development=CairoMakie.Axis(fig3[2,2],titlefont=font, ylabel="Participation",yticks = 0:1,xticks = 0:1)
+	development=CairoMakie.Axis(fig3[2,1],titlefont=font, ylabel="Participation",yticks = 0:1,xticks = 0:1)
 	hidexdecorations!(development, ticklabels=false)
 	hideydecorations!(development, label=false)
 	hidespines!(development)
@@ -56,7 +59,7 @@ arc
 	Kuznets=CairoMakie.Axis(fig3[1,4],yticks = 0:1,xticks = 0:1,titlefont=font, xlabel="Resource Level")
 	hidespines!(Kuznets)
 	
-	individual=CairoMakie.Axis(fig3[2,1], yscale = log10,titlefont=font, ylabel="time →",xlabel="Actors sorted by incentive, w̃")
+	individual=CairoMakie.Axis(fig3[2,3], yscale = log10,titlefont=font, ylabel="time →",xlabel="Actors sorted by incentive, w̃")
 	xlims!(individual,0,1)
 	hidespines!(individual)
 	
@@ -68,8 +71,8 @@ arc
 	
 	phaseplot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
 
-	arcarrow!(inequality,Point2f(0.2,0.5), 0.4, π/2, π/4)
-	text!(inequality, 0.5,0.55,text="increasing\ndiversity",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
+	arcarrow!(inequality,Point2f(0.25,0.55), 0.4, π/2, π/4)
+	text!(inequality, 0.55,0.55,text="Increasing\nincentive\ndiversity",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
 	#text!(ax12_fig3,0.6,0.7,text="Some actors will\nnot participate\neven with max resource",font="Gloria Hallelujah", fontsize=10,align=(:left, :top), color=:black)
 
 	d1=scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.15,sigma=0.4, normalize=true, distribution=LogNormal),color=low;N)
@@ -83,7 +86,8 @@ arc
 	arrow_fun(x) = Point2f(1.9,0.0)
 	strength=0.5
 	arrows!(development, xs, ys, arrow_fun, arrowsize = 15, lengthscale = 0.3, linewidth=2)
-	text!(development, 0.2,0.5,text="economic\ndevelopment",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
+	text!(development, 0.52,0.5,text="Economic\ndevelopment",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
+		text!(development, 0.45,0.28,text="Increasing\nmean incentives",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
 	
 
    
@@ -91,31 +95,42 @@ arc
 	phaseplot!(impact_potential,scenario(ū=sed(mean=1.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
 	phaseplot!(impact_potential,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false,show_exploitation=false;show_attractor,attractor_size)
 	arcarrow!(impact_potential,Point2f(1.0,0.0), 0.7, π*0.9, π*0.6, begin_arrow=true,end_arrow=false)
-		text!(impact_potential, 0.25,-0.03,text="increasing\nimpact",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
+		text!(impact_potential, 0.25,-0.03,text="Increasing\ntotal impact",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
 
-	covstr=3
-	coscneg=scenario(ū=sed(mean=2.0, sigma=-covstr/1.04, normalize=true, distribution=LogNormal),w=sed(min=0.15,max=0.65, normalize=true, distribution=LogNormal),color=low;N)
-	coscbase=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.65, normalize=true, distribution=LogNormal),color=medium;N)
-	coscpos=scenario(ū=sed(mean=2.0, sigma=covstr/1.44,  normalize=true,distribution=LogNormal),w=sed(min=0.15,max=0.65, normalize=true, distribution=LogNormal),color=high;N)
-	phaseplot!(covar_impact,coscneg,show_trajectory=false, show_exploitation=true;show_attractor,attractor_size)
-	phaseplot!(covar_impact,coscbase,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
-	phaseplot!(covar_impact,coscpos,show_trajectory=false, show_exploitation=false;show_attractor,attractor_size)
-	#phaseplot!(CairoMakie.Axis(fig3[2,4]),coscneg)
+	covstr=2.4
+	coscGray=scenario(ū=sed(mean=1.5, sigma=0.0,  normalize=true),w̃=sed(min=0.15,max=0.65, normalize=false, distribution=LogNormal),color=:lightgray;N)
+	coscneg=scenario(ū=sed(mean=1.5, sigma=-covstr/2.94, normalize=true, distribution=LogNormal),w̃=sed(min=0.15,max=0.65, normalize=false, distribution=LogNormal),color=low;N)
+	coscbase=scenario(ū=sed(mean=1.5, sigma=0.0,  normalize=true),w̃=sed(min=0.15,max=0.65, normalize=false, distribution=LogNormal),color=medium;N)
+	coscpos=scenario(ū=sed(mean=2.0, sigma=covstr/2.04,  normalize=true,distribution=LogNormal),w̃=sed(min=0.15,max=0.65, normalize=false, distribution=LogNormal),color=high;N)
+	phaseplot!(covar_impact,coscGray,show_trajectory=false, show_exploitation=true,show_sustained=false,show_attractor=false;attractor_size)
+	phaseplot!(covar_impact,coscneg,show_trajectory=false, show_exploitation=false,show_potential=false;show_attractor,attractor_size)
+	phaseplot!(covar_impact,coscbase,show_trajectory=false, show_exploitation=false,show_potential=false;show_attractor,attractor_size)
+	phaseplot!(covar_impact,coscpos,show_trajectory=false, show_exploitation=false,show_potential=false;show_attractor,attractor_size)
+	text!(covar_impact, 0.15,0.8,text="Convex impact curve:\nw̃ and ū correlate",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
+	text!(covar_impact, 0.48,0.7,text="cor(w̃,ū)>0",font=annotation_font,fontsize=16,color=high,lineheight=0.5)
+	text!(covar_impact, 0.29,-0.02,text="cor(w̃,ū)<0",font=annotation_font,fontsize=16,color=low,lineheight=0.5)
+	text!(covar_impact, 0.4,0.4,text="cor(w̃,ū)=0",font=annotation_font,fontsize=16,color=medium,lineheight=0.5)
+	scatter!(covar_impact,coscneg.y,coscneg.U,markersize=12,color=low)
+	scatter!(covar_impact,coscpos.y,coscpos.U,markersize=12,color=high)
+	scatter!(covar_impact,coscbase.y,coscbase.U,markersize=12,color=medium)
    
 	ba1=scenario(α=sed(mean=0.5,sigma=0.0, normalize=true),	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=low;N)
 	ba2=scenario(α=sed(mean=2.0,sigma=0.0, normalize=true),ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.1,max=1.0, normalize=true, distribution=LogNormal),color=high;N)
 	
 	phaseplot!(Behavioural_adaptability,ba1,show_trajectory=true, show_exploitation=true;show_attractor,attractor_size)
 	phaseplot!(Behavioural_adaptability,ba2,show_trajectory=true, show_exploitation=false;show_attractor,attractor_size)
-	
+	text!(Behavioural_adaptability, 0.55,0.6,text="Increasing\nrelative\ndynamics",font=annotation_font,fontsize=14,color=:black,lineheight=0.5)
+	arrow_fun2(x) = Point2f(0.2,0.3)
+	arrows!(Behavioural_adaptability, [0.5], [0.35], arrow_fun2, arrowsize = 15, lengthscale = 0.55, linewidth=2)
 
 		s13=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.25,max=0.55, normalize=true, distribution=LogNormal),color=high;N)
 	#Main Phaseplot
-    csc=ColorSchemes.:grays#bam#magma
+    csc=ColorSchemes.:rainbow2#bam#magma
 	cl=length(csc)
 	rand=false
-	S=[scenario(ū=sed(mean=3*c, sigma=1.0,  normalize=true),w=sed(median=2*c,sigma=0.5*c, normalize=true, distribution=LogNormal),color=csc[30];N) for c in range(0.0,stop=1.0,length=10)]
-	s1=scenario(ū=sed(mean=0.5, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.25, normalize=true, distribution=LogNormal),color=csc[30];N)
+	is=1.25
+	S=[scenario(ū=sed(mean=3*c*is, sigma=0.0,  normalize=true),w=sed(median=0.8*c/is,sigma=0.5, normalize=true, distribution=LogNormal),color=:lightgray;N) for c in range(0.1,stop=2.0,length=100)]
+	s1=scenario(ū=sed(mean=0.5, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.25, normalize=true, distribution=LogNormal),color=:lightgray;N)
 	s2=scenario(ū=sed(mean=1.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.05,max=0.65, normalize=true, distribution=LogNormal, random=rand),color=csc[40];N)
 	s3=scenario(ū=sed(mean=1.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.075,max=0.75, normalize=true, distribution=LogNormal, random=rand),color=csc[50];N)
 	s4=scenario(ū=sed(mean=2.0, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.1,max=0.95, normalize=true, distribution=LogNormal, random=rand),color=csc[60];N)
@@ -123,6 +138,14 @@ arc
 	s6=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.2,max=2.55, normalize=true, distribution=LogNormal, random=rand),color=csc[90];N)
 	s7=scenario(ū=sed(mean=2.5, sigma=1.0,  normalize=true, random=rand),w=sed(min=0.4,max=4.55, normalize=true, distribution=LogNormal, random=rand),color=csc[100];N)
 
+	m=7
+	for (i,s) in enumerate(S)
+		mod(i,m)==1 ? phaseplot!(Kuznets,s; attractor_size=0, show_exploitation=i==1 ? true : false) : nothing
+		scatter!(Kuznets,[s.y],[s.U],color=csc[i])
+	end
+	lines!(Kuznets,[s.y for s in S],[s.U for s in S], colormap=csc,color=1:length(S), linewidth=1)
+	text!(Kuznets, 0.3,0.4,text="Attractor\ntrajectory\nover time as\nincentives and\nimpacts change",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
+	#=
 	phaseplot!(Kuznets,s1; attractor_size)
 	phaseplot!(Kuznets,s2,show_exploitation=false;attractor_size)
 	phaseplot!(Kuznets,s3,show_exploitation=false;attractor_size)
@@ -130,28 +153,29 @@ arc
 	phaseplot!(Kuznets,s5,show_exploitation=false;attractor_size)
 	phaseplot!(Kuznets,s6,show_exploitation=false;attractor_size)
 	phaseplot!(Kuznets,s7,show_exploitation=false;attractor_size)
-
+=#
 	for (i,s) in enumerate([coscpos,coscbase,coscneg])
 		iax=CairoMakie.Axis(Income_distribution[i,1])
 		hidedecorations!(iax)
-		incomes!(iax,s,show_text=false, indexed=:w̃, fix_xlim=false)
+		#incomes!(iax,s,show_text=false, indexed=:w̃, fix_xlim=false)
 	end
 
-	Colorbar(fig3[1,5], label="Time",ticks=([0,1],["start","end"]),colormap=ColorSchemes.grays,tellwidth=true)
+	Colorbar(fig3[1,5], label="Time",ticks=([0,1],["end","start"]),colormap=reverse(csc),tellwidth=true)
 	
 	fs=20
-	Label(fig3[0,1],text="Dynamics", tellwidth=false, fontsize=fs)
-	Label(fig3[0,2],text="Incentives", tellwidth=false, fontsize=fs)
-	Label(fig3[0,3],text="Impacts", tellwidth=false, fontsize=fs)
+	Label(fig3[0,3],text="Dynamics, α", tellwidth=false, fontsize=fs)
+	Label(fig3[0,1],text="Incentives, w̃", tellwidth=false, fontsize=fs)
+	Label(fig3[0,2],text="Impact, ū", tellwidth=false, fontsize=fs)
 	Label(fig3[0,4],text="Environmental Kuznets", tellwidth=false, fontsize=fs)
 	fst=18
-	text!(Behavioural_adaptability,0.05,0.9,text="a", fontsize=fst)
-	text!(individual,0.05,1000,text="b", fontsize=fst)
+	text!(Behavioural_adaptability,0.05,0.9,text="e", fontsize=fst)
+	text!(individual,0.05,1000,text="f", fontsize=fst)
 	text!(individual,0.65,1000,text="Participation \nover time", fontsize=fst)
-	text!(inequality,0.05,0.9,text="c", fontsize=fst)
-	text!(development,0.05,0.9,text="d", fontsize=fst)
-	text!(impact_potential,0.05,0.9,text="e", fontsize=fst)
-	text!(covar_impact,0.05,0.9,text="f", fontsize=fst)
+	text!(inequality,0.05,0.9,text="a", fontsize=fst)
+	text!(development,0.05,0.9,text="b", fontsize=fst)
+	text!(impact_potential,0.05,0.9,text="c", fontsize=fst)
+	text!(covar_impact,0.05,0.9,text="d", fontsize=fst)
+	text!(Kuznets,0.05,0.9,text="g", fontsize=fst)
 	#println(s13.w̃.data)
 	individual_u!(individual,ba2, rot=true)
  	saveas!="" ? save(saveas,fig3) : nothing
@@ -558,13 +582,9 @@ function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize
 	fig3
 end
 
-# ╔═╡ 3c57eb3d-f1e5-4ae9-ad58-a1740b4ef5b4
-figure3(saveas="../figures/system_dynamic_figure.png")
-
 # ╔═╡ Cell order:
-# ╠═3c57eb3d-f1e5-4ae9-ad58-a1740b4ef5b4
 # ╠═fdbe88f9-d515-4ee1-8d30-ad6e636314a2
-# ╠═19664c9e-29e4-4fb2-bd89-6067a07fd68a
+# ╠═cc0aebe2-dbb9-4159-b91f-2ef9475ad435
 # ╠═545cd41b-44d6-44a1-967a-fae9efcf88b6
 # ╠═d6124a1f-4b50-47ba-899c-904742a0cce5
 # ╠═54c44bd0-db85-40af-934c-adb9a372a9c8
