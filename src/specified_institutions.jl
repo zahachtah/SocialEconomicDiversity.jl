@@ -226,17 +226,16 @@ Configures the economic incentive based on the specified target, maximum value, 
 - If the target is `:q`, it adjusts both `s.aū` and `s.aw̃` by adding the incentive effect to `s.aū` and normalizing `s.aw̃`.
 """
 function economic_incentive(institution::Economic_incentive, s)
-    temp=s.institution[1]
-    s.institution=[]
-    sim!(s)
-   if s.y>0.5
+    S=deepcopy(s)
+    S.institution=[]
+    sim!(S)
+   if S.y>0.5
         institution.subsidize=true
         println("subsidy")
     else
         institution.subsidize=false
         println("tax")
     end
-    s.institution=[temp]
     if institution.target == :p
         # Adjust aw̃ by adding the incentive effect
         s.aw̃ = ones(s.N)  ./ (1 + institution.max * (1.0-institution.value) * (institution.subsidize ? 1.0 : -1.0))
