@@ -227,6 +227,8 @@ Configures the economic incentive based on the specified target, maximum value, 
 """
 function economic_incentive(institution::Economic_incentive, s)
     S=deepcopy(s)
+    S.aw̃=ones(s.N)
+    S.aū=ones(s.N)
     S.institution=[]
     sim!(S)
    if S.y>0.5
