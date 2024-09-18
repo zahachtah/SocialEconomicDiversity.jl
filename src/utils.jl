@@ -122,6 +122,7 @@ function institutional_impact!(S;M=100, inst=1)
         gini::Array{Float64}=[]
         I::Array{Float64}=[]
         y::Array{Float64}=[]
+        println(typeof(inst)==Protected_area)
         t=range(typeof(inst)==Protected_area ? 1/M : 0.0,stop=1.0,length=M)
         told=s.institution[inst].value
         U=zeros(s.N,M)
