@@ -84,7 +84,7 @@ function institutional_impact!(S,inst::SocialEconomicDiversity.Institution;M=100
         gini::Array{Float64}=[]
         I::Array{Float64}=[]
         y::Array{Float64}=[]
-        t=range(0.0,stop=1.0,length=M)
+        t=range(typeof(inst)==Protected_area ? 1/M : 0.0,stop=1.0,length=M)
         U=zeros(s.N,M)
         y0=1.0
         u0=fill(0.0/s.N,s.N)
