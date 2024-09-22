@@ -50,11 +50,11 @@ Handles the dynamic allocation of permits based on the specified criteria and wh
 function dynamic_permits(institution::Dynamic_permit_allocation,du,u,s,t)
     n=Int64(round(institution.value.*s.N)) # number of allowed permitholders (can we do this at scenario creation)
     id=findall(u[1:s.N].>0.0)      # get all who would like to use resource since this is after applying+du its essentially u_t+1
-    l=length(id)                  # number of potential resource users 
-    if l>n  # if number of actors that want to use resource are more than number of permits 
+    l=length(id)                  # number of potential resource users
+    if l>n  # if number of actors that want to use resource are more than number of permits
         #println(p.target)
         if institution.reverse
-            #r=max(1,l-n+1):l 
+            #r=max(1,l-n+1):l
             r=(l-n+1):l   # select the permit holders (given to high w)
         else
             r=1:n # select the permit holders (given to low w)
@@ -113,7 +113,7 @@ Handles the equal share allocation based on the specified target and value.
 """
 function equal_share(institution::Equal_share_allocation, du, u, s, t)
     # Calculate the number of entities that wish to use the resource
-    
+
     n = sum(u .> 0.0)
 
     if institution.target == :yield
@@ -172,7 +172,7 @@ Configures the protected area based on the specified dispersal rate and value.
 function protected_area(institution::Protected_area, s)
     # Set the proportion of the area that is protected
     s.protected = 1 - institution.value
-    
+
     # Set the dispersal rate in the scenario
     s.dispersal = institution.dispersal
 end
@@ -207,7 +207,7 @@ mutable struct Economic_incentive <: StaticInstitution
     description::String
     cost::Function
     # Constructor for `Economic_incentive` with default parameter values
-    function Economic_incentive(; target::Symbol = :q, max::Float64 = 1.0, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive, label::String="Economic incentive", description::String="Configures the economic incentive based on the specified target, maximum value, reverse flag, and value.", cost=x->subsidize ? -x : x)
+    function Economic_incentive(; target::Symbol = :q, max::Float64 = 1.0, subsidize::Bool = false, value::Float64 = 1.0, fun::Function = economic_incentive, label::String="Economic incentive", description::String="Configures the economic incentive based on the specified target, maximum value, reverse flag, and value.", cost=x->subsidize ? -x.value : x.value)
         new(target, max, subsidize, value, fun, label,description,cost)
     end
 end
@@ -248,7 +248,7 @@ function economic_incentive(institution::Economic_incentive, s)
     elseif institution.target == :w
         # Normalize aw̃ based on the incentive effect
         s.aw̃ = ones(s.N)  .* (1 + institution.max * (1.0-institution.value) * (institution.subsidize ? 1.0 : -1.0))
-      
+
     end
 end
 
@@ -279,13 +279,13 @@ mutable struct Market <: DynamicInstitution
     description::String
     cost::Function
     # Constructor for `Market` with default parameter values
-    function Market(;criteria::Symbol = :ϕ, 
-                    target::Symbol = :effort, 
-                    value::Float64 = 1.0, 
-                    market_rate::Float64 = 0.01, 
+    function Market(;criteria::Symbol = :ϕ,
+                    target::Symbol = :effort,
+                    value::Float64 = 1.0,
+                    market_rate::Float64 = 0.01,
                     fun::Function = market,
                     label::String="Market mechanism",
-                    description::String="Executes the market mechanism for allocating resources based on supply and demand.", 
+                    description::String="Executes the market mechanism for allocating resources based on supply and demand.",
                     cost=x->0)
         new(criteria, target, value, market_rate,fun, label,description,cost)
     end
@@ -319,16 +319,16 @@ function market(institution::Market, du, u, s, t)
 
     # Identify entities that wish to increase their usage
     id = findall(du[1:s.N] .> 0.0)
-    
+
     # Calculate individual demand for increased usage
     ind_demand = min.(view(du, id), view(s.ū, id) .- (view(u, id)))
     demand = sum(ind_demand)
-    
+
     # If demand exceeds supply, adjust the desired change in usage proportionally to the available supply
     if demand > supply
         du[id] .= supply .* ind_demand ./ demand
     end
-    
+
     # Update the tradable quota price based on the difference between demand and supply
     du[s.N+3] = s.institution[1].market_rate * (demand - supply)
 end

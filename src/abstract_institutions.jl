@@ -1,4 +1,7 @@
-
+# Abstract institution types are a means of assigning the stage of the simulation at which the institutional impact is calculated.
+# For example, Markets and Protected areas (DynamicInstitutions) are implemented in the actual differential equation, while
+# Dynamic permits (LimitInstitutions) are in the stagelimiter (between step limitaiton). Economic incentives (Static Institutiuons) are applied
+# before the simulation actually starts. Note that one could implement a economic incentive that is dynamic also if one wants too.
 
 abstract type Institution end
 

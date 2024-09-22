@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.45
+# v0.19.46
 
 using Markdown
 using InteractiveUtils
@@ -24,7 +24,6 @@ md"
 begin
 	random=false
 	distribution=LogNormal
-	
 	s1=scenario(
 		w=sed(min=0.01,max=0.3,normalize=true;random,distribution),
 		q=sed(mean=1.0,sigma=0.0,normalize=true;random),
@@ -100,7 +99,7 @@ begin
 	iPA=Protected_area()
 	iEp=Economic_incentive(target=:p,max=0.9)
 	iEq=Economic_incentive(target=:q,max=0.9)
-	institutions=[iPH,iPL,iSE,iSY,iTE,iTY,iPA] #iPL,iEp
+	institutions=[iPH,iPL,iSE,iSY,iTE,iTY,iPA,iEp,iEq] #iPL,iEp
 end
 
 # ╔═╡ 196ec14a-cb05-4d7a-80f7-14bfaf1e9b39
@@ -128,7 +127,7 @@ for q its more tricky I think? should we assume that the increase in value that 
 # ╔═╡ 56564230-1a0c-4aef-9084-ac8f92795b67
 md"# Income distributions as options!
 # Shade grays as best of institutions!
-## y could be a ecosysyem funciton goal, e.g. preserve coral reef grazing
+## y could be a ecosystem status, e.g. preserve coral reef grazing
 ## somethings fishy with trade revenues for market effort
 "
 
@@ -332,6 +331,15 @@ c=context_diversity(Scenarios[1:4],w=[0.0,1.0,-0.25])
 # ╔═╡ 8f49c68a-7fa2-4c4a-a338-249db821b57d
 save("../figures/Contexts.png",c)
 
+# ╔═╡ f15519b1-6a0c-44eb-9555-531e32f617aa
+
+
+# ╔═╡ 43e4865a-7ead-4302-b422-8417341f32bc
+scatter(h_original)
+
+# ╔═╡ 3a89c366-4b00-4c45-a942-e86d101f7128
+scatter(h_transformed)
+
 # ╔═╡ Cell order:
 # ╟─8dc1246f-47ac-4a41-af25-bdbf4bad30c7
 # ╠═1a452997-4471-4803-93e7-7b4c66fd676f
@@ -355,3 +363,6 @@ save("../figures/Contexts.png",c)
 # ╠═9c5d3d93-17c6-4d15-bd91-abb31f0868cb
 # ╠═5920f1db-1ad1-4ed2-b877-57add06b843c
 # ╠═aafff548-39d3-11ef-39ed-d166b0a452b7
+# ╠═f15519b1-6a0c-44eb-9555-531e32f617aa
+# ╠═43e4865a-7ead-4302-b422-8417341f32bc
+# ╠═3a89c366-4b00-4c45-a942-e86d101f7128
