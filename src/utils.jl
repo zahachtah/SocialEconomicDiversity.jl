@@ -64,7 +64,7 @@ function revenues!(S::Scenario)
             T=S.institution[1]==:target ? (S.y*(1.0-S.protected)).*S.N : S.N
             S.trade_revenue=(S.institution[1].value./T.-S.u).*S.ϕ.*S.r.*S.p.*S.K;
         end
-        inst_cost=typeof(S.institution[1]) <: SocialEconomicDiversity.Institution ? S.institution[1].cost(S.institution[1].value)./S.N : 0.0
+        inst_cost=typeof(S.institution[1]) <: SocialEconomicDiversity.Institution ? S.institution[1].cost(S.institution[1])./S.N : 0.0
     end
     #R̃ₕᵣ= S.u.*(S.y .- S.w̃);
     S.total_revenue = S.wage_revenue .+  S.resource_revenue .+S.trade_revenue.+ inst_cost

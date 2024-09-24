@@ -110,7 +110,7 @@ Lets check how these institutions work for one scenario. First we do an institut
 [institutional_impact!(s,inst) for inst in institutions, s in Scenarios]
 
 # ╔═╡ 30976e77-1f49-4e89-810c-6414ff0f8292
-186/60
+institutions
 
 # ╔═╡ 72edff09-b442-4373-bc63-58376ede8e35
 [s.y for s in Scenarios]
