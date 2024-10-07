@@ -87,7 +87,7 @@ function figure3d(; font="Georgia", annotation_font="Gloria Hallelujah", fontsiz
 	strength=0.5
 	arrows!(development, xs, ys, arrow_fun, arrowsize = 15, lengthscale = 0.3, linewidth=2)
 	text!(development, 0.52,0.5,text="Economic\ndevelopment",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
-		text!(development, 0.45,0.28,text="Increasing\nmean incentives",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
+		text!(development, 0.45,0.08,text="Increasing\nmean outside\nlievelihood\nopportunities",font=annotation_font,fontsize=16,color=:black,lineheight=0.5)
 	
 
    
