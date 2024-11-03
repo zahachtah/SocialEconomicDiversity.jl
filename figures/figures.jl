@@ -1375,3 +1375,60 @@ function SI_figure_PA_yield(;R=100, minw=0.01,k=3, dispersal=0.2, save_fig=false
     save_fig ? save("graphics/SI_figure_PA_yield.png",f) : nothing
     f
 end
+
+function explain_institutions(s)
+    d=200
+    f=Figure(size=(5*d,3*d))
+    a1=Axis(f[1,1])
+    a2=Axis(f[1,2])
+    a3=Axis(f[1,3])
+    a4=Axis(f[1,4])
+    a5=Axis(f[1,5])
+    b1=Axis(f[2,1])
+    b2=Axis(f[2,2])
+    b3=Axis(f[2,3])
+    b4=Axis(f[2,4])
+    b5=Axis(f[2,5])
+    linkyaxes!(b1, b2,b3,b4,b5)
+    c1=Axis(f[3,1])
+    c2=Axis(f[3,2])
+    c3=Axis(f[3,3])
+    c4=Axis(f[3,4])
+    c5=Axis(f[3,5])
+    s.institution=[]
+    sim!(s,y0=0.7)
+    u0=s.u
+    y0=s.y
+    barplot!(a1,s.w̃,s.u)
+    barplot!(a1,s.w̃,s.ū.-s.u)
+    incomes!(b1,s)
+    phaseplot!(c1,s,show_realized=true, show_trajectory=true)
+    s.institution=[Dynamic_permit_allocation(value=0.3, reverse=false)]
+    sim!(s)
+    barplot!(a2,s.w̃,s.u)
+    barplot!(a2,s.w̃,s.ū.-s.u,offset=s.u)
+    incomes!(b2,s)
+    phaseplot!(c2,s,show_realized=true, show_trajectory=true)
+    s.institution=[Dynamic_permit_allocation(value=0.3, reverse=true)]
+    sim!(s)
+    barplot!(a3,s.w̃,s.u)
+    barplot!(a3,s.w̃,s.ū.-s.u,offset=s.u)
+    incomes!(b3,s)
+    phaseplot!(c3,s,show_realized=true, show_trajectory=true)
+    s.institution=[Market(value=0.6, target=:effort)]
+    sim!(s)
+    #println(s.t_ϕ)
+    barplot!(a4,s.w̃,s.u)  
+    barplot!(a4,s.w̃,s.ū.-s.u,offset=s.u)
+    incomes!(b4,s) 
+    #scatter!(c4,s.t_y,markersize=3)
+    phaseplot!(c4,s,show_realized=true, show_trajectory=true)
+    s.institution=[Market(value=0.3, target=:yield)]
+    sim!(s)
+    barplot!(a5,s.w̃,s.u)
+    barplot!(a5,s.w̃,s.ū.-s.u,offset=s.u)
+    incomes!(b5,s)
+    phaseplot!(c5,s,show_realized=true, show_trajectory=true)
+
+    f
+end
