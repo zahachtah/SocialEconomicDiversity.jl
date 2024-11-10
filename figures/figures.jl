@@ -1432,3 +1432,44 @@ function explain_institutions(s)
 
     f
 end
+
+function explain_institutions(;sort_w=true)
+    ms=10
+    mso=5
+    f=Figure(size=(900,600))
+    a1=Axis(f[1,1])
+    a2=Axis(f[2,1])
+    a3=Axis(f[1,2])
+    a4=Axis(f[2,2])
+    a5=Axis(f[1,3])
+    a6=Axis(f[2,3])
+    s=scenario(ū=sed(mean=2.0,sigma=0.0, normalize=true),w̃=sed(min=0.05,max=0.5,distribution=LogNormal),N=100)
+    sim!(s)
+
+    id=findall(s.u.>0)
+    A=fill(0.0,s.N)
+    B=fill(0.0,s.N)
+    A[id[1:20]].=1.0
+    B[id[20]:end].=1.0
+
+    Φ(y,s;X=fill(1.0,s.N),Y=fill(0.0,s.N))=length(findall(s.w̃.*X.+Y.<y))/s.N
+
+    y=range(0.0,stop=1.0,length=100)
+    lines!(a1,y,Φ.(y,Ref(s)), color=:lightgray)
+    lines!(a1,y,Φ.(y,Ref(s),X=fill(2.0,100)))
+
+    lines!(a2,y,Φ.(y,Ref(s)),color=:lightgray)
+    lines!(a2,y,Φ.(y,Ref(s),Y=fill(0.3,100)))
+
+    lines!(a3,y,Φ.(y,Ref(s)), color=:lightgray)
+    lines!(a3,y,Φ.(y,Ref(s),Y=A))
+
+    lines!(a4,y,Φ.(y,Ref(s)), color=:lightgray)
+    lines!(a4,y,Φ.(y,Ref(s),Y=B))
+
+    scatter!(a5,s.w̃,Φ.(y,Ref(s)),markersize=mso, color=:lightgray)
+    scatter!(a6,s.w̃,Φ.(y,Ref(s)),markersize=mso, color=:lightgray)
+    linkaxes!(a1,a2,a3,a4,a5,a6)
+    println(id)
+    f
+end
