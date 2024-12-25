@@ -1,19 +1,17 @@
 ### A Pluto.jl notebook ###
-# v0.20.3
+# v0.19.46
 
 using Markdown
 using InteractiveUtils
 
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
-    #! format: off
     quote
         local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
         local el = $(esc(element))
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
         el
     end
-    #! format: on
 end
 
 # ╔═╡ ab1720b2-acd9-11ef-1b86-732bee591307
@@ -286,58 +284,63 @@ set_theme!(theme_dark())
 # ╔═╡ 1e335796-6b2b-4e3f-823f-61b676872ba9
 @htl("""
 <div style="display: grid; 
-            grid-template-columns: auto auto; 
+            grid-template-columns: auto auto auto auto; 
             align-items: center; 
             gap: 0.5em;">
+
     <div style="text-align: right;">Number of actors:</div>
     <div>$(@bind N PlutoUI.Slider(3:1000, default=100)) $(N)</div>
-
-<div style="text-align: right;">Mean Impact:</div>
-    <div>$(@bind mu PlutoUI.Slider(range(0.1,stop=2.0,length=100), default=1.0)) $(round(mu,digits=2))</div>
-
-<div style="text-align: right;">Impact skew:</div>
-    <div>$(@bind s PlutoUI.Slider(range(0.1,stop=2.0,length=100),default=1.0)) $(round(s,digits=2))</div>
-
-<div style="text-align: right;">Min Incentives:</div>
-    <div>$(@bind minIn PlutoUI.Slider(range(0.01,stop=1.5,length=100), default=0.1)) $(round(minIn,digits=2))</div>
-<div style="text-align: right;">Max Incentives:</div>
-    <div>$(@bind maxIn PlutoUI.Slider(range(0.01,stop=1.5,length=100),default=0.7)) $(round(maxIn,digits=2))</div>
-
-    <div style="text-align: right;">Lognormal distribution:</div>
-    <div>$(@bind LN PlutoUI.CheckBox(false))</div>
 
 <div style="text-align: right;">Policy Instrument:</div>
     <div>$(@bind selected_option Select(["Assigned Use Rights", "Tradable Use Rights", "Protected Area","Economic Incentives","Kuznets Development"]))</div>
 
+<div style="text-align: right;">Mean Impact:</div>
+    <div>$(@bind mu PlutoUI.Slider(range(0.1,stop=2.0,length=100), default=1.0)) $(round(mu,digits=2))</div>
+
 <div style="text-align: right;">Regulation: </div>
     <div>$(@bind f PlutoUI.Slider(range(0.0,stop=1.0,length=100)))</div>
-    
+
+<div style="text-align: right;">Impact skew:</div>
+    <div>$(@bind s PlutoUI.Slider(range(0.1,stop=2.0,length=100),default=1.0)) $(round(s,digits=2))</div>
+
     <div style="text-align: right;">Open Access:</div>
     <div>$(@bind OA PlutoUI.CheckBox(false))</div>
+
+<div style="text-align: right;">Min Incentives:</div>
+    <div>$(@bind minIn PlutoUI.Slider(range(0.01,stop=1.5,length=100), default=0.1)) $(round(minIn,digits=2))</div>
 
     <div style="text-align: right;">Historical use rights:</div>
     <div>$(@bind HUR PlutoUI.CheckBox(false))</div>
 
+<div style="text-align: right;">Max Incentives:</div>
+    <div>$(@bind maxIn PlutoUI.Slider(range(0.01,stop=1.5,length=100),default=0.7)) $(round(maxIn,digits=2))</div>
+
     <div style="text-align: right;">Regulation scan:</div>
     <div>$(@bind RS PlutoUI.CheckBox(false))</div>
 
+    <div style="text-align: right;">Lognormal distribution:</div>
+    <div>$(@bind LN PlutoUI.CheckBox(false))</div>
+
 <div style="text-align: right;">Order Incomes:</div>
     <div>$(@bind order PlutoUI.CheckBox(false))</div>
+
+
+
+<div></div>
+    
+
+<div></div>
+
+
+
+
+
 
 <div style="text-align: right;">Show Trajetory:</div>
     <div>$(@bind trajectory PlutoUI.CheckBox(false))</div>
 
 </div>
 """)
-
-# ╔═╡ 747fe030-be91-4c40-a193-46bcc6d28556
-md"
-## tradable issues
-
-__something fishy, regulation has zero effect....__
-* total trade <>0
-* price > 0 at OA
-"
 
 # ╔═╡ 5d8df8c1-0608-4ae3-9ac2-31787b8868df
 md"
@@ -357,12 +360,6 @@ $\begin{align}
 \text{incentives   }  \gamma &= \tilde{w}_i + \phi, 
  \end{align}$
 """
-
-# ╔═╡ 9ddf4c5e-6c9c-4960-bf14-e9a62f9e7d8b
-md"
-### Problem summary:
-* If Rᵢ==0 there can still be demand.
-"
 
 # ╔═╡ a3a5956a-d61e-4e3c-beb4-c3db2e3cfaa8
 md"
@@ -408,11 +405,6 @@ $\begin{align}
 \end{align}$
 """
 
-# ╔═╡ bb6aa4ae-86be-4512-8ebd-d25a27fb363f
-md"
-## check for possible problem of getting paid for unused use rights
-	"
-
 # ╔═╡ 84c3854b-4fb0-4bf0-9628-a6d4cf3beb02
 function Γ(y,p; x=zeros(p.N+1))
 	
@@ -438,9 +430,6 @@ function Φ(y,p)
     end
     return f/p.N
 end
-
-# ╔═╡ 152ede59-4f6a-497a-a076-31f67e2088db
-ColorSchemes.tab20
 
 # ╔═╡ 6c5493fe-d9a4-400a-ba4e-b8ba51cf660f
 function incomes!(aa,sol,p)
@@ -520,31 +509,6 @@ begin
 	end
 end
 
-# ╔═╡ 8649fecd-24ec-4be0-84ba-ed663778e857
-function marketold(institution, du, u, s, t)
-    # Determine the supply available in the market based on the target and value
-    if s.institution[1].target == :yield
-        supply = max(0.0, s.institution[1].value - sum(u[1:s.N]) * u[s.N+1])
-    else
-        supply = max(0.0, s.institution[1].value - sum(u[1:s.N]))
-    end
-
-    # Identify entities that wish to increase their usage
-    id = findall(du[1:s.N] .> 0.0)
-
-    # Calculate individual demand for increased usage
-    ind_demand = min.(view(du, id), view(s.ū, id) .- (view(u, id)))
-    demand = sum(ind_demand)
-
-    # If demand exceeds supply, adjust the desired change in usage proportionally to the available supply
-    if demand > supply
-        du[id] .= supply .* ind_demand ./ demand
-    end
-
-    # Update the tradable quota price based on the difference between demand and supply
-    du[s.N+3] = s.institution[1].market_rate * (demand - supply)
-end
-
 # ╔═╡ d0b09169-78fa-401d-aeb0-2964ed8d59d9
 begin
 	function dxdt(dx,x,p,t)
@@ -603,103 +567,11 @@ end
 # ╔═╡ b1baaa46-9322-4a8e-821b-85fe0527ab03
 sol,z=run(p);
 
-# ╔═╡ eea2111f-755f-43d2-9c57-6a514c91ced0
-sum(sol.prob.p.U)
-
-# ╔═╡ 53b49955-f447-4f4f-995a-9809124727e8
-sum(sol[1:p.N,end-1])+sol[end-1,end-1]
-
-# ╔═╡ 85b58dc7-0cb9-4122-823a-50c7bfe35cf9
-sol[end-1,end-1]
-
-# ╔═╡ a3590b7a-d674-4ee1-b7b8-68933c98f819
-(f,s,mu,sum(sol[1:p.N,end-1]), sum(p.U),sum(p.U.-sol[1:p.N,end-1]))
-
-# ╔═╡ 83ce9571-b2b5-485a-94e9-6f1cdb015ec2
-sol[end,end]
-
-# ╔═╡ dc90beb8-f301-483b-8bfe-04439bf04372
-begin
-	m=sol.prob.p
-	fff=Figure()
-	aaa=Axis(fff[1,1])
-	id=findall(sol[1:m.N,end-1].>0.0)
-	idn=findall(sol[1:m.N,end-1].<=0.0)
-	scatter!(aaa,m.w̃,m.U, label="U")
-	scatter!(aaa,m.w̃,m.ū, label="ū")
-	scatter!(aaa,m.w̃,sol[1:m.N,end-1], label="u")
-	axislegend(aaa)
-	fff
-end
-
-# ╔═╡ 778cf486-5237-4d8d-9fd2-f0f623f74a1d
-sol.t
-
-# ╔═╡ 1e62f576-78ea-4778-afbd-0090dc9a2431
-sol[end,end-1]
-
-# ╔═╡ b2c573f4-5821-4829-b7ef-d9f2818bc83d
-sum(m.U[id].-sol[id,end-1])
-
-# ╔═╡ 3b0801c8-43c3-4fdf-9962-2e33ba24161f
-sum(m.U[idn].-sol[idn,end-1])
-
-# ╔═╡ 52dfb28c-a6fe-49c8-af94-43dff01a6308
-fieldnames(typeof(sol))
-
-# ╔═╡ b27195d0-76e0-4e33-9bf2-f997c1c694ce
-scatter(sol.t,sol[end,:])
-
-# ╔═╡ 17ae7a20-6579-40fb-b389-bd5bc519836f
-lines(sol.t,sol[end,:])
-
-# ╔═╡ c8da183e-4561-4b98-8bb3-feb9df0ac3a2
-sum(p.U.-sol[1:p.N,end-1])
-
-# ╔═╡ 84b0c6b5-7c2d-4f1d-b3e8-ef1bcffcfce8
-p.U
-
-# ╔═╡ d5125f36-8de3-4233-a5d2-7db24a1c32a2
-sum(p.ū.-sol[1:p.N,end-1])
-
-# ╔═╡ 80af2234-dc00-473d-801c-d10d6e0968a9
-p
-
-# ╔═╡ 198847ff-731b-4974-9fb3-94b69c393439
-change(p,U=fill(0.2/p.N,p.N))
-
-# ╔═╡ 54002ea1-761a-41d5-866e-d9c000bf6d92
-begin
-	x=zeros(p.N+1)
-	x[end-1]=sol.u[end][end-1]
-	x[end]=sol.u[end][end]
-	γp=p.γ(x,p,0.0)
-	idp = sortperm(γp)
-	sum(γp[idp] .< 0.4)/p.N
-end
-
-# ╔═╡ b479ad06-8815-4c18-8855-32c8b701eec5
-oasol.t
-
 # ╔═╡ 503638ac-973c-40be-a2f6-1ab8503dd790
 p.U
 
 # ╔═╡ a91ed323-d642-41b4-8a66-0080aa4ae6bb
 heatmap(sol[1:p.N,:]')
-
-# ╔═╡ 60ac29c4-07e6-41e3-8011-18c7ee787347
-begin
-	# attempt to do a vertical band, needs some work still
-	y=range(0.0,stop=1.0,length=100)
-	fig1=Figure()
-	ax=Axis(fig1[1,1])
-	v=diff(Φ.(y,Ref(p)))
-	P=Point2f[]
-	[push!(P,(y[i],-v[i])) for (i,va) in enumerate(y[1:end-1])]
-	poly!(ax,P)
-	fig1
-end
-	
 
 # ╔═╡ 60dabc08-7e84-46a3-aa7f-82cff0a44bcd
 k=kde(p.w̃)
@@ -726,9 +598,6 @@ function incomes(x,p; sum=false)
 	ecological=x[p.N+1]
 	return sum ? (;resource,wages,trade,total,g,ecological) : (;resource,wages,trade,total,gini=g,ecological)
 end
-
-# ╔═╡ 17e5fb0d-51a1-468e-af48-2482e77bd087
-sum(incomes(sol[:,end-1],p).trade)
 
 # ╔═╡ 59505297-9201-46e3-9334-d89db46df26f
 function regulation_scan(p;m=100)
@@ -765,9 +634,6 @@ function regulation_scan(p;m=100)
 	oRI=argmax(EH)
 	return (;RR,WR,TR,ToR,GI,EH,RI,r,oRR,oWR,oTR,oToR,oGI,oEH,oRI)
 end
-
-# ╔═╡ 8f7a456d-46ca-4321-ba44-3ea31d29e055
-R=regulation_scan(p)
 
 # ╔═╡ 3cb5b1d7-3ba8-45c4-9b0f-fe24b4e30944
 function fig(sol,p)
@@ -833,10 +699,6 @@ end
 # ╔═╡ c0a53509-2354-46ce-a9f5-bfb44f3e952f
 fig(sol,p)
 
-# ╔═╡ e6cebcb7-9043-46b2-bf02-c04c606f2b75
-md#
-## Defining the SocialEonomicDiversity type (SED)
-
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -866,7 +728,7 @@ Statistics = "~1.11.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.2"
+julia_version = "1.11.0"
 manifest_format = "2.0"
 project_hash = "58ae7c71289e05bd60c4d85a8ee8fe6856814692"
 
@@ -1658,9 +1520,9 @@ version = "4.1.1"
 
 [[deps.FreeType2_jll]]
 deps = ["Artifacts", "Bzip2_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
-git-tree-sha1 = "786e968a8d2fb167f2e4880baba62e0e26bd8e4e"
+git-tree-sha1 = "fa8e19f44de37e225aa0f1695bc223b05ed51fb4"
 uuid = "d7e528f0-a631-5988-bf34-fe36492bcfd7"
-version = "2.13.3+1"
+version = "2.13.3+0"
 
 [[deps.FreeTypeAbstraction]]
 deps = ["ColorVectorSpace", "Colors", "FreeType", "GeometryBasics"]
@@ -2101,10 +1963,10 @@ uuid = "d4300ac3-e22c-5743-9152-c294e39db1e4"
 version = "1.11.0+0"
 
 [[deps.Libglvnd_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll", "Xorg_libXext_jll"]
-git-tree-sha1 = "ff3b4b9d35de638936a525ecd36e86a8bb919d11"
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Xorg_libX11_jll", "Xorg_libXext_jll"]
+git-tree-sha1 = "6f73d1dd803986947b2c750138528a999a6c7733"
 uuid = "7e76a0d4-f3c7-5321-8279-8d96eeed0f29"
-version = "1.7.0+0"
+version = "1.6.0+0"
 
 [[deps.Libgpg_error_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -2159,9 +2021,9 @@ version = "1.11.0"
 
 [[deps.LinearSolve]]
 deps = ["ArrayInterface", "ChainRulesCore", "ConcreteStructs", "DocStringExtensions", "EnumX", "FastLapackInterface", "GPUArraysCore", "InteractiveUtils", "KLU", "Krylov", "LazyArrays", "Libdl", "LinearAlgebra", "MKL_jll", "Markdown", "PrecompileTools", "Preferences", "RecursiveFactorization", "Reexport", "SciMLBase", "SciMLOperators", "Setfield", "SparseArrays", "Sparspak", "StaticArraysCore", "UnPack"]
-git-tree-sha1 = "9d5872d134bd33dd3e120767004f760770958863"
+git-tree-sha1 = "6b79df6e803fb62b79a364b86c790e7e21bd38ce"
 uuid = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
-version = "2.38.0"
+version = "2.37.0"
 
     [deps.LinearSolve.extensions]
     LinearSolveBandedMatricesExt = "BandedMatrices"
@@ -3500,9 +3362,9 @@ version = "5.6.3+0"
 
 [[deps.Xorg_libX11_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libxcb_jll", "Xorg_xtrans_jll"]
-git-tree-sha1 = "9dafcee1d24c4f024e7edc92603cedba72118283"
+git-tree-sha1 = "afead5aba5aa507ad5a3bf01f58f82c8d1403495"
 uuid = "4f6342f7-b3d2-589e-9d20-edeb45f2b2bc"
-version = "1.8.6+1"
+version = "1.8.6+0"
 
 [[deps.Xorg_libXau_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -3518,9 +3380,9 @@ version = "1.1.4+1"
 
 [[deps.Xorg_libXext_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll"]
-git-tree-sha1 = "d7155fea91a4123ef59f42c4afb5ab3b4ca95058"
+git-tree-sha1 = "d2d1a5c49fae4ba39983f63de6afcbea47194e85"
 uuid = "1082639a-0dae-5f34-9b06-72781eeb8cb3"
-version = "1.3.6+1"
+version = "1.3.6+0"
 
 [[deps.Xorg_libXrender_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll"]
@@ -3536,9 +3398,9 @@ version = "0.1.1+1"
 
 [[deps.Xorg_libxcb_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "XSLT_jll", "Xorg_libXau_jll", "Xorg_libXdmcp_jll", "Xorg_libpthread_stubs_jll"]
-git-tree-sha1 = "1a74296303b6524a0472a8cb12d3d87a78eb3612"
+git-tree-sha1 = "bcd466676fef0878338c61e655629fa7bbc69d8e"
 uuid = "c7cfdc94-dc32-55de-ac96-5a1b8d977c5b"
-version = "1.17.0+1"
+version = "1.17.0+0"
 
 [[deps.Xorg_xtrans_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -3643,61 +3505,32 @@ version = "3.6.0+0"
 # ╠═ab1720b2-acd9-11ef-1b86-732bee591307
 # ╠═81f66720-3626-406b-9830-966f3e5483ee
 # ╟─1e335796-6b2b-4e3f-823f-61b676872ba9
-# ╠═eea2111f-755f-43d2-9c57-6a514c91ced0
-# ╠═53b49955-f447-4f4f-995a-9809124727e8
-# ╠═85b58dc7-0cb9-4122-823a-50c7bfe35cf9
 # ╟─c0a53509-2354-46ce-a9f5-bfb44f3e952f
-# ╠═747fe030-be91-4c40-a193-46bcc6d28556
 # ╟─5d8df8c1-0608-4ae3-9ac2-31787b8868df
-# ╠═f1736bbb-b3cf-4781-b370-90b7839e959d
-# ╠═9ddf4c5e-6c9c-4960-bf14-e9a62f9e7d8b
+# ╟─f1736bbb-b3cf-4781-b370-90b7839e959d
 # ╟─a3a5956a-d61e-4e3c-beb4-c3db2e3cfaa8
-# ╠═7f80e8ee-1870-443e-a3d5-9442ce41731d
+# ╟─7f80e8ee-1870-443e-a3d5-9442ce41731d
 # ╟─62c53ee4-59e7-465f-b0bd-c10b977be25f
-# ╠═108a901b-cc82-4dc4-9a32-5ec885dfa98e
+# ╟─108a901b-cc82-4dc4-9a32-5ec885dfa98e
 # ╟─7fef1e66-f30c-4525-9110-808f2185a782
-# ╠═cf74322b-dfe1-44ff-aa58-d9362de97e20
-# ╟─bb6aa4ae-86be-4512-8ebd-d25a27fb363f
-# ╠═a3590b7a-d674-4ee1-b7b8-68933c98f819
+# ╟─cf74322b-dfe1-44ff-aa58-d9362de97e20
 # ╠═b1baaa46-9322-4a8e-821b-85fe0527ab03
-# ╠═c8da183e-4561-4b98-8bb3-feb9df0ac3a2
-# ╠═84b0c6b5-7c2d-4f1d-b3e8-ef1bcffcfce8
-# ╠═83ce9571-b2b5-485a-94e9-6f1cdb015ec2
-# ╠═d5125f36-8de3-4233-a5d2-7db24a1c32a2
-# ╠═dc90beb8-f301-483b-8bfe-04439bf04372
-# ╠═778cf486-5237-4d8d-9fd2-f0f623f74a1d
-# ╠═1e62f576-78ea-4778-afbd-0090dc9a2431
-# ╠═b2c573f4-5821-4829-b7ef-d9f2818bc83d
-# ╠═3b0801c8-43c3-4fdf-9962-2e33ba24161f
-# ╠═52dfb28c-a6fe-49c8-af94-43dff01a6308
-# ╠═17e5fb0d-51a1-468e-af48-2482e77bd087
 # ╠═1a76ac91-709c-41bd-a6e8-1dd20d82a262
-# ╠═80af2234-dc00-473d-801c-d10d6e0968a9
-# ╠═198847ff-731b-4974-9fb3-94b69c393439
-# ╠═8f7a456d-46ca-4321-ba44-3ea31d29e055
 # ╠═59505297-9201-46e3-9334-d89db46df26f
 # ╠═84c3854b-4fb0-4bf0-9628-a6d4cf3beb02
-# ╠═54002ea1-761a-41d5-866e-d9c000bf6d92
 # ╠═8b751c9d-3dc4-4c4c-859e-7438726e5f19
 # ╠═3cb5b1d7-3ba8-45c4-9b0f-fe24b4e30944
-# ╠═152ede59-4f6a-497a-a076-31f67e2088db
 # ╠═6c5493fe-d9a4-400a-ba4e-b8ba51cf660f
-# ╠═b27195d0-76e0-4e33-9bf2-f997c1c694ce
 # ╠═9009479e-ba5e-44e9-95d9-2fff617d05c6
-# ╠═b479ad06-8815-4c18-8855-32c8b701eec5
 # ╠═a4bd1969-002b-4b3d-8a75-59eeb197409b
 # ╠═503638ac-973c-40be-a2f6-1ab8503dd790
 # ╠═a91ed323-d642-41b4-8a66-0080aa4ae6bb
-# ╠═17ae7a20-6579-40fb-b389-bd5bc519836f
 # ╠═bd28c318-4367-45ed-901b-c75cab457001
-# ╠═8649fecd-24ec-4be0-84ba-ed663778e857
-# ╠═60ac29c4-07e6-41e3-8011-18c7ee787347
 # ╠═d0b09169-78fa-401d-aeb0-2964ed8d59d9
 # ╠═60dabc08-7e84-46a3-aa7f-82cff0a44bcd
 # ╠═391208fe-1e2c-43b2-af1f-541fc45b01a0
 # ╠═9b76006f-4a6b-4f53-a70e-a5df0a9f599d
 # ╠═b7456426-3710-45cd-884b-93b4225083ac
-# ╠═e6cebcb7-9043-46b2-bf02-c04c606f2b75
 # ╠═a24e8fa5-ad77-4423-8162-88d540a62025
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
