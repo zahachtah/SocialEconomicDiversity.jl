@@ -206,6 +206,8 @@ end
 
 
 
+
+
 function update(scenario::Scenario; kwargs...)
     # Create a copy of the scenario to avoid mutating the original
     s = deepcopy(scenario)
