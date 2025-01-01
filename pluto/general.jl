@@ -321,7 +321,7 @@ md"
     <div>$(@bind N PlutoUI.Scrubbable(3:1000, default=100)) </div>
 
 <div style="text-align: right;">Policy Instrument:</div>
-    <div>$(@bind selected_policy Select(["Assigned Use Rights", "Tradable Use Rights", "Protected Area","Economic Incentives","Kuznets Development"]))</div>
+    <div>$(@bind selected_policy Select(["Assigned Use Rights", "Tradable Use Rights", "Protected Area","Economic Incentives","Development"]))</div>
 
 <div style="text-align: right;">Mean Impact:</div>
     <div>$(@bind mu PlutoUI.Scrubbable(range(0.1,stop=2.0,length=100), default=1.0, format=".2f"))</div>
@@ -330,7 +330,7 @@ md"
     <div>$(@bind f PlutoUI.Scrubbable(range(0.0,stop=1.0,length=100), format=".2f" ))</div>
 
 <div style="text-align: right;">Impact skew:</div>
-    <div>$(@bind s PlutoUI.Scrubbable(range(0.1,stop=2.0,length=100),default=1.0, format=".2f")) </div>
+    <div>$(@bind s PlutoUI.Scrubbable(range(-1,stop=1,length=100),default=0.0, format=".2f")) </div>
 
     <div style="text-align: right;">Open Access:</div>
     <div>$(@bind OA PlutoUI.CheckBox(false))</div>
@@ -355,7 +355,7 @@ md"
 
 </div>
 
-    <div style="text-align: right;">Lognormal distribution:</div>
+    <div style="text-align: right;">Lognormal w̃:</div>
     <div>$(@bind LN PlutoUI.CheckBox(false))</div>
 
 
@@ -388,11 +388,9 @@ md"
 
 """)
 
-# ╔═╡ 5a4b3648-e703-481a-bc99-dbde483e923e
+# ╔═╡ 45c5d4b5-7e1f-44aa-9ea2-15c632ce840f
 md"
-# test economic incentives on μ, does the attractor follow?
-## check for how incomes are calculated, some issues there too!
-"
+## Regulation scan only working properly for tradable use rights. historical use rights does not work with regulation scan..."
 
 # ╔═╡ c3ab2629-307c-4cf5-97c7-47154d02e239
 md"
@@ -405,13 +403,6 @@ $\dot{y}=ρ(f_U,y)y (1-y)$
 
 # ╔═╡ da0ebd8c-d4f1-43b2-8446-b61f12685e24
 
-
-# ╔═╡ cfadcd96-6313-4d3e-a04e-1ec4009dd026
-md"
-### check if incomes are calculated wrong, incomes look wrong with assigned use rights
-
-### Also, historical use rights seem to be fucked again...
-"
 
 # ╔═╡ 0028873a-a10d-4c54-a2aa-2e7f2a5cea9d
 Formalization=Dict(
@@ -443,7 +434,7 @@ m(y_p,y) & =\text{spillover effect} \\
 \text{changing effort capacities ,} q_i : \bar{u} & =\frac{\bar{e} q_i(E)}{r} \\
 \text{Utility} = U_i &= \overbrace{u_i y (1-t)}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \\[4pt] 
 \end{align}",
-"Kuznets Development"=>L"\begin{align}
+"Development"=>L"\begin{align}
 \textbf{Kuznets Development:} \\[10pt]
 \text{development trajectory}& =  E(t) \\
 \text{ changing alternative incomes, } \tilde{w} : \gamma_i & = \tilde{w}_i=\frac{w(E(t))_i}{pK} \\  
@@ -514,11 +505,13 @@ md"
 # ╔═╡ ddc7bd05-318f-4364-abde-d046cdd94627
 	begin
 		function dxdt(dx,x,p,t)
+			
 			# Extract parameters to make equations prettier
-			N,α,w̃,ū,γ,ϕ,μ=p
+			N,α,w̃,ū,γ,ϕ=p
+			
 			
 			# Actor resource use change
-			dx[1:N]=α*(x[N+1].-γ(x,p,t))
+			dx[1:N]=α*(x[N+1].-p.γ(x,p,t))
 			
 			# Resource level dynamics
 			dx[N+1]=x[N+1]*((1-x[N+1])-sum(x[1:N]))
@@ -529,10 +522,11 @@ md"
 
 		# This ensures constrained values of variables, e.g. 0>uᵢ>ū
 		function stage_limiter!(x, integrator, p, t)
+
 			
 			# Actor use limits
-			ū=p.μ(x,p,t)
-			x[1:p.N].=ifelse.(x[1:p.N].<0.0,0.0,ifelse.(x[1:p.N].>(ū),ū,x[1:p.N]))
+			
+			x[1:p.N].=ifelse.(x[1:p.N].<0.0,0.0,ifelse.(x[1:p.N].>(p.μ(x,p,t)),p.μ(x,p,t),x[1:p.N]))
 			
 			for j in p.N+1:length(x)
 				x[j]=max(0.0,x[j])
@@ -546,9 +540,6 @@ md"
 
 Here we set the scenario parameters based on the selected states in UI of the Playground. If historical use rights are to be used, run the model first in OA mode and extract actors id with use uᵢ>0. Set these use rights to share the implemented total limit."
 
-# ╔═╡ b1dde046-7127-4097-83fa-07a0567e3245
-HUR
-
 # ╔═╡ eaacdb9b-c9b7-47ba-ba85-625c00da5c27
 md"
 ### Solving the differential equations"
@@ -560,7 +551,17 @@ function run(p; u0=zeros(p.N), y0=1.0,ϕ0=0.0)
 	
 	tend=(0.0,1000.0)
 
-	initVals=selected_policy=="Tradable Use Rights" ? [u0;y0;ϕ0] :  [u0;y0]
+	if selected_policy=="Development"
+		q=change(p,γ=γ, μ=μ)
+ 		qprob = ODEProblem(dxdt,[u0;y0],tend,q);
+		qsol=solve(qprob,SSPRK432(;stage_limiter!),callback= TerminateSteadyState(1e-6,1e-4) )
+		initVals=qsol.u[end-1]
+	elseif selected_policy=="Tradable Use Rights"
+		initVals=[u0;y0;ϕ0]
+	else
+		initVals=[u0;y0]
+	end
+
 
 	 prob = ODEProblem(dxdt,initVals,tend,p);
 
@@ -576,23 +577,23 @@ md"
 
 # ╔═╡ 84c3854b-4fb0-4bf0-9628-a6d4cf3beb02
 # Incentive function
-function Γ(y,p; x=zeros(p.N+1))
+function Γ(y,p; x=zeros(p.N+1), t=0.0)
 	
 	x[p.N+1]=y
-	γ=p.γ(x,p,0.0)
+	γ=p.γ(x,p,t)
 	id = sortperm(γ) # if w_bar's are not in ascending order
     f = sum(γ[id] .< y)/p.N
 end
 
 # ╔═╡ 8b751c9d-3dc4-4c4c-859e-7438726e5f19
 # Impact function
-function Φ(y,p)
+function Φ(y,p; t=0.0)
 	x=zeros(p.N+1)
 	x[end]=y
-    γ=p.γ(x,p,0.0)
+    γ=p.γ(x,p,t)
 
     id = sortperm(γ)
-	μ=p.μ(x,p,0.0)
+	μ=p.μ(x,p,t)
     cu = cumsum(μ[id])
     f = sum(cu .< (1.0 - y))
     if f == 0
@@ -602,11 +603,6 @@ function Φ(y,p)
     end
     return f/p.N
 end
-
-# ╔═╡ 2285b9e4-04fe-4abc-904d-5bacbc012131
-md"
-# understand Whats up with μ
-"
 
 # ╔═╡ 2b950c8c-2212-4690-8f35-92f79dc664a9
 md"
@@ -688,7 +684,7 @@ end
 # ╔═╡ 6c5493fe-d9a4-400a-ba4e-b8ba51cf660f
 function incomes!(aa,sol,p)
 	resource_revenue=sol[1:p.N,end-1].*sol[p.N+1,end-1]
-	alt_revenues=p.w̃.*(p.ū .-sol[1:p.N,end-1])
+	alt_revenues=p.w̃.*(p.μ(sol[:,end-1],p,0.0) .-sol[1:p.N,end-1])
 	trade_revenues=p.ϕ==market ? (p.U.-sol[1:p.N,end-1])*sol[end,end-1] : fill(0.0,p.N) 
 	incomes=resource_revenue+alt_revenues+trade_revenues
 	inc=resource_revenue+alt_revenues
@@ -709,6 +705,14 @@ end
 md"
 ### Economic Incentives
 "
+
+# ╔═╡ fe37cba2-f16a-4b26-a7ff-ba90e4e34c76
+begin
+	function μ_economic_incentive(x,p,t)
+		
+		return p.ū.+p.regulation/p.N
+	end
+end
 
 # ╔═╡ 7260e83d-8d68-453f-b362-c964610aa6c8
 md"
@@ -751,6 +755,23 @@ begin
 	end
 end
 
+# ╔═╡ 14e082f7-007b-4f29-9c63-bdc58f4c037d
+md"
+### Development
+"
+
+# ╔═╡ 79fc5598-e8bd-4d67-b875-8885d219b269
+begin
+	function μ_development(x,p,t)
+		return p.ū.+p.regulation*2/p.N*t/1000
+	end
+
+	function γ_development(x,p,t)
+		
+		return p.w̃.+p.regulation*t/1000
+	end
+end
+
 # ╔═╡ 9009479e-ba5e-44e9-95d9-2fff617d05c6
 begin
 	# If historical use rights are to be used, run the model first in OA mode and extract actors id with use uᵢ>0. Set these use rights to share the implemented total limit.
@@ -765,17 +786,31 @@ begin
 		if n!=0
 			U[1:n].=1.0
 		end
-		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*s/N,max=mu/s/N), γ=OA ? γ : γ_assigned_use_rights,ϕ=ϕ, μ=μ, U=U, regulation=Float64(f), target=:effort)
+		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ=OA ? γ : γ_assigned_use_rights,ϕ=ϕ, μ=μ, U=U, regulation=Float64(f), target=:effort)
 	elseif selected_policy=="Tradable Use Rights"
-		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*s/N,max=mu/s/N), γ=OA ? γ : γ_market,ϕ=OA ? ϕ : market, μ=μ, U=HUR ? hur.*(1-Float64(f))./sum(hur) : fill(f==0 ? Inf : (1-Float64(f))/N,N),target=yield ? :yield : :effort,market_rate=0.05)
+		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ=OA ? γ : γ_market,ϕ=OA ? ϕ : market, μ=μ, U=HUR ? hur.*(1-Float64(f))./sum(hur) : fill(f==0 ? Inf : (1-Float64(f))/N,N),target=yield ? :yield : :effort,market_rate=0.05)
 	elseif selected_policy=="Protected Area"
-		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*s/N,max=mu/s/N), γ=OA ? γ : γ_protected_area,ϕ=ϕ, μ=μ_protected_area,m=0.3,regulation=Float64(f), target=:effort)
+		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ=OA ? γ : γ_protected_area,ϕ=ϕ, μ=μ_protected_area,m=0.3,regulation=Float64(f), target=:effort)
+	elseif selected_policy=="Economic Incentives"
+		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ= γ,ϕ=ϕ, μ=μ_economic_incentive,regulation=Float64(f), target=:effort)
+	elseif selected_policy=="Development"
+		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ= γ_development,ϕ=ϕ, μ=μ_development,regulation=Float64(f), target=:effort)
 	end
+	
 
 end
 
+# ╔═╡ fa8cd950-a8f1-48d3-8f14-84c3ed1598bd
+p
+
 # ╔═╡ b1baaa46-9322-4a8e-821b-85fe0527ab03
 sol,z=run(p);
+
+# ╔═╡ 29d857df-b02c-4431-ba63-a72e46d21ae4
+sol.t
+
+# ╔═╡ 48124195-78e0-44f5-959b-2c2a7b49d2f2
+scatter(sol[:,end])
 
 # ╔═╡ b89eb24b-2247-4b79-8c9d-0277c5661608
 Y=p.target==:effort ? 1 : y
@@ -925,7 +960,13 @@ md"
 "
 
 # ╔═╡ ebb8c96a-eaa0-499f-844b-e404241d242b
-p
+scatter([sum(sol[1:p.N,i]./p.μ(sol[:,i],p,sol.t[i]))/p.N  for i in Int64.(round.(range(1,stop=length(sol.t)-1,length=10)))])
+
+# ╔═╡ 2655a451-72bd-495d-a466-a602dc5db534
+ColorSchemes
+
+# ╔═╡ 719f1d0a-c5f2-49c6-b839-95141285eca2
+
 
 # ╔═╡ 3cb5b1d7-3ba8-45c4-9b0f-fe24b4e30944
 function fig(sol,p)
@@ -935,6 +976,7 @@ function fig(sol,p)
 	#limits!(a12,0.0,1.0,0.0,1.0)
 	limits!(a21,0.0,1.0,0.0,1.0)
 	q=change(p,γ=γ, μ=μ)
+	qrun=run(q)
 	k=p.γ(sol.u[end],p,sol.t[end])
 
 	#distribution_poly(a21,:w̃,p, scale=0.1, flip=false)
@@ -944,18 +986,31 @@ function fig(sol,p)
 	#lines!(a21,[0,1],[f,f], color=:lightgray, linestyle=:dash)
 	Y=p.target==:effort ? ones(length(y)) : y
 	lines!(a21,y,Φ.(1 .-(1-f)./Y,Ref(p)), color=:darkorange, linestyle=:dot)
-	lines!(a21,y,Γ.(y,Ref(q), x=sol.u[end]), color=:lightgray)
-	lines!(a21,y,Γ.(y,Ref(p), x=sol.u[end]))
-	lines!(a21,y,Φ.(y,Ref(p)))
-	lines!(a21,y,Φ.(y,Ref(q)), color=:lightgray)
-	scatter!(a21,[sol[p.N+1,end-1]],[sum(sol[1:p.N,end-1]./p.ū./p.N)], color=:white)
-	length(sol.u[end])>p.N+1 ? text!(a21,"ϕ: "*string(sol[end,end])) : nothing
 
 	
+	lines!(a21,y,Γ.(y,Ref(q), x=sol.u[end]), color=:lightgray)
 	
-	trajectory ? lines!(a21,[u[p.N+1] for u in sol.u[1:end-1]],[sum(u[1:p.N]./p.ū)/p.N for u in sol.u[1:end-1]], color=:white, linestyle=:dot) : nothing
+	lines!(a21,y,Γ.(y,Ref(p), x=sol.u[end], t=sol.t[end-1]))
+	lines!(a21,y,Φ.(y,Ref(p), t=sol.t[end-1]))
+	lines!(a21,y,Φ.(y,Ref(q)), color=:lightgray)
+
+		# Show trajectory
+	trajectory ? lines!(a21,[u[p.N+1] for u in sol.u[1:end-1]],[sum(u[1:p.N]./p.μ(u,p,sol.t[i]))/p.N for (i,u) in enumerate(sol.u[1:end-1])], color=selected_policy=="Development" ? sol.t[1:end-1] : :white, linestyle=:dot, colormap=cgrad([:white, :crimson], [0.0, 0.5, 1.0])) : nothing
+
+	#Show the attractor
+	scatter!(a21,[sol[p.N+1,end-1]],[sum(sol[1:p.N,end-1]./p.μ(sol.u[end-1],p,sol.t[end-1])./p.N)], color=:crimson, markersize=15)
+	if selected_policy=="Development"
+		scatter!(a21,[sol[p.N+1,1]],[sum(sol[1:p.N,1]./p.μ(sol.u[end-1],p,sol.t[1])./p.N)], color=:white, markersize=15)
+	end
+
+	# Show the market price of use rights
+	length(sol.u[end])>p.N+1 ? text!(a21,"ϕ: "*string(sol[end,end])) : nothing
+
+
+	
 	incomes!(a22,sol,p)
 	Colorbar(F[1,3],limits=extrema(p.w̃), label="w̃")
+	
 	if RS
 		R=regulation_scan(p)
 		ar=Axis(F[2,1:2], xlabel="regulation level")
@@ -3811,18 +3866,19 @@ version = "3.6.0+0"
 # ╠═d7d60288-8345-4fe8-ad95-b3e41d131e9e
 # ╠═0380f592-bd94-49e8-9006-6587e58041bc
 # ╟─9803845d-a902-4d18-8957-4fe79a6b2843
-# ╠═1e335796-6b2b-4e3f-823f-61b676872ba9
+# ╟─1e335796-6b2b-4e3f-823f-61b676872ba9
 # ╟─c0a53509-2354-46ce-a9f5-bfb44f3e952f
-# ╠═5a4b3648-e703-481a-bc99-dbde483e923e
+# ╠═fa8cd950-a8f1-48d3-8f14-84c3ed1598bd
+# ╟─45c5d4b5-7e1f-44aa-9ea2-15c632ce840f
 # ╟─7f80e8ee-1870-443e-a3d5-9442ce41731d
 # ╠═c3ab2629-307c-4cf5-97c7-47154d02e239
 # ╠═da0ebd8c-d4f1-43b2-8446-b61f12685e24
-# ╠═cfadcd96-6313-4d3e-a04e-1ec4009dd026
-# ╟─0028873a-a10d-4c54-a2aa-2e7f2a5cea9d
+# ╠═0028873a-a10d-4c54-a2aa-2e7f2a5cea9d
 # ╟─8075c52a-a263-4ca5-a9f2-c33ba43daec4
 # ╟─1a007494-f1d6-4659-8757-5b50f13a5030
 # ╠═62cf8442-617e-4508-a479-8d56287a63f4
 # ╠═b1baaa46-9322-4a8e-821b-85fe0527ab03
+# ╠═29d857df-b02c-4431-ba63-a72e46d21ae4
 # ╠═1a76ac91-709c-41bd-a6e8-1dd20d82a262
 # ╠═59505297-9201-46e3-9334-d89db46df26f
 # ╠═b89eb24b-2247-4b79-8c9d-0277c5661608
@@ -3835,15 +3891,14 @@ version = "3.6.0+0"
 # ╟─e6d63664-3b7d-451b-bfdf-6488cec68a64
 # ╠═ddc7bd05-318f-4364-abde-d046cdd94627
 # ╟─733ae727-2195-42ae-8bd8-7f8c39ef27ed
-# ╠═b1dde046-7127-4097-83fa-07a0567e3245
 # ╠═9009479e-ba5e-44e9-95d9-2fff617d05c6
+# ╠═48124195-78e0-44f5-959b-2c2a7b49d2f2
 # ╟─eaacdb9b-c9b7-47ba-ba85-625c00da5c27
 # ╠═a4bd1969-002b-4b3d-8a75-59eeb197409b
 # ╟─93666b06-3af8-4b9c-99e5-3b6c9ccf8e3a
 # ╠═84c3854b-4fb0-4bf0-9628-a6d4cf3beb02
 # ╠═8b751c9d-3dc4-4c4c-859e-7438726e5f19
 # ╠═57016500-98a3-43b7-82ad-fc1380c648ef
-# ╠═2285b9e4-04fe-4abc-904d-5bacbc012131
 # ╠═9e792817-1ed8-4313-8023-a218c7ae5f39
 # ╠═985b89c3-4d1f-4348-97ee-99ca187adec3
 # ╠═d5bb2b5d-44be-47c2-9578-4b22d8d709a5
@@ -3857,8 +3912,11 @@ version = "3.6.0+0"
 # ╟─1e338a69-c264-4640-8da9-3c237336fc08
 # ╠═64c01173-6b66-4c4a-bbf5-746fe095bbf9
 # ╟─d47d1484-7683-4126-b556-78b790deed40
+# ╠═fe37cba2-f16a-4b26-a7ff-ba90e4e34c76
 # ╟─7260e83d-8d68-453f-b362-c964610aa6c8
 # ╠═1eaf7645-06d0-4034-9397-e675aeccdd99
+# ╟─14e082f7-007b-4f29-9c63-bdc58f4c037d
+# ╠═79fc5598-e8bd-4d67-b875-8885d219b269
 # ╠═9e1bd13d-596a-4b36-b9cf-571e89eb5dce
 # ╠═70222e88-a519-40ac-8e2b-b643c37bd0e8
 # ╠═a1c79ec2-7d42-412b-9884-6501204e8c96
@@ -3870,6 +3928,8 @@ version = "3.6.0+0"
 # ╠═a24e8fa5-ad77-4423-8162-88d540a62025
 # ╟─09e02bf5-b50a-4750-a243-c7d24a36e08c
 # ╠═ebb8c96a-eaa0-499f-844b-e404241d242b
+# ╠═2655a451-72bd-495d-a466-a602dc5db534
+# ╠═719f1d0a-c5f2-49c6-b839-95141285eca2
 # ╠═3cb5b1d7-3ba8-45c4-9b0f-fe24b4e30944
 # ╟─9ff29c15-c387-40e1-b3a9-2d8cebb3618c
 # ╠═ab1720b2-acd9-11ef-1b86-732bee591307
