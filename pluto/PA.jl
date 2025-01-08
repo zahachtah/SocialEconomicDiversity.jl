@@ -255,6 +255,11 @@ pluto-output h3 {
 pluto-output img:hover {
 	//width:1000px !important
 }
+
+pluto-output p{
+font-family: Garamond, Georgia, serif;
+font-size: 1.1em
+}
     pluto-tree img {
         max-width: none !important;
         max-height: none !important;
@@ -266,7 +271,8 @@ pluto-output img:hover {
         max-height: 15rem !important;
     }
 main {
-    max-width: 900px;
+    max-width: 700px;
+	
 }
 
 img {

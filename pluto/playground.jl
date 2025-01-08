@@ -16,7 +16,7 @@ macro bind(def, element)
     #! format: on
 end
 
-# ╔═╡ a24e8fa5-ad77-4423-8162-88d540a62025
+# ╔═╡ a8f2eb1e-18a9-4cac-9f66-d818107040c1
 begin
 	using Statistics
 	using Distributions
@@ -277,40 +277,14 @@ end
 
 end
 
-# ╔═╡ ab1720b2-acd9-11ef-1b86-732bee591307
+# ╔═╡ 707e66d2-c9f4-11ef-11be-b32ec1a9da45
 using  DifferentialEquations, CairoMakie, PlutoUI, Colors,  HypertextLiteral, ColorSchemes
 
-# ╔═╡ f8e1b129-5fe6-49e4-9bd2-0f612f16cef0
-md"""
-!!! note
-    Colored number fields can be clicked and dragged left or right to change the value
-"""
-
-# ╔═╡ ed9ab4fd-eb64-4c6c-abb8-ee815c16615c
-H=@htl("""
-
-    <div style="text-align: right;">Number of actors:</div>
-    <div>$(@bind KL PlutoUI.Scrubbable(3:1000, default=100)) </div>
-
-""");
-
-# ╔═╡ d7d60288-8345-4fe8-ad95-b3e41d131e9e
-@htl("""<div style="display: grid; 
-            grid-template-columns: auto auto auto auto; 
-            align-items: center; 
-            gap: 0.5em;">
-	$(H)
-</div>
-""")
-
-# ╔═╡ 0380f592-bd94-49e8-9006-6587e58041bc
-@htl("""$(H)""")
-
-# ╔═╡ 9803845d-a902-4d18-8957-4fe79a6b2843
+# ╔═╡ c42bec27-67e8-4450-b9b4-c1af794e6625
 md"
 # Playground"
 
-# ╔═╡ 1e335796-6b2b-4e3f-823f-61b676872ba9
+# ╔═╡ be50a6a1-398d-4419-bca0-e7cf63bcc479
 @htl("""
 <div style="display: grid; 
             grid-template-columns: auto auto auto auto; 
@@ -321,13 +295,13 @@ md"
     <div>$(@bind N PlutoUI.Scrubbable(3:1000, default=100)) </div>
 
 <div style="text-align: right;">Policy Instrument:</div>
-    <div>$(@bind selected_policy Select(["Assigned Use Rights", "Tradable Use Rights", "Protected Area","Economic Incentives","Development"]))</div>
+    <div>$(@bind selected_policy Select(["Open Access","Assigned Use Rights", "Tradable Use Rights", "Protected Area","Economic Incentives","Development"]))</div>
 
 <div style="text-align: right;">Mean Impact:</div>
     <div>$(@bind mu PlutoUI.Scrubbable(range(0.1,stop=2.0,length=100), default=1.0, format=".2f"))</div>
 
-<div style="text-align: right;">Regulation: </div>
-    <div>$(@bind f PlutoUI.Scrubbable(range(0.0,stop=1.0,length=100), format=".2f" ))</div>
+<div style="text-align: right;">Regulation level: </div>
+    <div>$(@bind regulation_level PlutoUI.Scrubbable(range(0.0,stop=1.0,length=100), format=".2f" ))</div>
 
 <div style="text-align: right;">Impact skew:</div>
     <div>$(@bind s PlutoUI.Scrubbable(range(-1,stop=1,length=100),default=0.0, format=".2f")) </div>
@@ -339,7 +313,7 @@ md"
     <div>$(@bind minIn PlutoUI.Scrubbable(range(0.01,stop=1.5,length=100), default=0.1, format=".2f")) </div>
 
 <div ><span style="text-align: right;">Historical use rights:</span>
-    <span>$(@bind HUR PlutoUI.CheckBox(false))</span></div>
+    <span>$(@bind historical_use_rights PlutoUI.CheckBox(false))</span></div>
 
 <div><span style="text-align: right;">Regulation scan:</span>
     <span>$(@bind RS PlutoUI.CheckBox(false))</span></div>
@@ -388,150 +362,73 @@ md"
 
 """)
 
-# ╔═╡ 45c5d4b5-7e1f-44aa-9ea2-15c632ce840f
-md"
-## Regulation scan only working properly for tradable use rights. historical use rights does not work with regulation scan..."
+# ╔═╡ 78194022-27e9-413c-a6bd-14a6ca61b898
+#fig(run(scenario,f=regulation_level))
 
-# ╔═╡ c3ab2629-307c-4cf5-97c7-47154d02e239
-md"
-$f_U = \text{Fraction use-area}$
-$ρ(f_U,y) = \text{Realized increase in relative growth}$
-$U_i=u_i y f_U - \left(\frac{\bar{u}}{ r(f_U)}-u_i\right) \tilde{w}$
-$U_i=f_p \left(u_i y - \frac{(\frac{\bar{u}}{ ρ(f_U,y)}-u_i) \tilde{w}}{f_U} \right)$
-$\dot{y}=ρ(f_U,y)y (1-y)$
-"
+# ╔═╡ c8178072-d067-4aad-9561-9b637309db53
+function incomes(x,p; sum=false)
+	resource=x[1:p.N].*x[p.N+1]
+	wages=(p.ū.-x[1:p.N]).*p.w̃
+	trade= length(x)>p.N+1 ? (p.U.-x[1:p.N]).*x[p.N+2] : fill(0.0,p.N)
+	total=resource.+wages.+trade
+	g=gini(total)
+	ecological=x[p.N+1]
+	return sum ? (;resource,wages,trade,total,g,ecological) : (;resource,wages,trade,total,gini=g,ecological)
+end
 
-# ╔═╡ da0ebd8c-d4f1-43b2-8446-b61f12685e24
-
-
-# ╔═╡ 0028873a-a10d-4c54-a2aa-2e7f2a5cea9d
-Formalization=Dict(
-	"Tradable Use Rights"=>L"\begin{align}
-	\textbf{Tradable Use Rights:} \\[10pt]
-\text{Utility  }  U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;+\; \overbrace{(R_i - u_i)\,\phi}^{\text{Tradable use rights}}, \\[4pt] 
- \text{supply}  &= \max (0, \sum_{i} R_i - u_i ), \\[4pt]
- \text{demand}  &= \sum_{i} \begin{cases} \min \left( \dot{u}_i, \bar{u}-(u_i+\dot{u}_i) \right) & \text{if } \dot{u}_i > 0 , \\[4pt] 0 & \text{otherwise}. \end{cases} \\[4pt]
-
-\dot{u}_i = \frac{dU_i}{du} &= \begin{cases} y - (\tilde{w}_i + \phi) & \text{if } u_i < R_i \text{ and } supply>0 \\[4pt] \min \left(0,y - (\tilde{w}_i + \phi) \right)  & \text{otherwise}\end{cases} \\[4pt]
-
-  \dot{\phi} &= \pi  \left( \text{demand} - \text{supply} \right),\\[4pt]
-\text{incentives   }  \gamma &= \tilde{w}_i + \phi, 
- \end{align}",
-"Assigned Use Rights"=>L"\begin{align}
-\text{Utility} = U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;-\; \overbrace{\max\{u_i - R_i,0\} S}^{\text{Sanctioning}}, \\[6pt] 
-\dot{u}_i = \frac{dU_i}{du} &= y - \left(\tilde{w}_i +\begin{cases} S & \text{if } u_i \ge  R_i \\[4pt] 0 & \text{otherwise} \end{cases}\right), \\[6pt]
- \gamma &= \tilde{w}_i + \begin{cases} S & \text{if } u_i \ge R_i \\[4pt] 0 & \text{otherwise} \end{cases}, \\[6pt]
-\end{align}",
-"Protected Area"=>L"\begin{align}
-f_p &= \text{fraction protected area} \\
-w_i^T(y_p) & =\text{tourism benefits} \\
-m(y_p,y) & =\text{spillover effect} \\
-\text{incentives} = \gamma_i & = \frac{\tilde{w}_i+\tilde{w}_i^T(y_p)}{1-f_p} \\
-\text{impact} = \bar{u}_i & =\frac{q_i \bar{e}_i}{r+m(y_p,y)} 
-\end{align}",
-"Economic Incentives"=>L"\begin{align}
-\text{ changing alternative incomes, } \tilde{w} : \gamma_i & = \tilde{w}_i=\frac{w(E)_i}{pK} \\  
-\text{changing effort capacities ,} q_i : \bar{u} & =\frac{\bar{e} q_i(E)}{r} \\
-\text{Utility} = U_i &= \overbrace{u_i y (1-t)}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \\[4pt] 
-\end{align}",
-"Development"=>L"\begin{align}
-\textbf{Kuznets Development:} \\[10pt]
-\text{development trajectory}& =  E(t) \\
-\text{ changing alternative incomes, } \tilde{w} : \gamma_i & = \tilde{w}_i=\frac{w(E(t))_i}{pK} \\  
-\text{changing effort capacities ,} q_i : \bar{u} & =\frac{\bar{e} q_i(E(t))}{r} \\
-\text{Utility} = U_i &= \overbrace{u_i y (1-t)}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \\[4pt] 
-\end{align}");
-
-# ╔═╡ 7f80e8ee-1870-443e-a3d5-9442ce41731d
-Formalization[selected_policy]
-
-# ╔═╡ 8075c52a-a263-4ca5-a9f2-c33ba43daec4
-md"""
-!!! note
-    if we only investigate the cases where **some** have use rights (Rᵢ>ū\_i) and others not (Rᵢ=0) then γᵢ does not change dynamically so we can precalculate it. for 0<Rᵢ<ūᵢ one needs to use special care sine ODE's are sensitive to discontinuous functions.
-"""
-
-# ╔═╡ 1a007494-f1d6-4659-8757-5b50f13a5030
-@htl("""
-<h1 style="color: steelblue"> Implementation </h1>""")
-
-# ╔═╡ 62cf8442-617e-4508-a479-8d56287a63f4
-md"
-### Things to show
-* How reduced assigned use rights relates to price and changed incentives
-* The importance of historical use rights
-* The difference between effort and yield regulation
-* Yield control lack of resilience
-"
-
-# ╔═╡ 8ffade64-98e6-420b-9dd0-9970a13b9051
-md"
-* define scenario, s
-* if regulation>0 then run(s; u0=zeros(p.N), y0=1.0,ϕ0=0.0, f=0.0)
-"
-
-# ╔═╡ bf6950ea-baa3-4aba-b4ef-0673ce9eb391
-md"
-### Regulation scan
-"
-
-# ╔═╡ 9d2ced66-3e0c-473f-9482-b68ae0679f98
-
-
-# ╔═╡ a91ed323-d642-41b4-8a66-0080aa4ae6bb
-#heatmap(sol[1:p.N,:]')
-
-# ╔═╡ d0b09169-78fa-401d-aeb0-2964ed8d59d9
-md"
-## Basic model
-"
-
-# ╔═╡ 41e8f678-ee63-4fdb-accc-0b5386d38e2f
-md"
-### Unregulated incentive and impact
-Incentives, γ, and impact, μ, are funitons that can be provided to simulate different socioeconomi and policy situations. In the base situation they are simply the alternative livelihood opportunities and physical limitations on effort, such as time, e.g. sleep and social obligations, as well as infrastructure such as gear, information and nowledge. 
-"
-
-# ╔═╡ bd28c318-4367-45ed-901b-c75cab457001
-begin
-	# Inentives are here simply alternative livelihood opportunities
-	function γ(x,p,t)
-		return p.w̃
-	end
-
-	# Impact is simply physical constraints on effort such as time and infrastructure such as gear, information and knowledge
-	function μ(x,p,t)
-		return p.ū
-	end
-
-	# Base model needs no additional manipulation of the derivative
-	function ϕ(dx,x,p,t)
-		return 0.0
-	end
-
+# ╔═╡ d5811d2d-2999-4b5b-b76a-96b152774cb7
+function income_plot!(aa,sol,p)
+	resource_revenue=sol[1:p.N,end-1].*sol[p.N+1,end-1]
+	alt_revenues=p.w̃.*(p.μ(sol[:,end-1],p,0.0) .-sol[1:p.N,end-1])
+	trade_revenues=selected_policy=="Tradable Use Rights" ? (p.U.-sol[1:p.N,end-1])*sol[end,end-1] : fill(0.0,p.N) 
+	incomes=resource_revenue+alt_revenues+trade_revenues
+	inc=resource_revenue+alt_revenues
+	id=order ? sortperm(incomes) : collect(1:p.N)
+	barplot!(aa,inc[id], color=p.w̃[id], alpha=1.0, offset=trade_revenues[id])
+	barplot!(aa,trade_revenues[id], color=p.w̃[id])
+	barplot!(aa,trade_revenues[id], color=HSLA(0,0,1,0.2))
+	barplot!(aa,trade_revenues[id], color=HSLA(0,0,1,0.2))
+	fir=findall(resource_revenue[id].>0)
+	fia=findall(alt_revenues[id].>0)
+	#scatter!(aa,collect(1:p.N)[fia],alt_revenues[id][fia].+trade_revenues[id][fia], color=:crimson, markersize=10, marker=:hline)
+	scatter!(aa,collect(1:p.N)[fir],resource_revenue[id][fir].+trade_revenues[id][fir], color=:white, markersize=10, marker=:hline)
+	lines!(aa,1:p.N,fill(0.0,p.N), color=:black)
 
 end
 
-# ╔═╡ e6d63664-3b7d-451b-bfdf-6488cec68a64
+# ╔═╡ f51413d2-44c8-41d6-ae94-9b1e229a3a93
 md"
-### The differential equation"
+# Model
+"
 
-# ╔═╡ ddc7bd05-318f-4364-abde-d046cdd94627
+# ╔═╡ 9ce8f25b-f84b-4d08-b22d-07f65571d03e
+md" 
+## Defining a Scenario"
+
+# ╔═╡ 383e475e-4d24-4e5a-924b-2fec165bc8e8
+function change(p,kwargs)
+	return (p,kwargs...)
+end
+
+# ╔═╡ 678b4cd7-6235-4873-8557-158948f39b01
+md"
+## The differential equation"
+
+# ╔═╡ b275096b-1631-4eaf-8119-76bd8b2b48b6
 	begin
 		function dxdt(dx,x,p,t)
 			
 			# Extract parameters to make equations prettier
-			N,α,w̃,ū,γ,ϕ=p
-			
+			N=p.N
 			
 			# Actor resource use change
-			dx[1:N]=α*(x[N+1].-p.γ(x,p,t))
+			dx[1:N]=p.α*(x[N+1].-p.γ(x,p,t))
 			
 			# Resource level dynamics
 			dx[N+1]=x[N+1]*((1-x[N+1])-sum(x[1:N]))
 
 			# Optional function to add functionality, e.g. markets
-			ϕ(dx,x,p,t)
+			p.ϕ(dx,x,p,t)
 		end
 
 		# This ensures constrained values of variables, e.g. 0>uᵢ>ū
@@ -548,24 +445,38 @@ md"
 		end
 	end;
 
-# ╔═╡ 733ae727-2195-42ae-8bd8-7f8c39ef27ed
+# ╔═╡ 1884c09c-409f-40bf-8ba1-352e87cea23c
+function run(s; u0=zeros(s.N), y0=1.0,ϕ0=0.0, f=0.0)
+
+	tend=(0.0,1000.0)
+
+	p=s.regulate(s,f)
+	if selected_policy=="Development"
+		q=change(s,regulation_level=0)
+ 		qprob = ODEProblem(dxdt,[u0;y0],tend,q);
+		qsol=solve(qprob,SSPRK432(;stage_limiter!),callback= TerminateSteadyState(1e-6,1e-4) )
+		initVals=qsol.u[end-1]
+	elseif selected_policy=="Tradable Use Rights"
+		initVals=[u0;y0;ϕ0]
+	else
+		initVals=[u0;y0]
+	end
+
+
+	 prob = ODEProblem(dxdt,initVals,tend,p);
+
+	#SSPRK22
+
+	sol=solve(prob,SSPRK432(;stage_limiter!),callback= TerminateSteadyState(1e-6,1e-4) )
+	return sol
+end
+
+# ╔═╡ 33fd36f0-4660-48c1-9d34-2f0dfb586936
 md"
-### Setting the scenario
+## The incentive and impact functions
+"
 
-Here we set the scenario parameters based on the selected states in UI of the Playground. If historical use rights are to be used, run the model first in OA mode and extract actors id with use uᵢ>0. Set these use rights to share the implemented total limit."
-
-# ╔═╡ 42800b3f-4462-4e78-b4e7-784a16dd17b5
-target=:effort
-
-# ╔═╡ eaacdb9b-c9b7-47ba-ba85-625c00da5c27
-md"
-### Solving the differential equations"
-
-# ╔═╡ 93666b06-3af8-4b9c-99e5-3b6c9ccf8e3a
-md"
-### Incentive Γ and Impact Φ functions"
-
-# ╔═╡ 84c3854b-4fb0-4bf0-9628-a6d4cf3beb02
+# ╔═╡ 91a47b56-557c-413a-97e1-5ecdde0960a3
 # Incentive function
 function Γ(y,p; x=zeros(p.N+1), t=0.0)
 	
@@ -575,7 +486,7 @@ function Γ(y,p; x=zeros(p.N+1), t=0.0)
     f = sum(γ[id] .< y)/p.N
 end
 
-# ╔═╡ 8b751c9d-3dc4-4c4c-859e-7438726e5f19
+# ╔═╡ 63429f44-ecd8-4089-8792-a9083d774552
 # Impact function
 function Φ(y,p; t=0.0)
 	x=zeros(p.N+1)
@@ -594,79 +505,309 @@ function Φ(y,p; t=0.0)
     return f/p.N
 end
 
-# ╔═╡ 2b950c8c-2212-4690-8f35-92f79dc664a9
-md"
-## Policy algorithms
-"
+# ╔═╡ 16969774-78cb-493b-b147-2a1cbb887e91
+function fig(sol)
+	q=sol.prob.p
+	p=sol.prob.p
+	y=range(0.0,stop=1.0,length=100)
+	F=Figure(size=(800,RS ? 800 : 400))
+	a21=Axis(F[1,1], aspect=1);a22=Axis(F[1,2])#;a23=Axis(F[1,3])
+	#limits!(a12,0.0,1.0,0.0,1.0)
+	limits!(a21,0.0,1.0,0.0,1.0)
+	
+	qrun=run(sol.prob.p, f=0.0)
+	k=q.γ(sol.u[end],q,sol.t[end])
 
-# ╔═╡ dd39cb0f-e20e-4a50-94f6-974d172bdfc4
-md"
-### Assigned Use Rights
-"
+	#distribution_poly(a21,:w̃,p, scale=0.1, flip=false)
+	#distribution_poly(a21,:ū,p, scale=0.1, flip=true)
+	
+	#lines!(a21,[0,1],[Φ(1-f,p),Φ(1-f,p)], color=:lightgray, linestyle=:dash)
+	#lines!(a21,[0,1],[f,f], color=:lightgray, linestyle=:dash)
+	Y=p.target==:effort ? ones(length(y)) : y
+	lines!(a21,y,Φ.(1 .-(1-regulation_level)./Y,Ref(p)), color=:darkorange, linestyle=:dot)
 
-# ╔═╡ 87f36eda-7049-4ba1-9db4-730758c559b3
-begin
-	function smooth_cutoff_quad(x, U, δ)
-	    if x < U - δ
-	        return 0.0
-	    elseif x > U + δ
-	        return 1.0
-	    else
-	        # Normalize x into [0,1]
-	        t = (x - (U - δ)) / (2δ)
-	        # Cubic "smoothstep": 3t^2 - 2t^3
-	        #   p(0) = 0, p(1)=1,
-	        #   p'(0)=p'(1)=0 => ensures continuity up to the 1st derivative
-	        return 3t^2 - 2t^3
-	    end
+	
+	lines!(a21,y,Γ.(y,Ref(q), x=qrun.u[end]), color=:lightgray)
+	lines!(a21,y,Γ.(y,Ref(p), x=sol.u[end], t=sol.t[end-1]))
+	lines!(a21,y,Φ.(y,Ref(p), t=sol.t[end-1]))
+	lines!(a21,y,Φ.(y,Ref(q)), color=:lightgray)
+
+		# Show trajectory
+	trajectory ? lines!(a21,[u[p.N+1] for u in sol.u[1:end-1]],[sum(u[1:p.N]./p.μ(u,p,sol.t[i]))/p.N for (i,u) in enumerate(sol.u[1:end-1])], color=selected_policy=="Development" ? sol.t[1:end-1] : :white, linestyle=:dot, colormap=cgrad([:white, :crimson], [0.0, 0.5, 1.0])) : nothing
+
+	#Show the attractor
+	scatter!(a21,[sol[p.N+1,end-1]],[sum(sol[1:p.N,end-1]./p.μ(sol.u[end-1],p,sol.t[end-1])./p.N)], color=:crimson, markersize=15)
+	if selected_policy=="Development"
+		scatter!(a21,[sol[p.N+1,1]],[sum(sol[1:p.N,1]./p.μ(sol.u[end-1],p,sol.t[1])./p.N)], color=:white, markersize=15)
 	end
 
-	function regulate_assigned_use_rights(p,f)
-		U=zeros(1:N)
-		n=Int64(round(f*N))
-		if n!=0
-			U[n:end].=1.0
-		end
-		return change(p,U=U)
-	end
+	# Show the market price of use rights
+	length(sol.u[end])>p.N+1 ? text!(a21,"ϕ: "*string(sol[end,end])) : nothing
+
+
+	
+	income_plot!(a22,sol,p)
+	Colorbar(F[1,3],limits=extrema(p.w̃), label="w̃")
+	
+	if RS
+		R=regulation_scan(p)
+		ar=Axis(F[2,1:2], xlabel="regulation level")
+		# (;RR,WR,TR,ToR,GI,EH,RI,r)
+		cs=ColorSchemes.tab20
+		lw=3
+		lines!(ar,[f,f],[0.0,1.0], color=:white,linewidth=lw, label="Selected")
 		
-	function γ_assigned_use_rights(x,p,t)
-		return p.w̃.+p.U
-		#δ=0.00001
-		#return p.w̃ .+ p.regulation .* smooth_cutoff_quad.(x[1:p.N], p.U, δ)
+		lines!(ar,R.r,(R.RR.-minimum(R.RR))./(maximum(R.RR)-minimum(R.RR)),label="resource", color=cs[1])
+		lines!(ar,[R.r[R.oRR],R.r[R.oRR]],[0.0,1.0], color=cs[1], linestyle=:dot,linewidth=lw)
+		
+		lines!(ar,R.r,(R.WR.-minimum(R.WR))./(maximum(R.WR)-minimum(R.WR)),label="wages", color=cs[3])
+		lines!(ar,[R.r[R.oWR],R.r[R.oWR]],[0.0,1.0], color=cs[3], linestyle=:dot,linewidth=lw)
+		
+		lines!(ar,R.r,(R.TR.-minimum(R.TR))./(maximum(R.TR)-minimum(R.TR)),label="trade", color=cs[5])
+		lines!(ar,[R.r[R.oTR],R.r[R.oTR]],[0.0,1.0], color=cs[5], linestyle=:dot,linewidth=lw)
+		
+		lines!(ar,R.r,(R.ToR.-minimum(R.ToR))./(maximum(R.ToR)-minimum(R.ToR)),label="total", color=cs[7])
+		lines!(ar,[R.r[R.oToR],R.r[R.oToR]],[0.0,1.0], color=cs[7], linestyle=:dot,linewidth=lw)
+		
+		lines!(ar,R.r,(R.GI.-minimum(R.GI))./(maximum(R.GI)-minimum(R.GI)),label="gini", color=cs[9])
+		lines!(ar,[R.r[R.oGI],R.r[R.oGI]],[0.0,1.0], color=cs[9], linestyle=:dot,linewidth=lw)
+
+		lines!(ar,R.r,(R.RI.-minimum(R.RI))./(maximum(R.RI)-minimum(R.RI)),label="regulation", color=cs[13])
+		lines!(ar,[R.r[R.oRI],R.r[R.oRI]],[0.0,1.0], color=cs[13], linestyle=:dot,linewidth=lw)
+		
+		lines!(ar,R.r,R.EH,label="ecologial", color=cs[11])
+		lines!(ar,[R.r[R.oEH],R.r[R.oEH]],[0.0,1.0], color=cs[11], linestyle=:dot,linewidth=lw)
+
+		
+		
+		axislegend(ar)
 	end
+	F
 end
 
-# ╔═╡ 5e0aa44d-ff9e-41eb-9f1f-d6a1241b416f
-γ_assigned_use_rights
+# ╔═╡ 56eb1655-0694-449e-91c2-ae8fe82b328c
 
-# ╔═╡ 1e338a69-c264-4640-8da9-3c237336fc08
+
+# ╔═╡ 7034dba4-6ee4-4c36-8f23-e27c2a3d1c6e
 md"
-### Tradable Use Rights
+# Formalizing policy Instruments
+
+All policy instruments can affect either of three factors of individual actors in the nondimensional model:
+
+* the distribution and sanctioning of use rights, Rᵢ
+* the relative opportunity cost of resource harvest, γᵢ
+* the relative impact, μᵢ
+
+The strength of our way to formalize a socio-economic system in this way is that the effect of policy not only on the resource level, but on the distribution of cost and benefits can be readily analysed. Below we will describe exactly how we implement the different policies, acknowledging that there are more than one way to do this. Thus, what we present here, is intended as a leverage to further development and discussion.
+
+Theoretically we derive policy impact by imlpementing its effect for the utility of the actor. The actors decision then is derived by optimizing this utility, mathematically coresponding to taking the first derivative of the utility, U, with rrespect to the level or resource use, u and use this to simulate the change in $u$, i.e. $u̇$. 
+
+Programatically we have chosen to make policy implementation very flexible by adding user-specified funtions that are called in the system of differential equations. These are:
+
+$\begin{align}
+γ(x,s,t)&  = \text{Incentives} \\
+μ(x,s,t)&  =  \text{Impacts} \\
+dx'(dx,x,s,t)&     = \text{Additional dynamics}\\
+regulate(s,\text{policy})& = \text{Regulation mechanisms}
+\end{align}$
+
+were $x$ is the full state of the system, i.e. $u$'s and resoure level $y$, $s$ is the scenario, $t$ the time, $dx$ is the open access level of change in system states and $\text{policy}$ is the level of policy implementaiton.
+
+For example, γ(x,s,t) will provide the incentives that will be used, which, for open access would simply be $γ(x,s,t)=w̃$, but for tradable quotas the choice to sell or buy quotas adds an incentive of the current market price as $γ(x,s,t)=w̃+ϕ(t)$. Similarly, impacts $μ(x,s,t)$ can be defined. A third function, $dx'(dx,x,s,t)$ provides a way to manipulate the differential equations directly, e.g. by adding code that simulates the tradabe use right price by supply and demand functionality. Lastly how regulation level affects the system can be specified in the function regulate(s,regulation_level)
 "
 
-# ╔═╡ 64c01173-6b66-4c4a-bbf5-746fe095bbf9
+# ╔═╡ 58279a55-3bc6-4a44-a7b9-005088ea83c3
+md"
+## Open access
+
+Open access means that there is an understanding that noone may prevent anyone from using the resource. Only the physical limits of time, ē, and gear and knowledge, q, degtermine the impact, ū, together with the resource regeneration rate, r. Incentives are  only determined by alternative livelihood options, w. In essence this means that the use rights, R, are set, deliberately or by custom, to 1 for all actors so we can ignore it for practical purpose in the formalization of the open access system:. 
+"
+
+# ╔═╡ 0674660f-7d3c-4a21-9524-159622a2e30f
+md"We implement this by defining functions γ, μ, ϕ and regulate as:"
+
+# ╔═╡ e695e54c-230a-414f-b984-8669ad4395a7
+begin
+	# Inentives are here simply alternative livelihood opportunities
+	function γ(x,p,t)
+		return p.w̃
+	end
+
+	# Impact is simply physical constraints on effort such as time and infrastructure such as gear, information and knowledge
+	function μ(x,p,t)
+		return p.ū
+	end
+
+	# Base model needs no additional manipulation of the derivative
+	function ϕ(dx,x,p,t)
+		return 0.0
+	end
+
+	function regulate(p,regulation_level)
+		return change(p,regulation_level=regulation_level)
+	end
+
+end
+
+# ╔═╡ 22e05a4f-d87e-4902-ac34-8a4856097e5b
+function phase_plot!(axis,sol; show_trajectory=false, show_target=false, open_access_color=:lightgray, incentive_line_color=:darkorange, impact_line_color=:darkorange)
+
+	## Fix the market price placement
+	
+	scenario=sol.prob.p
+	N=scenario.N
+	limits!(axis,0.0,1.0,0.0,1.0)
+
+	y=range(0.0,stop=1.0,length=100)
+	γ_array=scenario.γ(sol.u[end],scenario,sol.t[end])
+	oa=change(scenario,γ=γ, μ=μ,regulate=regulate, ϕ=ϕ)
+
+	if show_target
+		if haskey(scenario,:target)
+			Y=scenario.target==:effort ? ones(length(y)) : y
+			lines!(axis,y,Φ.(1 .-(1-regulation_level)./Y,Ref(scenario)), color=:darkorange, linestyle=:dot)
+		end
+	end
+
+	# Cumulative incentive distributions
+	lines!(axis,y,Γ.(y,Ref(oa)), color=open_access_color, linewidth=3)
+	lines!(axis,y,Γ.(y,Ref(scenario)), color=incentive_line_color, linewidth=3)
+
+	# Cumulative impact istributions
+	lines!(axis,y,Φ.(y,Ref(oa)), color=open_access_color, linewidth=1)
+	lines!(axis,y,Φ.(y,Ref(scenario)), color=impact_line_color,linewidth=1)
+
+	if show_trajectory
+		# Show trajectory
+		lines!(axis,[u[scenario.N+1] for u in sol.u[1:end-1]],[sum(u[1:scenario.N]./scenario.μ(u,scenario,sol.t[i]))/scenario.N for (i,u) in enumerate(sol.u[1:end-1])], color=selected_policy=="Development" ? sol.t[1:end-1] : :white, linestyle=:dot, colormap=cgrad([:white, :crimson], [0.0, 0.5, 1.0]))
+	end
+
+	#Show the attractor
+	scatter!(axis,[sol[N+1,end-1]],[sum(sol[1:N,end-1]./scenario.μ(sol.u[end-1],scenario,sol.t[end-1])./N)], color=:crimson, markersize=15)
+	if selected_policy=="Development"
+		scatter!(axis,[sol[N+1,1]],[sum(sol[1:N,1]./scenario.μ(sol.u[end-1],scenario,sol.t[1])./N)], color=:white, markersize=15)
+	end
+
+	# Show the market price of use rights
+	scenario.policy=="Tradable Use Rights" ? text!(axis,"ϕ: "*string(sol[end,end])) : nothing
+end
+
+# ╔═╡ c442745c-5e61-40cf-aab7-ee156bbd874c
+md" We have thoroughly shown how open access dynamics play out in figure 3 in the MS"
+
+# ╔═╡ d1512299-d1ae-46c8-b1a5-157398b2aa51
+begin
+	function showOpenAccessExamples()
+		f=Figure(size=(1200,400))
+		a1=Axis(f[1,1])
+		a2=Axis(f[1,2])
+		a3=Axis(f[1,3])
+		Noa=100
+		
+		oa1=(;N=Noa,α=0.1,w̃=dist!(sed(min=0.01,max=0.2, distribution=LogNormal),Noa), ū=dist!(sed(mean=0.5, sigma=0.0,normalize=true),Noa),U=ones(Noa), policy="Open Access", γ=γ, ϕ=ϕ, μ=μ,regulate=regulate,regulation_level=0.0, target=:yield)
+		
+		oa2=(;N=Noa,α=0.1,w̃=dist!(sed(min=0.1,max=1.7, distribution=LogNormal),Noa), ū=dist!(sed(mean=1.0, sigma=0.0,normalize=true),Noa),U=ones(Noa), policy="Open Access", γ=γ, ϕ=ϕ, μ=μ,regulate=regulate,regulation_level=0.0, target=:yield)
+		
+		oa3=(;N=Noa,α=0.1,w̃=dist!(sed(min=0.1,max=0.9, distribution=LogNormal),Noa), ū=dist!(sed(mean=2.5, sigma=0.0,normalize=true),Noa),U=ones(Noa), policy="Open Access", γ=γ, ϕ=ϕ, μ=μ,regulate=regulate,regulation_level=0.0, target=:yield)
+		
+		phase_plot!(a1,run(oa1))
+		phase_plot!(a2,run(oa2))
+		phase_plot!(a3,run(oa3))
+		f
+	end
+	showOpenAccessExamples()
+end
+
+# ╔═╡ dad6949a-ff76-4986-a213-8ec31d1e09fa
+md"
+## Assigned use rights
+Assigned use rights add an enforced policy on the actors, by which use rights are given to some, but not to others. By sanctioning, S, the incentives to exit the reoure use is kept above a threshold that balances monitoring and santioning costs with the complience. We implement this by adding a sancioting term, $\max(u-R,0)  S$, meaning that whenever an actor increases $u_i$ over their use right, $R_i$, a proportional sanction cost, $S$, if applied to the utility. The resulting function that describes optimal decision to change $u$, $\dot{u}$ now has a disconiuity that differential equations solvers can have a diffiult time to handle. There are  three ways to deal with this: 1) apply a smoothed stepfunction which works but introduces a more gradual distributions of equilibrium $u$'s. 2) assume that sanctioning is more gradual in the first place, or 3) assume full compliance, sufficient sanctioning and use rights set to either zero (no use) or one (full use) in which case we can create a fixed array S of ones and zeros and add to the incentive function as $γ=\tilde{w}+S$. The last option suffices to demonstrate the potential of this type of policy instrument. Gradual compliance and sanctioning provide more interesting and complex dynamics fit for a different paper. 
+"
+
+# ╔═╡ 758a8ed0-6a51-4bc1-a082-247e2e9c9371
+function regulate_assigned_use_rights(scenario,f)
+	# f is the fraction users allowed to extract resource
+	# scenario.reverse picks users from teh highest w̃
+		R=zeros(1:scenario.N)
+		n=Int64(round((1-f)*scenario.N))# Integer fraction f of number of users
+		if n!=0
+			if haskey(scenario,:reverse)
+				scenario.reverse ? R[n:end].=1.0 : R[1:n].=1.0
+			end
+		end
+		return change(scenario,R=R) # return use rights
+end
+
+# ╔═╡ 332a298a-7041-4bb3-b56e-80d88983dc2a
+function γ_assigned_use_rights(x,p,t)
+		return p.w̃.+p.R
+end
+
+# ╔═╡ 8b03aea8-d53c-4053-aafb-1b4044337415
+begin
+	function showAssignedUseRights()
+		f=Figure(size=(800,800))
+		a1=Axis(f[1,1])
+		a2=Axis(f[1,2])
+		a3=Axis(f[2,1])
+		a4=Axis(f[2,2])
+		N=100
+		
+		s1=(;N=N,α=0.1,w̃=dist!(sed(min=0.1,max=0.9, distribution=LogNormal),N), ū=dist!(sed(mean=2.5, sigma=0.0,normalize=true),N),U=ones(N), policy="Assigned Use Rights", γ=γ_assigned_use_rights, ϕ=ϕ, μ=μ,regulate=regulate_assigned_use_rights,regulation_level=0.5, target=:yield, reverse=false)
+		
+		s2=(;N=N,α=0.1,w̃=dist!(sed(min=0.1,max=0.9, distribution=LogNormal),N), ū=dist!(sed(mean=2.5, sigma=0.0,normalize=true),N),U=ones(N), policy="Assigned Use Rights", γ=γ_assigned_use_rights, ϕ=ϕ, μ=μ,regulate=regulate_assigned_use_rights,regulation_level=0.5, target=:yield, reverse=true)
+
+		s3=(;N=N,α=0.1,w̃=dist!(sed(min=0.1,max=0.9, distribution=LogNormal),N), ū=dist!(sed(mean=2.5, sigma=0.0,normalize=true),N),U=ones(N), policy="Assigned Use Rights", γ=γ_assigned_use_rights, ϕ=ϕ, μ=μ,regulate=regulate_assigned_use_rights,regulation_level=0.8, target=:yield, reverse=false)
+
+		s4=(;N=N,α=0.1,w̃=dist!(sed(min=0.1,max=0.9, distribution=LogNormal),N), ū=dist!(sed(mean=2.5, sigma=0.0,normalize=true),N),U=ones(N), policy="Assigned Use Rights", γ=γ_assigned_use_rights, ϕ=ϕ, μ=μ,regulate=regulate_assigned_use_rights,regulation_level=0.8, target=:yield, reverse=true)
+		
+		phase_plot!(a1,run(s1, f=0.5))
+		phase_plot!(a2,run(s2, f=0.5))
+		phase_plot!(a3,run(s3, f=0.8))
+		phase_plot!(a4,run(s4, f=0.8))
+		Label(f[0,1],"Actors with high w̃ get use rights", tellwidth=false,fontsize=20)
+		Label(f[0,2],"Actors with low w̃ get use rights", tellwidth=false,fontsize=20)
+		Label(f[1,0],"Regulation level=0.5", tellheight=false,fontsize=20, rotation=pi/2)
+		Label(f[2,0],"Regulation level=0.8", tellheight=false,fontsize=20, rotation=pi/2)
+		f
+	end
+	
+	showAssignedUseRights()
+end
+
+# ╔═╡ d273590c-9fa6-4060-bed7-76221b006288
+md"
+Figure caption: it is harder to predict the level of resource since it may be hard to know the distribution of the q's.
+"
+
+# ╔═╡ 5fb7ee80-1cab-4b4e-a79d-73b4699eb86c
+md"
+### Tradable use rights
+"
+
+# ╔═╡ 5d76c4cb-3d29-49d1-bea8-7cd5327013b4
 begin
 
 	function regulate_tradable_use_rights(p,f, policy_target=:effort)
-		if HUR
+		
+		if historical_use_rights
 			u0=zeros(p.N); y0=1.0; ϕ0=0.0
-			oaprob = ODEProblem(dxdt,[u0;y0;ϕ0],tend,p);
+			oaprob = ODEProblem(dxdt,[u0;y0;ϕ0],(0,1000),p);
 			oasol=solve(oaprob,SSPRK432(;stage_limiter!),callback= TerminateSteadyState(1e-6,1e-4) )
 			hur=oasol[1:N,end-1].>0.0 #oasol[1:N,end-1].>0.0
 		end
-		U=HUR ? hur.*(1-Float64(f))./sum(hur) : fill(f==0 ? 1.0 : (1-Float64(f))/N,N)
+		U=historical_use_rights ? hur.*(1-Float64(f))./sum(hur) : fill(f==0 ? 1.0 : (1-Float64(f))/N,N)
 		q=change(p,U=U, policy_target=policy_target)
 
 		return q
 	end
 	
-	function γ_market(x,p,t)
+	function γ_tradable_use_rights(x,p,t)
 		# Market price ϕ=x[end] is added to the incentive
 		return p.w̃.+x[end]
 	end
 
-	function market(dx,x,p,t)
+	function ϕ_tradable_use_rights(dx,x,p,t)
 		# we calculate the sum of all unused Use Rights and assume they are for sale
 		# if the market is for quota (yield) then effort is yield/resource_density
 		if p.target == :yield
@@ -697,76 +838,12 @@ begin
 
 end
 
-# ╔═╡ b8efceac-e3ed-4a7e-9ac8-acda33bd75e6
-policySets=Dict(
-	[:γ, "Tradable Use Rights"]=>γ_tradable_use_rights,
-	[:μ, "Tradable Use Rights"]=>μ_tradable_use_rights,
-	[:ϕ, "Tradable Use Rights"]=>ϕ_tradable_use_rights,
-	[:regulate, "Tradable Use Rights"]=>regulate_tradable_use_rights,
-)
-
-# ╔═╡ 6c5493fe-d9a4-400a-ba4e-b8ba51cf660f
-function incomes!(aa,sol,p)
-	resource_revenue=sol[1:p.N,end-1].*sol[p.N+1,end-1]
-	alt_revenues=p.w̃.*(p.μ(sol[:,end-1],p,0.0) .-sol[1:p.N,end-1])
-	trade_revenues=p.ϕ==market ? (p.U.-sol[1:p.N,end-1])*sol[end,end-1] : fill(0.0,p.N) 
-	incomes=resource_revenue+alt_revenues+trade_revenues
-	inc=resource_revenue+alt_revenues
-	id=order ? sortperm(incomes) : collect(1:p.N)
-	barplot!(aa,inc[id], color=p.w̃[id], alpha=1.0, offset=trade_revenues[id])
-	barplot!(aa,trade_revenues[id], color=p.w̃[id])
-	barplot!(aa,trade_revenues[id], color=HSLA(0,0,1,0.2))
-	barplot!(aa,trade_revenues[id], color=HSLA(0,0,1,0.2))
-	fir=findall(resource_revenue[id].>0)
-	fia=findall(alt_revenues[id].>0)
-	#scatter!(aa,collect(1:p.N)[fia],alt_revenues[id][fia].+trade_revenues[id][fia], color=:crimson, markersize=10, marker=:hline)
-	scatter!(aa,collect(1:p.N)[fir],resource_revenue[id][fir].+trade_revenues[id][fir], color=:white, markersize=10, marker=:hline)
-	lines!(aa,1:p.N,fill(0.0,p.N), color=:black)
-
-end
-
-# ╔═╡ 9444e827-765b-4730-9fcf-cce7b0e545db
-regulate=regulate_tradable_use_rights
-
-# ╔═╡ d931aee2-95bb-4434-984e-b7f0f2d202fe
-	begin
-		w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform)
-		ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N)
-		U=ones(N)
-		α=0.1
-		Q=(;N,α,w̃, ū,U, γ, ϕ, μ,target,regulate)
-	end
-
-# ╔═╡ cc9bcc1c-1fb5-45e1-bf70-d419f4ae18c7
-sum(Q.regulate(Q,0.9).U)
-
-# ╔═╡ b97f54c2-e303-4d8e-967a-f293ca98a2ef
-Q.regulate(Q,0.9)
-
-# ╔═╡ 652bb9df-9611-4745-8f1f-db96522d026e
-Q
-
-# ╔═╡ d47d1484-7683-4126-b556-78b790deed40
+# ╔═╡ 69fd339f-3ef2-409a-96ab-927ce6a468a9
 md"
-### Economic Incentives
+### Protected area
 "
 
-# ╔═╡ fe37cba2-f16a-4b26-a7ff-ba90e4e34c76
-begin
-	function μ_economic_incentive(x,p,t)
-		
-		return p.ū.+p.regulation/p.N
-	end
-end
-
-# ╔═╡ 7260e83d-8d68-453f-b362-c964610aa6c8
-md"
-### Protected Area
-
-#### Not sure how to assign regulation level. in the function or by change(p,regulation=x). ponder...
-"
-
-# ╔═╡ 1eaf7645-06d0-4034-9397-e675aeccdd99
+# ╔═╡ 43fb1b4a-29a5-4f8d-a381-7b5e2f69b97f
 begin
 	function regulate_protected_area(p,f)
 		return change(p,regulation_level=f)
@@ -806,329 +883,221 @@ begin
 	end
 end
 
-# ╔═╡ 14e082f7-007b-4f29-9c63-bdc58f4c037d
+# ╔═╡ e48acb16-351d-4224-a55d-3415a1729275
+md"
+### Economic incentives
+"
+
+# ╔═╡ d634c8e9-768c-452e-90dd-c01348072718
+begin
+	function regulate_economic_incentive(p,f)
+		return change(p,regulation_level=f)
+	end
+	
+	function μ_economic_incentive(x,p,t)
+		return p.ū.+p.regulation_level/p.N
+	end
+end
+
+# ╔═╡ 2c638f4b-f7b6-43ff-bd99-fe2a9d43e32a
 md"
 ### Development
 "
 
-# ╔═╡ 79fc5598-e8bd-4d67-b875-8885d219b269
+# ╔═╡ df86c65e-e5a7-4742-bf17-577f026a2eab
 begin
+
+	function regulate_development(p,f)
+		return change(p,regulation_level=f)
+	end
+	
 	function μ_development(x,p,t)
-		return p.ū.+p.regulation*2/p.N*t/1000
+		return p.ū.+p.regulation_level*2/p.N*t/1000
 	end
 
 	function γ_development(x,p,t)
 		
-		return p.w̃.+p.regulation*t/1000
+		return p.w̃.+p.regulation_level*t/1000
 	end
 end
 
-# ╔═╡ 9009479e-ba5e-44e9-95d9-2fff617d05c6
-begin
-	# If historical use rights are to be used, run the model first in OA mode and extract actors id with use uᵢ>0. Set these use rights to share the implemented total limit.
+# ╔═╡ aaaa462b-6f1d-4a72-8ebf-faaf7454af10
+# collect all functions onto one object for simpler application to scenario
+P=Dict("Open Access"=>(;γ,μ, ϕ, regulate),
+	"Assigned Use Rights"=>(γ=γ_assigned_use_rights,μ=μ, ϕ=ϕ, regulate=regulate_assigned_use_rights ),
+	"Tradable Use Rights"=>(γ=γ_tradable_use_rights,μ=μ, ϕ=ϕ_tradable_use_rights, regulate=regulate_tradable_use_rights ),
+	"Protected Area"=>(γ=γ_protected_area,μ=μ_protected_area, ϕ=ϕ, regulate=regulate_protected_area ),
+	"Economic Incentives"=>(γ=γ,μ=μ_economic_incentive, ϕ=ϕ, regulate=regulate_economic_incentive),
+	"Development"=>(γ=γ_development,μ=μ_development, ϕ=ϕ, regulate=regulate_development)
+)
 
-
-
-	if selected_policy=="Assigned Use Rights"
-
-		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ=OA ? γ : γ_assigned_use_rights,ϕ=ϕ, μ=μ, U=ones(N), target=:effort, regulate=regulate_assigned_use_rights)
-	elseif selected_policy=="Tradable Use Rights"
-		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ=OA ? γ : γ_market,ϕ=OA ? ϕ : market, μ=μ, regulate=regulate_tradable_use_rights,U=zeros(N),target=yield ? :yield : :effort,market_rate=0.05)
-	elseif selected_policy=="Protected Area"
-		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ=OA ? γ : γ_protected_area,ϕ=ϕ, μ=μ_protected_area,m=0.3,regulation=Float64(f), regulate=regulate_protected_area,target=:effort)
-	elseif selected_policy=="Economic Incentives"
-		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ= γ,ϕ=ϕ, μ=μ_economic_incentive,regulation=Float64(f), target=:effort)
-	elseif selected_policy=="Development"
-		p=(N=N,α=0.1,w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform),ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N), γ= γ_development,ϕ=ϕ, μ=μ_development,regulation=Float64(f), target=:effort)
-	end
-	
-
-end
-
-# ╔═╡ fa8cd950-a8f1-48d3-8f14-84c3ed1598bd
-p
-
-# ╔═╡ 26e46665-12d4-4245-a3e5-7ee92a4254c9
-p
-
-# ╔═╡ a4bd1969-002b-4b3d-8a75-59eeb197409b
-function run(s; u0=zeros(p.N), y0=1.0,ϕ0=0.0, f=0.0)
-	dist!(s.w̃,s.N)
-	dist!(s.ū,s.N)
-	
-	tend=(0.0,1000.0)
-
-	p=s.regulate(s,f)
-	if selected_policy=="Development"
-		q=change(s,γ=γ, μ=μ)
- 		qprob = ODEProblem(dxdt,[u0;y0],tend,q);
-		qsol=solve(qprob,SSPRK432(;stage_limiter!),callback= TerminateSteadyState(1e-6,1e-4) )
-		initVals=qsol.u[end-1]
-	elseif selected_policy=="Tradable Use Rights"
-		initVals=[u0;y0;ϕ0]
-	else
-		initVals=[u0;y0]
-	end
-
-
-	 prob = ODEProblem(dxdt,initVals,tend,p);
-
-	#SSPRK22
-
-	sol=solve(prob,SSPRK432(;stage_limiter!),callback= TerminateSteadyState(1e-6,1e-4) )
-	return sol,p
-end
-
-# ╔═╡ b1baaa46-9322-4a8e-821b-85fe0527ab03
-sol,z=run(p);
-
-# ╔═╡ a2531b26-eb2b-49ed-a5e2-b605c67bfd18
-run(p)
-
-# ╔═╡ 017c1341-361b-4e57-b55b-f303f10972f9
-p
-
-# ╔═╡ 57016500-98a3-43b7-82ad-fc1380c648ef
-begin
-	q=change(p,γ=γ, μ=μ)
-	fb,ab=scatter(Φ.(range(0.0,stop=1.0,length=100),Ref(q)))
-	scatter!(ab,Φ.(range(0.0,stop=1.0,length=100),Ref(p)))
-	fb
-end
-
-# ╔═╡ 9e792817-1ed8-4313-8023-a218c7ae5f39
-q.μ
-
-# ╔═╡ a2047277-ea81-4641-9ad7-c99c5f4cfeb2
-q.μ(sol.u[end],q,0.0)
-
-# ╔═╡ 342c9f3d-0ddf-4d19-9320-84ffdeea897d
-Φ(0.2,q)
-
-# ╔═╡ 985b89c3-4d1f-4348-97ee-99ca187adec3
-p.μ(sol.u[end],p,0.0)
-
-# ╔═╡ d5bb2b5d-44be-47c2-9578-4b22d8d709a5
-q.μ(sol.u[end],p,0.0)
-
-# ╔═╡ 2cca71f7-8c3d-4b28-b8a2-a30e7c85e5d2
-Φ(0.2,p)
-
-# ╔═╡ 9e1bd13d-596a-4b36-b9cf-571e89eb5dce
-md"
-## Make Φ distribution for plotting in phaseplot!!
-"
-
-# ╔═╡ 70222e88-a519-40ac-8e2b-b643c37bd0e8
-band(p.w̃[1:end-1],fill(0.0,length(p.w̃)-1),1 ./diff(p.w̃)./maximum(1 ./diff(p.w̃)), alpha=0.5)
-
-# ╔═╡ a1c79ec2-7d42-412b-9884-6501204e8c96
-function distribution(a::Axis,s::Symbol,p; scale=0.1)
-	band!(a,p[s][1:end-1],fill(0.0,length(p[s])-1),1 ./diff(p[s])./maximum(1 ./diff(p[s])).*scale, alpha=0.5)
-end
-
-# ╔═╡ ecc0c6b7-7c62-458d-9788-cb41673bd686
-scatter(-diff(Φ.(range(0.0,stop=1.0,length=100),Ref(p))),1:99)
-
-# ╔═╡ 674b0387-f0cf-4840-96ce-53a433086964
-function distribution_poly(a::Axis,s::Symbol,p; scale=0.1, flip=false, color=HSLA(0,0,0.5,0.5), alpha=0.5)
-	x=p[s][1:end-1]
-	x2=range(0.0,stop=1.0,length=100)
-	y=1 ./diff(p[s])./maximum(1 ./diff(p[s]))
-	yt=Φ.(x2,Ref(p))
-	y2=1 ./diff(yt)./maximum(1 ./diff(yt))
-	P=[]
-	if flip
-		push!(P,Point2f(0.0,x2[1]))
-		[push!(P,Point2f(y2[i].*scale,x2[i])) for i in 1:99]
-		push!(P,Point2f(0.0,y[end]))
-	else
-		push!(P,Point2f(x[1],0.0))
-		[push!(P,Point2f(x[i],y[i].*scale)) for i in 1:length(x)]
-		push!(P,Point2f(x[end],0.0))
-	end
-	poly!(a,P; color)
-end
-
-# ╔═╡ a8261e9f-bcbf-4fba-aea7-27309788873c
-begin
-	f3=Figure()
-	a3=Axis(f3[1,1])
-	distribution_poly(a3,:ū,p, flip=true)
-	f3
-end
-
-# ╔═╡ b7456426-3710-45cd-884b-93b4225083ac
-
-function gini(x)
-    sum([abs(x[i]-x[j]) for i in 1:length(x), j in 1:length(x)])/(2*length(x)*sum(x))
-end
-
-# ╔═╡ 1a76ac91-709c-41bd-a6e8-1dd20d82a262
-function incomes(x,p; sum=false)
-	resource=x[1:p.N].*x[p.N+1]
-	wages=(p.ū.-x[1:p.N]).*p.w̃
-	trade= length(x)>p.N+1 ? (p.U.-x[1:p.N]).*x[p.N+2] : fill(0.0,p.N)
-	total=resource.+wages.+trade
-	g=gini(total)
-	ecological=x[p.N+1]
-	return sum ? (;resource,wages,trade,total,g,ecological) : (;resource,wages,trade,total,gini=g,ecological)
-end
-
-# ╔═╡ 59505297-9201-46e3-9334-d89db46df26f
-function regulation_scan(p;m=100)
-	r=range(0.0,stop=1.0,length=m)
-	RR=zeros(m)
-	WR=zeros(m)
-	TR=zeros(m)
-	ToR=zeros(m)
-	GI=zeros(m)
-	EH=zeros(m)
-	RI=zeros(m)
-	oau=zeros(p.N)
-	x0=zeros(p.N+2)
-	x0[p.N+1]=1.0
-	sols=[]
-	for (j,i) in enumerate(r)
-		P=p.regulate(p,i)
-		s,z=run(P, u0=x0[1:p.N],y0=x0[p.N+1], ϕ0=x0[p.N+1])
+# ╔═╡ ae16cb02-808d-495e-a456-cc71dd5854ec
+# Set the scenario based on UI
+	begin
+		w̃=sed(min=minIn,max=maxIn, distribution=LN ? LogNormal : Uniform)
+		ū=sed(min=mu*(1-Float64(s))/N,max=mu*(1+Float64(s))/N)
+		R=ones(N)
+		α=0.1
 		
-		if j==1
-			oau=s[1:p.N,end-1]
+		scenario=(;N,α,w̃=dist!(w̃,N), ū=dist!(ū,N),R, policy=selected_policy, γ=P[selected_policy][1], ϕ=P[selected_policy][3], μ=P[selected_policy][2],regulate=P[selected_policy][4],regulation_level=Float64(regulation_level), target=yield ? :yield : :effort)
+
+		# make this neater:
+		if selected_policy=="Protected Area"
+			scenario=change(scenario,m=0.1)
 		end
-		inc=incomes(s.u[end-1],P)
-		RR[j]=sum(inc.resource)
-		WR[j]=sum(inc.wages)
-		TR[j]=sum(abs.(inc.trade))
-		ToR[j]=sum(inc.total)
-		GI[j]=inc.gini
-		EH[j]=inc.ecological
-		RI[j]=sum(abs.(oau.-s[1:p.N,end-1]))
-		push!(sols,s.u[end-1])
+
+		if selected_policy=="Tradable Use Rights"
+			scenario=change(scenario,market_rate=0.1)
+		end
+		scenario
 	end
-	oRR=argmax(RR)
-	oWR=argmax(WR)
-	oTR=argmax(TR)
-	oToR=argmax(ToR)
-	oGI=argmin(GI)
-	oEH=argmax(EH)
-	oRI=argmax(EH)
-	return (;RR,WR,TR,ToR,GI,EH,RI,r,oRR,oWR,oTR,oToR,oGI,oEH,oRI,sols)
+
+# ╔═╡ 34acbcf4-3985-42ac-a502-40da08dfe82d
+begin
+	fi=Figure()
+	a1=Axis(fi[1,1])
+	a2=Axis(fi[1,2])
+	sol=run(scenario, f=regulation_level)
+	phase_plot!(a1,sol)
+	income_plot!(a2,sol, sol.prob.p)
+
+	fi
 end
 
-# ╔═╡ 6b3c74b8-3af3-45bf-a91f-9efb5551a490
+# ╔═╡ 5ac145d7-d115-416a-b13e-d4507f0fc757
+run(scenario,f=regulation_level)
+
+# ╔═╡ f3febf51-96fa-4b1b-bcde-30f1231e0315
+scenario
+
+# ╔═╡ 0efc519b-991e-46d2-9612-f0bd78e63c39
 md"
-## Implementation of distributions
+# The code for policies
 "
 
-# ╔═╡ 09e02bf5-b50a-4750-a243-c7d24a36e08c
+# ╔═╡ b4c33ee6-92fc-431f-a9f1-c1f3759835f2
 md"
-## Visualization functions
+# Socio-economic diversity
+Below is the code that we use to implement socioeconomic diversity using distributional parameters. Clik on the hidden eye symbol next to the cell underneath this text to toggle the code view.
 "
 
-# ╔═╡ ebb8c96a-eaa0-499f-844b-e404241d242b
-scatter([sum(sol[1:p.N,i]./p.μ(sol[:,i],p,sol.t[i]))/p.N  for i in Int64.(round.(range(1,stop=length(sol.t)-1,length=10)))])
-
-# ╔═╡ 2655a451-72bd-495d-a466-a602dc5db534
-ColorSchemes
-
-# ╔═╡ 719f1d0a-c5f2-49c6-b839-95141285eca2
-sol.prob.p
-
-# ╔═╡ 3cb5b1d7-3ba8-45c4-9b0f-fe24b4e30944
-function fig(sol)
-	q=sol.prob.p
-	p=sol.prob.p
-	y=range(0.0,stop=1.0,length=100)
-	F=Figure(size=(800,RS ? 800 : 400))
-	a21=Axis(F[1,1], aspect=1);a22=Axis(F[1,2])#;a23=Axis(F[1,3])
-	#limits!(a12,0.0,1.0,0.0,1.0)
-	limits!(a21,0.0,1.0,0.0,1.0)
-	
-	qrun=run(sol.prob.p, f=0.0)
-	k=q.γ(sol.u[end],q,sol.t[end])
-
-	#distribution_poly(a21,:w̃,p, scale=0.1, flip=false)
-	#distribution_poly(a21,:ū,p, scale=0.1, flip=true)
-	
-	#lines!(a21,[0,1],[Φ(1-f,p),Φ(1-f,p)], color=:lightgray, linestyle=:dash)
-	#lines!(a21,[0,1],[f,f], color=:lightgray, linestyle=:dash)
-	Y=p.target==:effort ? ones(length(y)) : y
-	lines!(a21,y,Φ.(1 .-(1-f)./Y,Ref(p)), color=:darkorange, linestyle=:dot)
-
-	
-	lines!(a21,y,Γ.(y,Ref(q), x=sol.u[end]), color=:lightgray)
-	
-	lines!(a21,y,Γ.(y,Ref(p), x=sol.u[end], t=sol.t[end-1]))
-	lines!(a21,y,Φ.(y,Ref(p), t=sol.t[end-1]))
-	lines!(a21,y,Φ.(y,Ref(q)), color=:lightgray)
-
-		# Show trajectory
-	trajectory ? lines!(a21,[u[p.N+1] for u in sol.u[1:end-1]],[sum(u[1:p.N]./p.μ(u,p,sol.t[i]))/p.N for (i,u) in enumerate(sol.u[1:end-1])], color=selected_policy=="Development" ? sol.t[1:end-1] : :white, linestyle=:dot, colormap=cgrad([:white, :crimson], [0.0, 0.5, 1.0])) : nothing
-
-	#Show the attractor
-	scatter!(a21,[sol[p.N+1,end-1]],[sum(sol[1:p.N,end-1]./p.μ(sol.u[end-1],p,sol.t[end-1])./p.N)], color=:crimson, markersize=15)
-	if selected_policy=="Development"
-		scatter!(a21,[sol[p.N+1,1]],[sum(sol[1:p.N,1]./p.μ(sol.u[end-1],p,sol.t[1])./p.N)], color=:white, markersize=15)
-	end
-
-	# Show the market price of use rights
-	length(sol.u[end])>p.N+1 ? text!(a21,"ϕ: "*string(sol[end,end])) : nothing
-
-
-	
-	incomes!(a22,sol,p)
-	Colorbar(F[1,3],limits=extrema(p.w̃), label="w̃")
-	
-	if RS
-		R=regulation_scan(p)
-		ar=Axis(F[2,1:2], xlabel="regulation level")
-		# (;RR,WR,TR,ToR,GI,EH,RI,r)
-		cs=ColorSchemes.tab20
-		lw=3
-		lines!(ar,[f,f],[0.0,1.0], color=:white,linewidth=lw, label="Selected")
-		
-		lines!(ar,R.r,(R.RR.-minimum(R.RR))./(maximum(R.RR)-minimum(R.RR)),label="resource", color=cs[1])
-		lines!(ar,[R.r[R.oRR],R.r[R.oRR]],[0.0,1.0], color=cs[1], linestyle=:dot,linewidth=lw)
-		
-		lines!(ar,R.r,(R.WR.-minimum(R.WR))./(maximum(R.WR)-minimum(R.WR)),label="wages", color=cs[3])
-		lines!(ar,[R.r[R.oWR],R.r[R.oWR]],[0.0,1.0], color=cs[3], linestyle=:dot,linewidth=lw)
-		
-		lines!(ar,R.r,(R.TR.-minimum(R.TR))./(maximum(R.TR)-minimum(R.TR)),label="trade", color=cs[5])
-		lines!(ar,[R.r[R.oTR],R.r[R.oTR]],[0.0,1.0], color=cs[5], linestyle=:dot,linewidth=lw)
-		
-		lines!(ar,R.r,(R.ToR.-minimum(R.ToR))./(maximum(R.ToR)-minimum(R.ToR)),label="total", color=cs[7])
-		lines!(ar,[R.r[R.oToR],R.r[R.oToR]],[0.0,1.0], color=cs[7], linestyle=:dot,linewidth=lw)
-		
-		lines!(ar,R.r,(R.GI.-minimum(R.GI))./(maximum(R.GI)-minimum(R.GI)),label="gini", color=cs[9])
-		lines!(ar,[R.r[R.oGI],R.r[R.oGI]],[0.0,1.0], color=cs[9], linestyle=:dot,linewidth=lw)
-
-		lines!(ar,R.r,(R.RI.-minimum(R.RI))./(maximum(R.RI)-minimum(R.RI)),label="regulation", color=cs[13])
-		lines!(ar,[R.r[R.oRI],R.r[R.oRI]],[0.0,1.0], color=cs[13], linestyle=:dot,linewidth=lw)
-		
-		lines!(ar,R.r,R.EH,label="ecologial", color=cs[11])
-		lines!(ar,[R.r[R.oEH],R.r[R.oEH]],[0.0,1.0], color=cs[11], linestyle=:dot,linewidth=lw)
-
-		
-		
-		axislegend(ar)
-	end
-	F
-end
-
-# ╔═╡ c0a53509-2354-46ce-a9f5-bfb44f3e952f
-fig(sol)
-
-# ╔═╡ 9ff29c15-c387-40e1-b3a9-2d8cebb3618c
+# ╔═╡ 0d3af4c2-6930-4251-bf93-4ab9a0d80242
 md"
-## Required Packages
+# Notebook setup
 "
 
-# ╔═╡ b0ab1696-6977-49b5-8e60-190e7ebe5989
+# ╔═╡ dc1a62a4-7809-49ac-986a-766861a805f8
 TableOfContents()
 
-# ╔═╡ 81f66720-3626-406b-9830-966f3e5483ee
+# ╔═╡ de810e42-2daa-4aaa-a458-65f9ea2ede97
 set_theme!(theme_dark())
+
+
+# ╔═╡ b2e9d365-7789-4189-b04d-4944978185ba
+html"""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;1,400&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+<style>
+
+pluto-output h1,
+pluto-output h2,
+pluto-output h3,
+pluto-output h4,
+pluto-output h5,
+pluto-output h6 {
+    font-family: "Nunito","Roboto", Arial, Helvetica, sans-serif;
+}
+pluto-output h3 {
+        text-indent: 30px; /* Adjust the value as needed */
+        /* Optional: Retain left alignment */
+        text-align: left;
+}
+pluto-output img:hover {
+	//width:1000px !important
+}
+
+pluto-output p{
+font-family: EB Garamond, Georgia, serif;
+font-size: 1.1em
+}
+    pluto-tree img {
+        max-width: none !important;
+        max-height: none !important;
+    }
+
+    /* somewhat larger images in arrays when collapsed */
+    pluto-tree.collapsed img {
+        max-width: 15rem !important;
+        max-height: 15rem !important;
+    }
+main {
+    max-width: 700px;
+	
+}
+pluto-output p{
+font-family: Garamond, Georgia, serif;
+font-size: 1.1em
+}
+
+img {
+    max-width: 1900px; !important
+
+}
+</style>
+
+"""
+
+# ╔═╡ c3ef8a94-7174-4e3a-b390-c36116dbb370
+Formalization=Dict(
+	"Open Access"=>L"\begin{align}
+	\text{Open Access:} & \\
+\text{Utility} = U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}}, \\[6pt] 
+\dot{u}_i = \frac{dU_i}{du} &= y - \tilde{w}_i , \\[6pt]
+ \text{Incentives: } \gamma &= \tilde{w}_i \\[6pt]
+	 \text{Impact: } \mu &= \bar{u}_i \\[6pt]
+\end{align}",
+	"Tradable Use Rights"=>L"\begin{align}
+	\textbf{Tradable Use Rights:} \\[10pt]
+\text{Utility  }  U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;+\; \overbrace{(R_i - u_i)\,\phi}^{\text{Tradable use rights}}, \\[4pt] 
+ \text{supply}  &= \max (0, \sum_{i} U_i - u_i ), \\[4pt]
+ \text{demand}  &= \sum_{i} \begin{cases} \min \left( \dot{u}_i, \bar{u}-(u_i+\dot{u}_i) \right) & \text{if } \dot{u}_i > 0 , \\[4pt] 0 & \text{otherwise}. \end{cases} \\[4pt]
+
+\dot{u}_i = \frac{dU_i}{du} &= \begin{cases} y - (\tilde{w}_i + \phi) & \text{if } u_i < R_i \text{ and } supply>0 \\[4pt] \min \left(0,y - (\tilde{w}_i + \phi) \right)  & \text{otherwise}\end{cases} \\[4pt]
+
+  \dot{\phi} &= \pi  \left( \text{demand} - \text{supply} \right),\\[4pt]
+\text{incentives   }  \gamma &= \tilde{w}_i + \phi, 
+ \end{align}",
+"Assigned Use Rights"=>L"\begin{align}
+\text{Utility} = U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;-\; \overbrace{\max\{u_i - R_i,0\} S}^{\text{Sanctioning}}, \\[6pt] 
+\dot{u}_i = \frac{dU_i}{du} &= y - \left(\tilde{w}_i +\begin{cases} S & \text{if } u_i \ge  R_i \\[4pt] 0 & \text{otherwise} \end{cases}\right), \\[6pt]
+ \gamma &= \tilde{w}_i + \begin{cases} S & \text{if } u_i \ge R_i \\[4pt] 0 & \text{otherwise} \end{cases}, \\[6pt]
+\end{align}",
+"Protected Area"=>L"\begin{align}
+f_p &= \text{fraction protected area} \\
+w_i^T(y_p) & =\text{tourism benefits} \\
+m(y_p,y) & =\text{spillover effect} \\
+\text{incentives} = \gamma_i & = \frac{\tilde{w}_i+\tilde{w}_i^T(y_p)}{1-f_p} \\
+\text{impact} = \bar{u}_i & =\frac{q_i \bar{e}_i}{r+m(y_p,y)} 
+\end{align}",
+"Economic Incentives"=>L"\begin{align}
+\text{ changing alternative incomes, } \tilde{w} : \gamma_i & = \tilde{w}_i=\frac{w(E)_i}{pK} \\  
+\text{changing effort capacities ,} q_i : \bar{u} & =\frac{\bar{e} q_i(E)}{r} \\
+\text{Utility} = U_i &= \overbrace{u_i y (1-t)}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \\[4pt] 
+\end{align}",
+"Development"=>L"\begin{align}
+\textbf{Kuznets Development:} \\[10pt]
+\text{development trajectory}& =  E(t) \\
+\text{ changing alternative incomes, } \tilde{w} : \gamma_i & = \tilde{w}_i=\frac{w(E(t))_i}{pK} \\  
+\text{changing effort capacities ,} q_i : \bar{u} & =\frac{\bar{e} q_i(E(t))}{r} \\
+\text{Utility} = U_i &= \overbrace{u_i y (1-t)}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \\[4pt] 
+\end{align}");
+
+# ╔═╡ bbd53c50-255b-4eff-be02-9025d5f8c239
+Formalization["Open Access"]
+
+# ╔═╡ 29f38be9-aee2-43d1-a4f9-26a7d57da718
+Formalization["Assigned Use Rights"]
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1144,11 +1113,11 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-CairoMakie = "~0.12.16"
+CairoMakie = "~0.12.18"
 ColorSchemes = "~3.27.1"
 Colors = "~0.12.11"
 DifferentialEquations = "~7.15.0"
-Distributions = "~0.25.113"
+Distributions = "~0.25.115"
 HypertextLiteral = "~0.9.5"
 KernelDensity = "~0.6.9"
 PlutoUI = "~0.7.60"
@@ -1161,7 +1130,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "58ae7c71289e05bd60c4d85a8ee8fe6856814692"
+project_hash = "57fbfd71e707d145b6679d66a22dd201396efa2c"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "72af59f5b8f09faee36b4ec48e014a79210f2f4f"
@@ -1380,9 +1349,9 @@ version = "1.2.0"
 
 [[deps.Bzip2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "35abeca13bc0425cff9e59e229d971f5231323bf"
+git-tree-sha1 = "8873e196c2eb87962a2048b3b8e08946535864a1"
 uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
-version = "1.0.8+3"
+version = "1.0.8+4"
 
 [[deps.CEnum]]
 git-tree-sha1 = "389ad5c84de1ae7cf0e28e381131c98ea87d54fc"
@@ -1425,9 +1394,9 @@ version = "1.18.2+1"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
-git-tree-sha1 = "3e4b134270b372f2ed4d4d0e936aabaefc1802bc"
+git-tree-sha1 = "1713c74e00545bfe14605d2a2be1712de8fbcb58"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "1.25.0"
+version = "1.25.1"
 weakdeps = ["SparseArrays"]
 
     [deps.ChainRulesCore.extensions]
@@ -1569,9 +1538,9 @@ version = "1.6.3"
 
 [[deps.DelayDiffEq]]
 deps = ["ArrayInterface", "DataStructures", "DiffEqBase", "LinearAlgebra", "Logging", "OrdinaryDiffEq", "OrdinaryDiffEqCore", "OrdinaryDiffEqDefault", "OrdinaryDiffEqDifferentiation", "OrdinaryDiffEqNonlinearSolve", "OrdinaryDiffEqRosenbrock", "Printf", "RecursiveArrayTools", "Reexport", "SciMLBase", "SimpleNonlinearSolve", "SimpleUnPack", "SymbolicIndexingInterface"]
-git-tree-sha1 = "f4133c0fec72de8b3853c76eb5f99e22c4b0ff16"
+git-tree-sha1 = "7123a01ba4ec2d4058bd14478afd5318c49ea6c1"
 uuid = "bcd4f6db-9728-5f36-b5f7-82caef46ccdb"
-version = "5.51.0"
+version = "5.52.0"
 
 [[deps.DiffEqBase]]
 deps = ["ArrayInterface", "ConcreteStructs", "DataStructures", "DocStringExtensions", "EnumX", "EnzymeCore", "FastBroadcast", "FastClosures", "FastPower", "ForwardDiff", "FunctionWrappers", "FunctionWrappersWrappers", "LinearAlgebra", "Logging", "Markdown", "MuladdMacro", "Parameters", "PreallocationTools", "PrecompileTools", "Printf", "RecursiveArrayTools", "Reexport", "SciMLBase", "SciMLOperators", "SciMLStructures", "Setfield", "Static", "StaticArraysCore", "Statistics", "TruncatedStacktraces"]
@@ -1758,9 +1727,9 @@ version = "2.2.8"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "f42a5b1e20e009a43c3646635ed81a9fcaccb287"
+git-tree-sha1 = "e51db81749b0777b2147fbe7b783ee79045b8e99"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
-version = "2.6.4+2"
+version = "2.6.4+3"
 
 [[deps.ExponentialUtilities]]
 deps = ["Adapt", "ArrayInterface", "GPUArraysCore", "GenericSchur", "LinearAlgebra", "PrecompileTools", "Printf", "SparseArrays", "libblastrampoline_jll"]
@@ -1802,9 +1771,9 @@ version = "1.8.0"
 
 [[deps.FFTW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "5cf2433259aa3985046792e2afc01fcec076b549"
+git-tree-sha1 = "4d81ed14783ec49ce9f2e168208a12ce1815aa25"
 uuid = "f5851436-0d7a-5f13-b9de-f02708fd171a"
-version = "3.3.10+2"
+version = "3.3.10+3"
 
 [[deps.FastAlmostBandedMatrices]]
 deps = ["ArrayInterface", "ArrayLayouts", "BandedMatrices", "ConcreteStructs", "LazyArrays", "LinearAlgebra", "MatrixFactorizations", "PrecompileTools", "Reexport"]
@@ -2029,9 +1998,9 @@ version = "0.21.0+0"
 
 [[deps.Giflib_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "7141135f9073f135e68c5ee8df44fb0fb80689b8"
+git-tree-sha1 = "6570366d757b50fabae9f4315ad74d2e40c0560a"
 uuid = "59f7168a-df46-5410-90c8-f2779963d0ec"
-version = "5.2.2+1"
+version = "5.2.3+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE2_jll", "Zlib_jll"]
@@ -2251,9 +2220,9 @@ version = "0.1.5"
 
 [[deps.JpegTurbo_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "3447a92280ecaad1bd93d3fce3d408b6cfff8913"
+git-tree-sha1 = "eac1206917768cb54957c65a615460d87b455fc1"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
-version = "3.1.0+1"
+version = "3.1.1+0"
 
 [[deps.JumpProcesses]]
 deps = ["ArrayInterface", "DataStructures", "DiffEqBase", "DocStringExtensions", "FunctionWrappers", "Graphs", "LinearAlgebra", "Markdown", "PoissonRandom", "Random", "RandomNumbers", "RecursiveArrayTools", "Reexport", "SciMLBase", "Setfield", "StaticArrays", "SymbolicIndexingInterface", "UnPack"]
@@ -2288,9 +2257,9 @@ version = "3.100.2+0"
 
 [[deps.LERC_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "78e0f4b5270c4ae09c7c5f78e77b904199038945"
+git-tree-sha1 = "aaafe88dccbd957a8d82f7d05be9b69172e0cee3"
 uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
-version = "4.0.0+2"
+version = "4.0.1+0"
 
 [[deps.LLVMOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -2300,9 +2269,9 @@ version = "18.1.7+0"
 
 [[deps.LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "16e6ec700154e8004dba90b4aec376f68905d104"
+git-tree-sha1 = "854a9c268c43b77b0a27f22d7fab8d33cdb3a731"
 uuid = "dd4b983a-f0e5-5f8d-a1b7-129d4a5fb1ac"
-version = "2.10.2+2"
+version = "2.10.2+3"
 
 [[deps.LaTeXStrings]]
 git-tree-sha1 = "dda21b8cbd6a6c40d9d02a73230f9d70fed6918c"
@@ -2398,9 +2367,9 @@ version = "1.7.0+0"
 
 [[deps.Libgpg_error_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "a7f43994b47130e4f491c3b2dbe78fe9e2aed2b3"
+git-tree-sha1 = "df37206100d39f79b3376afb6b9cee4970041c61"
 uuid = "7add5ba3-2f88-524e-9cd5-f83b8a55f7b8"
-version = "1.51.0+0"
+version = "1.51.1+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -2410,21 +2379,21 @@ version = "1.17.0+1"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "d841749621f4dcf0ddc26a27d1f6484dfc37659a"
+git-tree-sha1 = "84eef7acd508ee5b3e956a2ae51b05024181dee0"
 uuid = "4b2f31a3-9ecc-558c-b454-b3730dcb73e9"
-version = "2.40.2+1"
+version = "2.40.2+2"
 
 [[deps.Libtiff_jll]]
 deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "XZ_jll", "Zlib_jll", "Zstd_jll"]
-git-tree-sha1 = "b404131d06f7886402758c9ce2214b636eb4d54a"
+git-tree-sha1 = "4ab7581296671007fc33f07a721631b8855f4b1d"
 uuid = "89763e89-9b03-5906-acba-b20f662cd828"
-version = "4.7.0+0"
+version = "4.7.1+0"
 
 [[deps.Libuuid_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "9d630b7fb0be32eeb5e8da515f5e8a26deb457fe"
+git-tree-sha1 = "edbf5309f9ddf1cab25afc344b1e8150b7c832f9"
 uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
-version = "2.40.2+1"
+version = "2.40.2+2"
 
 [[deps.LineSearch]]
 deps = ["ADTypes", "CommonSolve", "ConcreteStructs", "FastClosures", "LinearAlgebra", "MaybeInplace", "SciMLBase", "SciMLJacobianOperators", "StaticArraysCore"]
@@ -2741,15 +2710,15 @@ version = "0.8.1+2"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "f58782a883ecbf9fb48dcd363f9ccd65f36c23a8"
+git-tree-sha1 = "7493f61f55a6cce7325f197443aa80d32554ba10"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "3.0.15+2"
+version = "3.0.15+3"
 
 [[deps.OpenSpecFun_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "418e63d434f5ca12b188bbb287dfbe10a5af1da4"
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "1346c9208249809840c91b26703912dff463d335"
 uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
-version = "0.5.5+1"
+version = "0.5.6+0"
 
 [[deps.Optim]]
 deps = ["Compat", "FillArrays", "ForwardDiff", "LineSearches", "LinearAlgebra", "NLSolversBase", "NaNMath", "Parameters", "PositiveFactorizations", "Printf", "SparseArrays", "StatsBase"]
@@ -2803,10 +2772,10 @@ weakdeps = ["EnzymeCore"]
     OrdinaryDiffEqCoreEnzymeCoreExt = "EnzymeCore"
 
 [[deps.OrdinaryDiffEqDefault]]
-deps = ["DiffEqBase", "EnumX", "LinearAlgebra", "LinearSolve", "OrdinaryDiffEqBDF", "OrdinaryDiffEqCore", "OrdinaryDiffEqRosenbrock", "OrdinaryDiffEqTsit5", "OrdinaryDiffEqVerner", "PrecompileTools", "Preferences", "Reexport"]
-git-tree-sha1 = "c8223e487d58bef28a3535b33ddf8ffdb44f46fb"
+deps = ["ADTypes", "DiffEqBase", "EnumX", "LinearAlgebra", "LinearSolve", "OrdinaryDiffEqBDF", "OrdinaryDiffEqCore", "OrdinaryDiffEqRosenbrock", "OrdinaryDiffEqTsit5", "OrdinaryDiffEqVerner", "PrecompileTools", "Preferences", "Reexport"]
+git-tree-sha1 = "2ee6ef0bbed24976e4acfccf609801f8a5bf8223"
 uuid = "50262376-6c5a-4cf5-baba-aaf4f84d72d7"
-version = "1.1.0"
+version = "1.2.0"
 
 [[deps.OrdinaryDiffEqDifferentiation]]
 deps = ["ADTypes", "ArrayInterface", "DiffEqBase", "FastBroadcast", "FiniteDiff", "ForwardDiff", "FunctionWrappersWrappers", "LinearAlgebra", "LinearSolve", "OrdinaryDiffEqCore", "SciMLBase", "SparseArrays", "SparseDiffTools", "StaticArrayInterface", "StaticArrays"]
@@ -3737,9 +3706,9 @@ version = "0.4.1"
 
 [[deps.Unitful]]
 deps = ["Dates", "LinearAlgebra", "Random"]
-git-tree-sha1 = "01915bfcd62be15329c9a07235447a89d588327c"
+git-tree-sha1 = "c0667a8e676c53d390a09dc6870b3d8d6650e2bf"
 uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
-version = "1.21.1"
+version = "1.22.0"
 weakdeps = ["ConstructionBase", "InverseFunctions"]
 
     [deps.Unitful.extensions]
@@ -3784,33 +3753,33 @@ version = "1.1.42+0"
 
 [[deps.XZ_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "ecda72ccaf6a67c190c9adf27034ee569bccbc3a"
+git-tree-sha1 = "beef98d5aad604d9e7d60b2ece5181f7888e2fd6"
 uuid = "ffd25f8a-64ca-5728-b0f7-c24cf3aae800"
-version = "5.6.3+1"
+version = "5.6.4+0"
 
 [[deps.Xorg_libX11_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libxcb_jll", "Xorg_xtrans_jll"]
 git-tree-sha1 = "9dafcee1d24c4f024e7edc92603cedba72118283"
 uuid = "4f6342f7-b3d2-589e-9d20-edeb45f2b2bc"
-version = "1.8.6+1"
+version = "1.8.6+3"
 
 [[deps.Xorg_libXau_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "2b0e27d52ec9d8d483e2ca0b72b3cb1a8df5c27a"
 uuid = "0c0b7dd1-d40b-584c-a123-a41640f87eec"
-version = "1.0.11+1"
+version = "1.0.11+3"
 
 [[deps.Xorg_libXdmcp_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "02054ee01980c90297412e4c809c8694d7323af3"
 uuid = "a3789734-cfe1-5b06-b2d0-1dd0d9d62d05"
-version = "1.1.4+1"
+version = "1.1.4+3"
 
 [[deps.Xorg_libXext_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll"]
 git-tree-sha1 = "d7155fea91a4123ef59f42c4afb5ab3b4ca95058"
 uuid = "1082639a-0dae-5f34-9b06-72781eeb8cb3"
-version = "1.3.6+1"
+version = "1.3.6+3"
 
 [[deps.Xorg_libXrender_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll"]
@@ -3822,19 +3791,19 @@ version = "0.9.11+1"
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "fee57a273563e273f0f53275101cd41a8153517a"
 uuid = "14d82f49-176c-5ed1-bb49-ad3f5cbd8c74"
-version = "0.1.1+1"
+version = "0.1.1+3"
 
 [[deps.Xorg_libxcb_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "XSLT_jll", "Xorg_libXau_jll", "Xorg_libXdmcp_jll", "Xorg_libpthread_stubs_jll"]
 git-tree-sha1 = "1a74296303b6524a0472a8cb12d3d87a78eb3612"
 uuid = "c7cfdc94-dc32-55de-ac96-5a1b8d977c5b"
-version = "1.17.0+1"
+version = "1.17.0+3"
 
 [[deps.Xorg_xtrans_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "b9ead2d2bdb27330545eb14234a2e300da61232e"
 uuid = "c5fb5394-a638-5e4d-96e5-b29de1b5cf10"
-version = "1.5.0+1"
+version = "1.5.0+3"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
@@ -3843,9 +3812,9 @@ version = "1.2.13+1"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "7dc5adc3f9bfb9b091b7952f4f6048b7e37acafc"
+git-tree-sha1 = "622cf78670d067c738667aaa96c553430b65e269"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
-version = "1.5.6+2"
+version = "1.5.7+0"
 
 [[deps.isoband_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -3878,15 +3847,15 @@ version = "2.0.3+0"
 
 [[deps.libpng_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Zlib_jll"]
-git-tree-sha1 = "9c42636e3205e555e5785e902387be0061e7efc1"
+git-tree-sha1 = "b7bfd3ab9d2c58c3829684142f5804e4c6499abc"
 uuid = "b53b4c65-9356-5827-b1ea-8c7a1a84506f"
-version = "1.6.44+1"
+version = "1.6.45+0"
 
 [[deps.libsixel_jll]]
-deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Pkg", "libpng_jll"]
-git-tree-sha1 = "80c5ae2c7b5163441018f4666b179f1ffca194c1"
+deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "Libdl", "libpng_jll"]
+git-tree-sha1 = "1e53ffe8941ee486739f3c0cf11208c26637becd"
 uuid = "075b6546-f08a-558a-be8f-8157d0f608a5"
-version = "1.10.3+2"
+version = "1.10.4+0"
 
 [[deps.libvorbis_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Ogg_jll", "Pkg"]
@@ -3896,9 +3865,9 @@ version = "1.3.7+2"
 
 [[deps.libwebp_jll]]
 deps = ["Artifacts", "Giflib_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libglvnd_jll", "Libtiff_jll", "libpng_jll"]
-git-tree-sha1 = "ccbb625a89ec6195856a50aa2b668a5c08712c94"
+git-tree-sha1 = "d2408cac540942921e7bd77272c32e58c33d8a77"
 uuid = "c5f90fcd-3b7e-5836-afba-fc50a0988cb2"
-version = "1.4.0+0"
+version = "1.5.0+0"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -3930,88 +3899,57 @@ version = "3.6.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╟─f8e1b129-5fe6-49e4-9bd2-0f612f16cef0
-# ╠═ed9ab4fd-eb64-4c6c-abb8-ee815c16615c
-# ╠═d7d60288-8345-4fe8-ad95-b3e41d131e9e
-# ╠═0380f592-bd94-49e8-9006-6587e58041bc
-# ╟─9803845d-a902-4d18-8957-4fe79a6b2843
-# ╠═1e335796-6b2b-4e3f-823f-61b676872ba9
-# ╟─c0a53509-2354-46ce-a9f5-bfb44f3e952f
-# ╠═fa8cd950-a8f1-48d3-8f14-84c3ed1598bd
-# ╟─45c5d4b5-7e1f-44aa-9ea2-15c632ce840f
-# ╟─7f80e8ee-1870-443e-a3d5-9442ce41731d
-# ╟─c3ab2629-307c-4cf5-97c7-47154d02e239
-# ╠═da0ebd8c-d4f1-43b2-8446-b61f12685e24
-# ╠═b8efceac-e3ed-4a7e-9ac8-acda33bd75e6
-# ╠═5e0aa44d-ff9e-41eb-9f1f-d6a1241b416f
-# ╠═0028873a-a10d-4c54-a2aa-2e7f2a5cea9d
-# ╟─8075c52a-a263-4ca5-a9f2-c33ba43daec4
-# ╟─1a007494-f1d6-4659-8757-5b50f13a5030
-# ╠═62cf8442-617e-4508-a479-8d56287a63f4
-# ╠═b1baaa46-9322-4a8e-821b-85fe0527ab03
-# ╠═26e46665-12d4-4245-a3e5-7ee92a4254c9
-# ╠═8ffade64-98e6-420b-9dd0-9970a13b9051
-# ╠═a2531b26-eb2b-49ed-a5e2-b605c67bfd18
-# ╠═bf6950ea-baa3-4aba-b4ef-0673ce9eb391
-# ╠═1a76ac91-709c-41bd-a6e8-1dd20d82a262
-# ╠═9d2ced66-3e0c-473f-9482-b68ae0679f98
-# ╠═59505297-9201-46e3-9334-d89db46df26f
-# ╠═6c5493fe-d9a4-400a-ba4e-b8ba51cf660f
-# ╠═a91ed323-d642-41b4-8a66-0080aa4ae6bb
-# ╟─d0b09169-78fa-401d-aeb0-2964ed8d59d9
-# ╟─41e8f678-ee63-4fdb-accc-0b5386d38e2f
-# ╠═bd28c318-4367-45ed-901b-c75cab457001
-# ╟─e6d63664-3b7d-451b-bfdf-6488cec68a64
-# ╠═ddc7bd05-318f-4364-abde-d046cdd94627
-# ╟─733ae727-2195-42ae-8bd8-7f8c39ef27ed
-# ╠═9009479e-ba5e-44e9-95d9-2fff617d05c6
-# ╠═42800b3f-4462-4e78-b4e7-784a16dd17b5
-# ╠═9444e827-765b-4730-9fcf-cce7b0e545db
-# ╠═d931aee2-95bb-4434-984e-b7f0f2d202fe
-# ╟─eaacdb9b-c9b7-47ba-ba85-625c00da5c27
-# ╠═a4bd1969-002b-4b3d-8a75-59eeb197409b
-# ╠═017c1341-361b-4e57-b55b-f303f10972f9
-# ╠═cc9bcc1c-1fb5-45e1-bf70-d419f4ae18c7
-# ╠═b97f54c2-e303-4d8e-967a-f293ca98a2ef
-# ╠═652bb9df-9611-4745-8f1f-db96522d026e
-# ╟─93666b06-3af8-4b9c-99e5-3b6c9ccf8e3a
-# ╠═84c3854b-4fb0-4bf0-9628-a6d4cf3beb02
-# ╠═8b751c9d-3dc4-4c4c-859e-7438726e5f19
-# ╠═57016500-98a3-43b7-82ad-fc1380c648ef
-# ╠═9e792817-1ed8-4313-8023-a218c7ae5f39
-# ╠═985b89c3-4d1f-4348-97ee-99ca187adec3
-# ╠═d5bb2b5d-44be-47c2-9578-4b22d8d709a5
-# ╠═a2047277-ea81-4641-9ad7-c99c5f4cfeb2
-# ╠═2cca71f7-8c3d-4b28-b8a2-a30e7c85e5d2
-# ╠═342c9f3d-0ddf-4d19-9320-84ffdeea897d
-# ╟─2b950c8c-2212-4690-8f35-92f79dc664a9
-# ╟─dd39cb0f-e20e-4a50-94f6-974d172bdfc4
-# ╠═87f36eda-7049-4ba1-9db4-730758c559b3
-# ╟─1e338a69-c264-4640-8da9-3c237336fc08
-# ╠═64c01173-6b66-4c4a-bbf5-746fe095bbf9
-# ╟─d47d1484-7683-4126-b556-78b790deed40
-# ╠═fe37cba2-f16a-4b26-a7ff-ba90e4e34c76
-# ╠═7260e83d-8d68-453f-b362-c964610aa6c8
-# ╠═1eaf7645-06d0-4034-9397-e675aeccdd99
-# ╟─14e082f7-007b-4f29-9c63-bdc58f4c037d
-# ╠═79fc5598-e8bd-4d67-b875-8885d219b269
-# ╠═9e1bd13d-596a-4b36-b9cf-571e89eb5dce
-# ╠═70222e88-a519-40ac-8e2b-b643c37bd0e8
-# ╠═a1c79ec2-7d42-412b-9884-6501204e8c96
-# ╠═a8261e9f-bcbf-4fba-aea7-27309788873c
-# ╠═ecc0c6b7-7c62-458d-9788-cb41673bd686
-# ╠═674b0387-f0cf-4840-96ce-53a433086964
-# ╠═b7456426-3710-45cd-884b-93b4225083ac
-# ╠═6b3c74b8-3af3-45bf-a91f-9efb5551a490
-# ╠═a24e8fa5-ad77-4423-8162-88d540a62025
-# ╟─09e02bf5-b50a-4750-a243-c7d24a36e08c
-# ╠═ebb8c96a-eaa0-499f-844b-e404241d242b
-# ╠═2655a451-72bd-495d-a466-a602dc5db534
-# ╠═719f1d0a-c5f2-49c6-b839-95141285eca2
-# ╠═3cb5b1d7-3ba8-45c4-9b0f-fe24b4e30944
-# ╟─9ff29c15-c387-40e1-b3a9-2d8cebb3618c
-# ╠═ab1720b2-acd9-11ef-1b86-732bee591307
-# ╠═b0ab1696-6977-49b5-8e60-190e7ebe5989
-# ╠═81f66720-3626-406b-9830-966f3e5483ee
+# ╟─c42bec27-67e8-4450-b9b4-c1af794e6625
+# ╟─be50a6a1-398d-4419-bca0-e7cf63bcc479
+# ╠═ae16cb02-808d-495e-a456-cc71dd5854ec
+# ╠═78194022-27e9-413c-a6bd-14a6ca61b898
+# ╠═34acbcf4-3985-42ac-a502-40da08dfe82d
+# ╠═22e05a4f-d87e-4902-ac34-8a4856097e5b
+# ╠═16969774-78cb-493b-b147-2a1cbb887e91
+# ╠═c8178072-d067-4aad-9561-9b637309db53
+# ╠═d5811d2d-2999-4b5b-b76a-96b152774cb7
+# ╟─f51413d2-44c8-41d6-ae94-9b1e229a3a93
+# ╠═9ce8f25b-f84b-4d08-b22d-07f65571d03e
+# ╠═5ac145d7-d115-416a-b13e-d4507f0fc757
+# ╠═383e475e-4d24-4e5a-924b-2fec165bc8e8
+# ╠═678b4cd7-6235-4873-8557-158948f39b01
+# ╠═b275096b-1631-4eaf-8119-76bd8b2b48b6
+# ╠═1884c09c-409f-40bf-8ba1-352e87cea23c
+# ╠═f3febf51-96fa-4b1b-bcde-30f1231e0315
+# ╠═33fd36f0-4660-48c1-9d34-2f0dfb586936
+# ╠═91a47b56-557c-413a-97e1-5ecdde0960a3
+# ╠═63429f44-ecd8-4089-8792-a9083d774552
+# ╠═56eb1655-0694-449e-91c2-ae8fe82b328c
+# ╟─7034dba4-6ee4-4c36-8f23-e27c2a3d1c6e
+# ╟─58279a55-3bc6-4a44-a7b9-005088ea83c3
+# ╟─bbd53c50-255b-4eff-be02-9025d5f8c239
+# ╟─0674660f-7d3c-4a21-9524-159622a2e30f
+# ╠═e695e54c-230a-414f-b984-8669ad4395a7
+# ╟─c442745c-5e61-40cf-aab7-ee156bbd874c
+# ╟─d1512299-d1ae-46c8-b1a5-157398b2aa51
+# ╟─dad6949a-ff76-4986-a213-8ec31d1e09fa
+# ╟─29f38be9-aee2-43d1-a4f9-26a7d57da718
+# ╠═758a8ed0-6a51-4bc1-a082-247e2e9c9371
+# ╠═332a298a-7041-4bb3-b56e-80d88983dc2a
+# ╠═8b03aea8-d53c-4053-aafb-1b4044337415
+# ╠═d273590c-9fa6-4060-bed7-76221b006288
+# ╠═5fb7ee80-1cab-4b4e-a79d-73b4699eb86c
+# ╠═5d76c4cb-3d29-49d1-bea8-7cd5327013b4
+# ╠═69fd339f-3ef2-409a-96ab-927ce6a468a9
+# ╠═43fb1b4a-29a5-4f8d-a381-7b5e2f69b97f
+# ╠═e48acb16-351d-4224-a55d-3415a1729275
+# ╠═d634c8e9-768c-452e-90dd-c01348072718
+# ╟─2c638f4b-f7b6-43ff-bd99-fe2a9d43e32a
+# ╠═df86c65e-e5a7-4742-bf17-577f026a2eab
+# ╟─aaaa462b-6f1d-4a72-8ebf-faaf7454af10
+# ╠═0efc519b-991e-46d2-9612-f0bd78e63c39
+# ╟─b4c33ee6-92fc-431f-a9f1-c1f3759835f2
+# ╠═a8f2eb1e-18a9-4cac-9f66-d818107040c1
+# ╟─0d3af4c2-6930-4251-bf93-4ab9a0d80242
+# ╠═707e66d2-c9f4-11ef-11be-b32ec1a9da45
+# ╠═dc1a62a4-7809-49ac-986a-766861a805f8
+# ╠═de810e42-2daa-4aaa-a458-65f9ea2ede97
+# ╠═b2e9d365-7789-4189-b04d-4944978185ba
+# ╟─c3ef8a94-7174-4e3a-b390-c36116dbb370
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
