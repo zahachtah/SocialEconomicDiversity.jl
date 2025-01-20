@@ -4,15 +4,12 @@
 \usepackage{amsmath} %maths
 \usepackage[utf8]{inputenc} %useful to type directly diacritic characters
 \begin{document}
-\begin{align*}\text{Utility} = U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;+\; \overbrace{(R_i - u_i)\,\phi}^{\text{Trade}}, \\[6pt] 
-\dot{u}_i = \frac{dU}{du} &= y - (\tilde{w}_i + \phi), \\[6pt]
-  \dot{\phi} &= \pi  \left( \text{demand} - \text{supply} \right),\\[6pt]
- \text{supply}  &= \sum_{i} \max\{0, R_i - u_i\}, \\[4pt]
- \text{demand}  &= \sum_{i} \begin{cases} \dot{u}_i & \text{if } u_i \ge R_i \text{ and } \dot{u}_i > 0, \\[4pt] 0 & \text{otherwise}. \end{cases} \\[4pt]
-\text{incentives} = \gamma &= \tilde{w}_i + \phi, \\[6pt]
-
-
-
-
-\end{align*}
+\begin{align*}
+\text{Utility  }  U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;+\; \overbrace{(R_i - u_i)\,\phi}^{\text{Tradable use rights}}, \\[4pt] 
+ \text{supply}  &= \max (0, \sum_{i} R_i - u_i ), \\[4pt]
+ \text{demand}  &= \sum_{i} \begin{cases} \min \left( \dot{u}_i, \bar{u}-(u_i+\dot{u}_i) \right) & \text{if } \dot{u}_i > 0 , \\[4pt] 0 & \text{otherwise}. \end{cases} \\[4pt]
+\dot{u}_i = \frac{dU_i}{du} &= \begin{cases} y - (\tilde{w}_i + \phi) & \text{if } u_i < R_i \text{ and } supply>0 \\[4pt] \min \left(0,y - (\tilde{w}_i + \phi) \right)  & \text{otherwise}\end{cases} \\[4pt]
+\dot{\phi} &= \pi  \left( \text{demand} - \text{supply} \right),\\[4pt]
+\text{incentives   }  \gamma &= \tilde{w}_i + \phi, 
+ \end{align*}
 \end{document}

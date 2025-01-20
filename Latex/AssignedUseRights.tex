@@ -4,8 +4,7 @@
 \usepackage{amsmath} %maths
 \usepackage[utf8]{inputenc} %useful to type directly diacritic characters
 \begin{document}
-\begin{align*}
-\text{Utility}_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;-\; \overbrace{\max\{u_i - U_i,0\} \S}^{\text{Sanctioning}}, \\[6pt] 
-\dot{u}_i &= y - \tilde{w}_i -\begin{cases} \S & \text{if } u_i>U_i \\[4pt] o & \text{otherwise} \end{cases}, \\[6pt]
- \gamma &= \tilde{w}_i + \begin{cases} \S & \text{if } u_i>U_i \\[4pt] o & \text{otherwise} \end{cases}, \\[6pt]\end{align*}
+\begin{align*}\text{Utility} = U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;-\; \overbrace{\max\{u_i - R_i,0\} S}^{\text{Sanctioning}}, \\[6pt] 
+\dot{u}_i = \frac{dU_i}{du} &= y - \left(\tilde{w}_i +\begin{cases} S & \text{if } u_i \ge  R_i \\[4pt] 0 & \text{otherwise} \end{cases}\right), \\[6pt]
+ \gamma &= \tilde{w}_i + \begin{cases} S & \text{if } u_i \ge R_i \\[4pt] 0 & \text{otherwise} \end{cases}, \\[6pt]\end{align*}
 \end{document}

@@ -1,4 +1,4 @@
-#using SocialEconomicDiversity, CairoMakie
+# using SocialEconomicDiversity, CairoMakie
 
 
 #Test with historical use rights
@@ -18,9 +18,9 @@ s6=scenario(s,policy="Development")
 regulation=0.5
 f=Figure(size=(900,600))
 a1=Axis(f[1,1],title=s1.policy)
-a2=Axis(f[1,2],title=s2.policy)
-a3=Axis(f[1,3],title=s3.policy)
-a4=Axis(f[2,1],title=s4.policy)
+a2=Axis(f[1,2],title=s2a.policy)
+a3=Axis(f[1,3],title=s3a.policy)
+a4=Axis(f[2,1],title=s4a.policy)
 a5=Axis(f[2,2],title=s5.policy)
 a6=Axis(f[2,3],title=s6.policy)
 phase_plot!(a1,sim(s1;regulation))

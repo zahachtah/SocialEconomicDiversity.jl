@@ -19,218 +19,333 @@ end
 # ╔═╡ bde09450-c5bb-11ef-33d3-a19c076eceaf
 using CairoMakie,PlutoUI, HypertextLiteral, FileIO
 
+# ╔═╡ f91b34af-c26d-4686-85d1-8ae26c7a3b35
+md"
+Make sure you are explicit with density vs numbers! For example: 1-x/K wher x is number/area and K=number/area OR x is number and K is number!
+
+Then this leads to better derivation of γ
+"
+
 # ╔═╡ ee9892b0-f2f4-4842-976e-ee4448597e56
 md"
 # Protected Area
 
-Protected areas represent a multidisciplinary challenge, as they involve not only the response of resource stocks to reduced harvesting in specific regions but also directly affect the incentives of resource users by limiting the available harvesting areas. Furthermore, indirect effects may play a significant role, including impacts from tourism, cultural heritage preservation, and power dynamics among stakeholders.
+Protected areas represent a multidisciplinary challenge, as they involve not only the response of resource stocks to reduced harvesting in specific regions but also directly affect the incentives of resource users by limiting the available harvesting areas. The choice of habitat to protect has large implications for its benefit to the unprotected areas. Furthermore, indirect effects may play a significant role, including impacts from tourism, cultural heritage preservation, and power dynamics among stakeholders.
 
 
 ## A two-population model
 
-We consider a simple two-population model where fish populations within protected and unprotected areas interact through movement. The mobility flux between these areas is influenced by the relative size between the protected and harvested area. In the unprotected area, harvesting is permitted and is represented by the harvesting term $hy$.
+We consider a simple two-population model where fish populations within protected and unprotected areas interact through movement. The mobility flux between these areas is influenced by the relative size between the protected and harvested area. In the unprotected area, harvesting is permitted and is represented by the harvesting term $hx$.
 
 The dynamics of the system are described by the following set of differential equations:
 
 $\begin{align}
-\dot{y} & =\overbrace{r \left(1-\frac{y}{K}\right) y}^{regeneration} - \overbrace{h y}^{harvest}  + \overbrace{\frac{f_p}{1-f_p}m (y_p-y)}^{mobility} \\
-\dot{y_p} & =\underbrace{r_p \left(1-\frac{y_p}{K_p}\right) y_p}_{regeneration} +\underbrace{\frac{1-f_p}{f_p}m (y-y_p)}_{mobility}
+\dot{x} & =\overbrace{r \left(1-\frac{x}{K}\right) x}^{\text{regeneration}} - \overbrace{h x}^{\text{harvest}}  + \overbrace{\frac{f_p}{1-f_p}m (x_p-x)}^{\text{mobility}} \\
+\dot{x_p} & =\underbrace{r_p \left(1-\frac{x_p}{K_p}\right) x_p}_{\text{regeneration}} +\underbrace{\frac{1-f_p}{f_p}m (x-x_p)}_{\text{mobility}}
 \end{align}$
 
-The equilibrium solution involves a nasty 4'th degree polynomial making it impractical to solve it other than by numerical methods. However, if we are concerned only with the endstate, we can use separation of timescales to take a shortcut.
+The effect of flow between these areas depends on the difference in densities and the mobility rate, $m (x_p-x)$, modulated by the relative sizes between the areas, i.e. $\frac{1-f_p}{f_p}$ and $\frac{f_p}{1-f_p}$ for the protected and unprotected area respectively. The latter is what will contribute the spillover effect, essentially padding the natural regeneration rate in the unprotected area's resoruce stock with an influx from the protected area. 
 
-Let us assume that the protected area population is always in in equilibrium in relation to the unprotected population such that we can predict density in the protected area as a function, $p_y(y,m,f_p)$. Then we only need to solve one equation (the second one above) and let the solution be determined by the actual density of the unprotected population, $y$ as well as the fraction area protected, $f_p$ and the mobility rate, $m$. The equation is quadratic in $y_p$ and thus for the solution, assuming $r=r_p$ and $K=K_p$ for now, we get:
+The equilibrium solution involves a 4'th degree polynomial making it impractical to solve it analytically. However, if we are concerned only with the endstate, we can use separation of timescales to take a shortcut:
 
-$y_p(y,f_p,m)=\frac{1-k+\sqrt{(k-1)^2+4ky}}{2}, k=\frac{1-f_p}{f_pm}$ 
+Let us assume that the protected area population is always in in equilibrium in relation to the unprotected population such that we can predict density in the protected area as a function of the unprotected area's resource density, $x$, as  $x_p(x,m,f_p)$. Then we only need to solve one equation (the second one above) and let the solution be determined by the actual density of the unprotected population, $x$ as well as the fraction area protected, $f_p$ and the mobility rate, $m$. The equation is quadratic in $x_p$ and thus for the solution, assuming $r_p=1$ and $K_p=1$ for now, we get:
 
-Let us now estimate the adjusted effective $r'$ that results from the spillover effect of the protected area. We know we have an influx of 
+$x_p(x,f_p,m)=\frac{1-k+\sqrt{(k-1)^2+4kx}}{2}, k=\frac{1-f_p}{f_pm}$ 
 
-$\text{spillover}(y,f_p,m)=\frac{f_p}{1-f_p} m \left(y_p(y,f_p,m)-y\right)$
+Let us now estimate the adjusted effective $r'$ that results from the spillover effect of the protected area. We know that we have an influx into the unprotected area of 
 
-in order to get this in the same units as r we can divide this by the density in the harvested area, $y$:
+$\text{spillover}(x,f_p,m)=\frac{f_p}{1-f_p} m \left(x_p(x,f_p,m)-x\right)$
 
-$r_{spillover}=\frac{\text{spillover}}{ y}$
+in order to get this in the same units as the local regeneration rate, $r$, we can divide this by the density in the harvested area, $x$:
+
+$r(x,f_p,m)_{spillover}=\frac{\text{spillover}(x,f_p,m)}{ x}$
 
 giving us a spillover per capita standing resource. This has now the same units as $r$ ($time^{-1}$) so we can calculate the effective regeneration from reproduction and spillover as
 
-$r'=r+r_{spillover}(y,f_p,m)$.
+$r'(x,f_p,m)=r+r_{spillover}(x,f_p,m)$
 
-or the fraction regeneration in the harvested populaiton that is due to spillover from the protected area:
+such that we can simplify the system as 
 
-$f_{spillover}(y,f_p,m)=\frac{r_{spillover}(y,f_p,m)}{r+r_{spillover}(y,f_p,m)}$
+$$\begin{align}
+\dot{x} & =\overbrace{r'(x,f_p,m) \left(1-\frac{x}{K}\right) x}^{\text{effective regeneration}} - \overbrace{h x}^{\text{harvest}}  \end{align}.$$
+
+The fraction regeneration in the harvested population that is due to spillover from the protected area then is:
+
+$f_{spillover}(x,f_p,m)=\frac{r_{spillover}(x,f_p,m)}{r+r_{spillover}(x,f_p,m)}$
 
 
-
-In figure SX1 we show how the relative resource density of the protected area would relate to the resource density of the harvested area under different scenarios of $f_p$ and $m$.
+In figure 1 we show how the relative resource density of the protected area would relate to the resource densitx of the harvested area under different scenarios of $f_p$ and $m$.
 
 "
 
 
 
-# ╔═╡ 0c61dc98-ba7c-4334-94e0-2aa16dcc7320
-@bind m PlutoUI.Scrubbable(range(1/100,stop=1.0-1/100,length=100),format=".2f", default=0.5)
+# ╔═╡ b5ae3737-3861-4fc1-bab3-09dae0a48bd3
+@htl("""
+<div style="display: grid; 
+            grid-template-columns: auto auto ; 
+            align-items: center; 
+            gap: 0.5em;">
 
+<div style="text-align: right;">Fraction protected:</div>
+<div>$(@bind fₚ PlutoUI.Scrubbable(range(0.0,stop=1.0-1/100,length=100),format=".2f", default=0.3)) </div>
 
-# ╔═╡ ec7b299a-7135-4a62-847d-1d1769827535
-@bind fₚ PlutoUI.Scrubbable(range(0.0,stop=1.0-1/100,length=100),format=".2f", default=0.5)
+<div style="text-align: right;">Movement rate:</div>
+<div>$(@bind m PlutoUI.Scrubbable(range(1/100,stop=1.0-1/100,length=100),format=".2f", default=0.3)) </div>
 
+<div style="text-align: right;">Protected regeneration improvement (%):</div>
+<div>$(	@bind xr PlutoUI.Scrubbable(range(0.0,stop=1.0,length=100),format=".2f", default=0.0)) </div>
 
-# ╔═╡ 4afcdef2-295d-45cd-b0ba-8ffc6c6c1de9
-@bind xr PlutoUI.Scrubbable(range(0.0,stop=1.0,length=100),format=".2f", default=0.0)
+<div style="text-align: right;">Protected Carrying capacity improvement (%):</div>
+<div>$(	@bind xK PlutoUI.Scrubbable(range(0.0,stop=1.0,length=100),format=".2f", default=0.0)) </div>
 
-# ╔═╡ 81845178-9390-45a7-a323-b74d7407b599
-@bind xK PlutoUI.Scrubbable(range(0.0,stop=1.0,length=100),format=".2f", default=0.0)
+</div>
+""")
 
-# ╔═╡ 1aa365d8-64ab-4264-8aec-2a598b71287c
-@bind yF PlutoUI.Scrubbable(range(0.0,stop=1.0,length=100),format=".2f", default=0.0)
+# ╔═╡ 7fd882c5-dfd7-42c7-8270-7b9e81de4d09
+begin 
+	
+	
 
-# ╔═╡ 10aa133c-9bee-45ae-942f-077aef7f1c1c
-typeof(xK)
+	
+	#@bind yF PlutoUI.Scrubbable(range(0.0,stop=1.0,length=100),format=".2f", default=0.0)
+end
 
-# ╔═╡ ed7383c3-0ab9-4130-b00f-4433b29cf4bf
+# ╔═╡ f0806ca2-6950-449e-b619-22caba4a321f
+md"
+Figure 1. Left panel: protected area resource density (green line) as a function of the density in the unprotected area (orange line) and the mean density weighted for fraction protection. Right panel: The fraction of replenishment in the unprotected area caused by reproduciton in the area vs spillover from the protected area as a funciton of unprotected area resource density."
 
 
 # ╔═╡ 1f62c0c0-67a0-46d4-8bc5-6b580a46029b
 md"
 ## Better habitats in protected areas
 
-Areas selected for protection are generally those of greater natural value, such as possessing superior reproductive habitats ($r_p$) or better foraging grounds that support higher abundances ($K_p$).
+Areas selected for protection are generally those of greater natural value, such as having superior reproductive habitats ($r_p$) or better foraging grounds that support higher abundances ($K_p$).
 
-This solution only slightly modifies the shortcut solution:
+Accounting for this only slightly modifies the shortcut solution:
 
 $y_p^* = K_p \cdot \frac{(r_p - k) + \sqrt{(r_p - k)^2 + \frac{4 r_p k y}{K_p}}}{2 r_p}$
 
-But provides an important opportunity to consider the effect of area choice for protected areas.
-We can define $K_p = K (1 + x_K)$ and $r_p = r (1 + x_r)$, where $x_K$ and $x_r$ represent the degree habitats in the protected area are more suitable compared to the harvested area.
+($k$ remains the same as above) but provides an important opportunity to consider the effect of area choice for protected areas.
+
 
 "
 
 # ╔═╡ 274920e6-7d8f-46dc-9016-17282264582e
 md"
 ## Ecologial parametrisation
-We have established 4 central ecological parameters that determine a minimal model of protected area for a mobile population: mobility, $m$, fraction area protected, $f_p$, relative difference between protected and unprotected area in habitat carrying capacity, $x_K$, and reproduction, $x_r$.
-"
 
-# ╔═╡ 21f5793c-21b1-4e28-81a3-f6ecc4582b0e
-md"
-## Empirical support
-In a large metastudy, Caldwell et al 2024 estimated the effect of MPA'a on fish stock using the quantity of fraction (or percent) of standing stock that is due to spillover effect. Since the resource in our case comes from either reproduciton, $r$ or spillover, $r_{spillover}$ we can do the same as, but in contrast to the figure above, plot it along an x-axis of fraction protected area as they did in their paper. In fact, we will use their figure as background to ours.
-"
 
-# ╔═╡ 456bad95-34cb-4fc7-93f3-8f8f296f7b0f
-m
+Let us define $K_p = K (1 + \frac{x_K}{100})$ and $r_p = r (1 + \frac{x_r}{100})$, where $x_K$ and $x_r$ represent the percent that habitats in the protected area are more suitable compared to the harvested area.
 
-# ╔═╡ 81261658-78c5-45d3-b293-f2ef71001380
-fₚ
-
-# ╔═╡ 7585ca94-c148-4080-93b5-66a5c683e687
-md"
-# Socioeconomic considerations
+We now have established 4 central ecological parameters that determine a minimal model of protected area for a mobile population: mobility, $m$, fraction area protected, $f_p$, % difference between protected and unprotected area in habitat carrying capacity, $K_p$, and reproduction, $r_p$.
 "
 
 # ╔═╡ 3d67deec-190f-49d2-a296-e45edbce5a10
 md"
 ## Relating to incentives and impact
 
-Since $\tilde{w}=\frac{w}{pqK}$ and we reduce the potentially available value  of the resource through protected area we get:
+Since $K$ is density per area and  by excluding access to part of that area the available effective density is now $(1-f_P)$ less. For incentives, $\tilde{w}=\frac{w}{pqK}$, we reduce the potentially available value  of the resource through protected area we get:
 
 $\tilde{w}=\frac{w}{pqK*(1-f_P)}$
 
-The adjustment is non-dimensional so we can set the resulting incentive
+The adjustment is non-dimensional so we can set the resulting incentive, $γ$ as
 
 $\gamma=\tilde{w}\frac{1}{1-f_p}$
 
 i.e. by reducing available area of harvest we increase the incentives to leave the resoure use activity aty earlier levels.
 
-To adjust $\bar{u}$ we need to go deeper. We now know the level of the protected area, given the level of resource in the harvested area (assuming given $f_p$ and $m$). We know that impact is
+To adjust $\bar{u}$ we need to go deeper. We know that impact is
 
-$\bar{u}=\frac{\bar{e}q}{r}$.
+$\bar{u}=\frac{\bar{e}q}{r}$
 
 From above, we know that $r'=r+r_{spillover}$
 
-and thus we can set 
-$\mu=\bar{u}\frac{1}{1+\frac{r_spillover}{r}}$
+thus 
 
-Both incentives and impacts are recalculated during the evaluation of the model and for each timestep we have teh dynamic variable for resource level in the harvested area, y. Mobility, $m$ and fraction area protected, $f_p$, is fixed. Thus for effective impact we have 
+$\bar{u}'=\frac{\bar{e}q}{r+r_{spillover}}.$
 
-$\mu(y,f_p,m)=\bar{u}\frac{1}{1+\frac{r_{spillover}(y,f_p,m)}{r}}$
+In the basic case impact, $μ=\bar{u}$ so we can say
+$\mu'=\bar{u}\frac{1}{1+\frac{r_spillover}{r}}$
 
+Thus for effective impact we can get the value given the current value of $y$, 
 
-Lets implement this function (code at bottom of notebook) and have a look:
+$\mu(y,f_p,m)'=\bar{u}\frac{1}{1+\frac{r_{spillover}(y,f_p,m)}{r}}.$
 
+This approach will only approximate the temporal dynamis as we assume instantaneous equilibration between the protected and unprotected resource densities, but for the endstate (attractor) the solution is perfectly defined. In particular, we can isolate the policy instrument **protected area's** direct effect on incentives and impact as
+
+$\begin{align}
+\text{effect on incentives: }= & \frac{1}{1-f_p} \\
+\text{effect on impacts: }= & \frac{1}{1+\frac{r_{spillover}(y,f_p,m,K_p, r_p)}{r}} \\
+\end{align}$
+
+"
+
+# ╔═╡ 7585ca94-c148-4080-93b5-66a5c683e687
+md"
+# Socioeconomic considerations
 "
 
 # ╔═╡ 52257637-00c8-4d62-b1bc-241846328ce4
 md"
-
-
-## Tourism
-## Economic development
-At times, protected areas are lobbied for by (western) NGO's or government organizations. To sugar the suggestion, economic support is often put into the bargin. Such support can be modelled by changing the distribution of the alternative livelihood opportunities. 
-
 ## Actors Utility function
+Using the notation of the nondimensional system, we can define the utility of each actor as:
 
-$U=y u_i + (\mu_i-u_i) \gamma_i$
+$U_i=y u_i + (\bar{u}-u_i) \tilde{w}_i\frac{1}{1-f_p}$
 
-$\gamma=\tilde{w}_i\frac{1}{1-f_p}$
+so that
 
-$\mu=\bar{u}\frac{1}{1+\frac{r_{spillover}}{r}}$
+$\begin{align}
+\dot{u}_i &= \frac{dU_i}{du} = y - \gamma_i, \\
+\text{subject to} \\
+ 0 & \leq u_i \leq \mu_i, \\
+\text{where } \\
+\gamma_i = & \tilde{w}_i \frac{1}{1 - f_p}, \\
+\mu_i = & \bar{u}_i \frac{1}{1 + \frac{r_{\text{spillover}}}{r}}.
+\end{align}$
 
-$\dot{u}_i=y- \gamma$
 
-$\mu$ does not affect the decisions, $\dot{u}$, but does play a role in the $\Phi$ funciton that sets the fraction participation of resource users at which a certain level of resource is kept constant. Specifically, the spillover effect will increase this as extraction rates are compensated for by the spillover effect. 
+
+## Tourism & Economic development
+## 
+At times, protected areas are lobbied for by (western) NGO's or government organizations, but this aspect is often highlighted in scientific field research on small scale fisheries for example. To sugar the proposition of a protected area, economic support is often put into the bargin. Such support or sideeffects can be modelled by changing the distribution of the alternative livelihood opportunities, $\tilde{w}$. For example we could say that a general inrease in livelihood is dependent on the attractiveness of the protected area, which might depend on $y_p$. How this relationship looks is case specific and depends on many aspects such as distance to other protected areas, markets or infrastructure. But a simple representation of this effect could be:
+
+$T(y_p,K_p)=1-\left(\frac{(K_p-y_p)^2}{t_p+(K_p-y_p)^2}  \right)$
+
+which would look as:
 
 "
 
-# ╔═╡ aa79ebb8-947b-4c1c-8c0c-7319cf00c7e6
+# ╔═╡ cc5558aa-53fc-4c39-a7bf-cc7590c7b2c8
+begin
+	function tourismeffect()
+		y=range(0.0,stop=1.0,length=100)
+		f,a=lines(y,1 .- ((1 .-y).^2 ./((0.2)^2 .+(1 .-y).^2)))
+		a.xlabel="protected area relative resource density yₚ, or proxy for Ecosystem Health"
+		a.ylabel="fraction increase in alternative livelihood opportunities"
+		a.title="Effect of tourism on alternative livelihoods"
+		f
+	end
+	tourismeffect()
+end
+
+# ╔═╡ 85864612-faa0-4612-adcf-b9704d425a08
+md" and which would add a second, indirect effect to incentives, either as an additive term, representing equal distribution of tourism benefits, or multiplicative term, meaning proportional to the current value of the alternative livelihood opportunities, i.e. incentives mostly benefits those  with already good status (high values of $\tilde{w}$).
+
+$\begin{align}
+\text{Combined effect on incentives (additive): }\gamma= &  \tilde{w}\left(\frac{1}{1-f_p} + \frac{T(y_p,K_p)}{\tilde{w}} \right)\\
+\text{Combined effect on incentives (multiplicative): } \gamma = & \tilde{w} \left( \frac{1}{1-f_p}  T(y_p,K_p) \right)\\
+\end{align}$
+
+In reality, the tourism or development benefits might not be linear at all but depend on the current socioeconomic status distribution, best represented by $\tilde{w}$ as $T_i(y_p,K_p,\tilde{w})$"
+
+# ╔═╡ 21f5793c-21b1-4e28-81a3-f6ecc4582b0e
 md"
-$\dot{y_p}=y_p (1-y_p)+\frac{fₚ}{1-fₚ}*   m(y- y_p)$
-	"
-
-# ╔═╡ 9843b9bd-baab-41c4-a739-fe39967c1e4e
-md"
-Since 
-
-$\bar{u}=\frac{\bar{e} q} {r}$ 
-
-we can write
-
-$\bar{u}=\frac{\bar{e} q} {r+r'}$ 
-
-or 
-
-$\bar{u}=\frac{\bar{e} q} {r} \frac{1}{1+r'/r}$
-
-given this formulation we can now extract the non-dimensional factor
-
-$ρ(y,m,f_p)=\frac{1}{1+r'/r}$
-
- and use it in the non-dimensionalized perspetive of the model, i.e.
-
-$ū'(y,m,f_p)=ū ρ(y,m,f_p)$
+## Empirical support
+In a large metastudy, Caldwell et al 2024 estimated the effect of MPA'a on fish stock using the quantity of fraction (or percent) of standing stock that is due to spillover effect. Since the resource in our case comes from either reproduciton, $r$ or spillover, $r_{spillover}$ we can do the same as, but in contrast to the figure above, plot it along an x-axis of fraction protected area as they did in their paper. In fact, we will use their figure as background to ours. I am a bit uncertain what is ACTUALLY on their y-axis so I am awaiting a response to an email asking for clarification. But I am fairly certain we will be able to put our model quite nicely into that figure (if nothing else we have 4 degrees of freedom to play with :-D). In any case, I think people will find this approach convining if we show something akin to what htey found! 
 "
-
-# ╔═╡ 94921f05-4f8f-42a8-bbf5-d93e6687e97c
-y=range(1/100,stop=1-1/100,length=100)
 
 # ╔═╡ e466874d-96ad-4653-aee3-6ac311eb9923
 Resource("https://zahachtah.github.io/CAS/images/MPA_spillover.png")
 
-# ╔═╡ 2519804f-2a3f-4dd2-9e37-444acd5b5431
-
-
-# ╔═╡ e2784371-c4a9-49dc-878b-e4960efc2892
-@htl("""
-<image url="https://zahachtah.github.io/CAS/images/MPA_spillover.png"/>
-""")
-
-# ╔═╡ 619fa236-0beb-467c-a08c-ea4d56aa7d24
-md"
-## I think I can reverse engineer this line from the simple model to get equivalent m!!
-"
-
 # ╔═╡ 946cd105-b9ca-48ce-8d24-d45422f69458
 TableOfContents()
+
+# ╔═╡ 19d0c01b-7d61-429b-9a90-5dc8446dc8fa
+md"
+## References
+Caldwell, I.R., McClanahan, T.R., Oddenyo, R.M., Graham, N.A.J., Beger, M., Vigliola, L., et al. (2024). Protection efforts have resulted in ~10% of existing fish biomass on coral reefs. Proc. Natl. Acad. Sci. U. S. A., 121, e2308605121.
+"
+
+# ╔═╡ 63c5dbd5-a65a-415e-97ec-63c88888461d
+md"
+
+## Functions (code)
+"
+
+# ╔═╡ 5c18331d-56a7-4d15-a93b-496191c75643
+
+function yₚ(y::Float64, f_p::Float64,m::Float64; K::Float64=1.0, r::Float64=1.0,xK::Float64=0.0, xr::Float64=0.0)
+    r_p=r*(1+xr)
+	K_p=K*(1+xK)
+    # Calculate the scaled mobility factor
+    k = (1.0 - f_p) / f_p * m
+    
+    # Compute the discriminant of the quadratic equation
+    discriminant = (r_p - k)^2 + 4.0 * r_p * k * y / K_p
+    
+    # Ensure the discriminant is non-negative for real solutions
+    if discriminant < 0
+        error("No real solution exists: discriminant is negative.")
+    end
+    
+    # Calculate the steady-state fish density in the protected area
+    y_p = ((r_p - k) + sqrt(discriminant)) * K_p / (2.0 * r_p)
+    
+    return y_p
+end
+
+
+# ╔═╡ 4da958fc-9d11-499d-95b3-e5e5fb367cf8
+function rₛ(y,fₚ,m; K::Float64=1.0, r::Float64=1.0,xK::Float64=0.0, xr::Float64=0.0)
+	(fₚ/(1-fₚ)*m*(yₚ(y,fₚ,m;r,K,xK,xr).-y))./y
+end
+
+# ╔═╡ 3cc7f016-19ff-423e-bfbd-d0ed98d2f526
+function frₛ(y,fₚ,m; K::Float64=1.0, r::Float64=1.0,xK::Float64=0.0, xr::Float64=0.0)
+	rₛ(y,fₚ,m)/(r+rₛ(y,fₚ,m;r,K,xK,xr))
+end
+
+# ╔═╡ 9857ba37-08b5-4b0f-980a-e18de8ce0523
+begin
+	function showplot()
+		y=range(0.0,stop=1.0,length=100)
+		yp=yₚ.(y,Float64(fₚ),Float64(m),xr=Float64(xr),xK=Float64(xK))
+		f=Figure(size=(800,400))
+		a=Axis(f[1,1], title="relative Resource Density", xlabel="Unprotected Area Resource density", ylabel="Resource densities")
+		lines!(a,y,yp, label="protected ($(Int64(round(fₚ*100)))%)", color=:forestgreen, linewidth=3)
+		lines!(a,y,y, label="harvested ($(Int64(round((1-fₚ)*100)))%)", color=:darkorange, linewidth=3)
+		lines!(a,y,y*(1-fₚ)+yp*fₚ, label="Whole area", color=:gray, linewidth=3)
+		axislegend(a,position=:rb, framevisible=false)
+		aa=Axis(f[1,2],title="Source of replenishment", xlabel="Unprotected Area Resource density", ylabel="fraction replenishment source")
+		hidespines!(aa)
+		ylims!(aa,(0.0,1.0))
+		rr=frₛ.(y,Float64(fₚ),Float64(m),xr=Float64(xr),xK=Float64(xK))
+		band!(aa,y,zeros(length(yp)),rr, label="spillover")
+		band!(aa,y,rr,ones(length(yp)), label="local reproduction")
+		#lines!(aa,y,((fₚ/(1-fₚ)*m*(yp.-y))./y), label=L"ρ(y,m,f_p)")
+		#lines!(aa,y,((fₚ/(1-fₚ)*m*(yp.-y))./y)./((fₚ/(1-fₚ)*m*(yp.-y))./y.+1), label="fraction of total")
+		axislegend(aa,position=:rt, framevisible=false, title="replenishment:")
+	#=
+		pa=range(1/100,stop=0.25,length=100)
+		ax3=Axis(f[1,3])
+		img = (load ∘ download)("https://zahachtah.github.io/CAS/images/MPA_spillover.png")
+		hidedecorations!(ax3)
+		hidespines!(ax3)
+		image!(ax3, rotr90(img))
+		xf=230
+		yf=-250
+		xs=59
+		ys=86
+		YP=pa.*yₚ.(yF,pa,m; xK, xr).+ (1 .-pa)*yF
+		id=findall(YP.<0.22)
+		scatter!(ax3,pa[id].*100 .*xs.+xf,ys.*YP[id].*100 .+yf)
+		lines!(ax3,[xs*fₚ*100+xf,fₚ*100*xs+xf],[5*ys+yf,ys*20+yf])
+		scatter!(ax3,xf.+[0,25,25,0].*xs,yf.+[5,5,20,20].*ys)=#
+		f
+	end
+
+	showplot()
+end
+
+# ╔═╡ 4cdbc294-26dd-40e8-8aa3-a43789cca382
+function flux(y,m,fᵤ)
+	return fᵤ/(1-fᵤ)*(yₚ(y,fᵤ,m)-y)
+end
+
+# ╔═╡ 0c61dc98-ba7c-4334-94e0-2aa16dcc7320
+
+
 
 # ╔═╡ 65551ab1-6292-4e5a-ba35-1969f0268ac0
 html"""
@@ -282,168 +397,6 @@ img {
 </style>
 
 """
-
-# ╔═╡ 19d0c01b-7d61-429b-9a90-5dc8446dc8fa
-md"
-## References
-Caldwell, I.R., McClanahan, T.R., Oddenyo, R.M., Graham, N.A.J., Beger, M., Vigliola, L., et al. (2024). Protection efforts have resulted in ~10% of existing fish biomass on coral reefs. Proc. Natl. Acad. Sci. U. S. A., 121, e2308605121.
-"
-
-# ╔═╡ 63c5dbd5-a65a-415e-97ec-63c88888461d
-md"
-
-## Functions (code)
-"
-
-# ╔═╡ 5c18331d-56a7-4d15-a93b-496191c75643
-"""
-# function y_p
-
-    Calculate the steady-state fish density in the protected area based on fraction protected, fₚ, density in the protected area, y, and mobility rate, m.
-
-Optionally provide fraction increased regeneration rate, xr_p, and increased carrying capacity in the protected area.
-
-Optionally also set base r and K
-
-	yₚ(y, f_p, m; K=1.0, r=1.0,xK_p=0.0, xr_p=0.0)
-	
-    """
-function yₚ(y::Float64, f_p::Float64,m::Float64; K::Float64=1.0, r::Float64=1.0,xK::Float64=0.0, xr::Float64=0.0)
-    r_p=r*(1+xr)
-	K_p=K*(1+xK)
-    # Calculate the scaled mobility factor
-    k = (1.0 - f_p) / f_p * m
-    
-    # Compute the discriminant of the quadratic equation
-    discriminant = (r_p - k)^2 + 4.0 * r_p * k * y / K_p
-    
-    # Ensure the discriminant is non-negative for real solutions
-    if discriminant < 0
-        error("No real solution exists: discriminant is negative.")
-    end
-    
-    # Calculate the steady-state fish density in the protected area
-    y_p = ((r_p - k) + sqrt(discriminant)) * K_p / (2.0 * r_p)
-    
-    return y_p
-end
-
-
-# ╔═╡ 4da958fc-9d11-499d-95b3-e5e5fb367cf8
-function rₛ(y,fₚ,m; K::Float64=1.0, r::Float64=1.0,xK::Float64=0.0, xr::Float64=0.0)
-	(fₚ/(1-fₚ)*m*(yₚ(y,fₚ,m;r,K,xK,xr).-y))./y
-end
-
-# ╔═╡ 3cc7f016-19ff-423e-bfbd-d0ed98d2f526
-function frₛ(y,fₚ,m; K::Float64=1.0, r::Float64=1.0,xK::Float64=0.0, xr::Float64=0.0)
-	rₛ(y,fₚ,m)/(r+rₛ(y,fₚ,m;r,K,xK,xr))
-end
-
-# ╔═╡ 76c6fb59-59c1-4829-95d2-56ac79f5c7f4
-frₛ(0.2,fₚ,m)
-
-# ╔═╡ 93f80cd0-3e00-4af9-8443-e879bf66873f
-frₛ.(0.05,pa,0.2,xK=0.0)
-
-# ╔═╡ c398b22f-8f25-4259-8ddc-c6158ed840fb
-frₛ(0.2,fₚ,m)
-
-# ╔═╡ 97b471cf-8168-471a-94ed-e98cf517cde7
-rₛ(0.5,fₚ,m)
-
-# ╔═╡ ee363519-c423-4c21-99a1-f82b93e57421
-begin
-img = (load ∘ download)("https://zahachtah.github.io/CAS/images/MPA_spillover.png")
-
-fi = Figure()
-ax1 = Axis(fi[1, 1], aspect=DataAspect())
-hidedecorations!(ax1)
-	hidespines!(ax1)
-image!(ax1, rotr90(img)) # probably want to supply x & y scale of data here
-
-	xf=230
-	yf=-247
-	xs=59
-	ys=86
-
-	
-	
-	yx=0.2
-	mx=0.1
-	xxK=1.5
-	xxr=1.5
-	xx=0.2
-	fr=frₛ.(yx,pa,mx).+xx
-	fr2=frₛ.(yx*2,pa,mx).+xx
-	fr3=frₛ.(yx*3,pa,mx).+xx
-	fr4=frₛ.(yx*4,pa,mx).+xx
-
-	YP=xx.+pa.*yₚ.(yx,pa,mx, xK=xxK, xr=xxr).+(mx.*(1 .-pa))
-	scatter!(ax1,pa.*100 .*xs.+xf,xf.*YP.*10 .+yf)
-	#scatter!(ax1,xf.+[0,25,25,0].*xs,yf.+[5,5,20,20].*ys)
-	#scatter!(ax1,pa.*100 .*xs.+xf,fr.*ys.*100 .+yf)
-	#scatter!(ax1,pa.*100 .*xs.+xf,fr2.*ys.*100 .+yf)
-	#scatter!(ax1,pa.*100 .*xs.+xf,fr3.*ys.*100 .+yf)
-	#scatter!(ax1,pa.*100 .*xs.+xf,fr4.*ys.*100 .+yf)
-	#axislegend(ax1, framevisible=false, position=:rc)
-	fi
-end
-
-# ╔═╡ 9857ba37-08b5-4b0f-980a-e18de8ce0523
-begin
-	function showplot()
-		yp=yₚ.(y,fₚ,m;xr,xK)
-		f=Figure(size=(1200,400))
-		a=Axis(f[1,1], title="relative Resource Density", xlabel="Resource density")
-		lines!(a,y,yp, label="protected ($(Int64(round(fₚ*100)))%)", color=:forestgreen, linewidth=3)
-		lines!(a,y,y, label="harvested ($(Int64(round((1-fₚ)*100)))%)", color=:darkorange, linewidth=3)
-		lines!(a,y,y*(1-fₚ)+yp*fₚ, label="Whole area", color=:gray, linewidth=3)
-		axislegend(a,position=:rb, framevisible=false)
-		aa=Axis(f[1,2],title="Source of replenishment", xlabel="Resource density")
-		ylims!(aa,(0.0,1.0))
-		rr=frₛ.(y,fₚ,m)
-		band!(aa,y,zeros(length(yp)),rr, label="spillover")
-		band!(aa,y,rr,ones(length(yp)), label="reproduction")
-		#lines!(aa,y,((fₚ/(1-fₚ)*m*(yp.-y))./y), label=L"ρ(y,m,f_p)")
-		#lines!(aa,y,((fₚ/(1-fₚ)*m*(yp.-y))./y)./((fₚ/(1-fₚ)*m*(yp.-y))./y.+1), label="fraction of total")
-		axislegend(aa,position=:rt, framevisible=false, title="replenishment:")
-	
-		pa=range(1/100,stop=0.25,length=100)
-		ax3=Axis(f[1,3])
-		img = (load ∘ download)("https://zahachtah.github.io/CAS/images/MPA_spillover.png")
-		hidedecorations!(ax3)
-		hidespines!(ax3)
-		image!(ax3, rotr90(img))
-		xf=230
-		yf=-250
-		xs=59
-		ys=86
-		YP=pa.*yₚ.(yF,pa,mx; xK, xr).+ (1 .-pa)*yF
-		id=findall(YP.<0.22)
-		scatter!(ax3,pa[id].*100 .*xs.+xf,ys.*YP[id].*100 .+yf)
-		lines!(ax3,[xs*fₚ*100+xf,fₚ*100*xs+xf],[5*ys+yf,ys*20+yf])
-		scatter!(ax3,xf.+[0,25,25,0].*xs,yf.+[5,5,20,20].*ys)
-		f
-	end
-
-	showplot()
-end
-
-# ╔═╡ 1a85678e-995b-4585-aee9-9c252c107887
-YP
-
-# ╔═╡ 5f059d50-1217-4bb1-99e8-b0cceb9b25ad
-yₚ
-
-# ╔═╡ eb5d3f45-6997-4369-bdbb-e58750b7d9cd
-yₚ(0.5,0.1,0.1)
-
-# ╔═╡ 4cdbc294-26dd-40e8-8aa3-a43789cca382
-function flux(y,m,fᵤ)
-	
-	
-	return fᵤ/(1-fᵤ)*(yₚ(y,fᵤ,m)-y)
-end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -549,9 +502,9 @@ version = "1.11.0"
 
 [[deps.Bzip2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "35abeca13bc0425cff9e59e229d971f5231323bf"
+git-tree-sha1 = "8873e196c2eb87962a2048b3b8e08946535864a1"
 uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
-version = "1.0.8+3"
+version = "1.0.8+4"
 
 [[deps.CEnum]]
 git-tree-sha1 = "389ad5c84de1ae7cf0e28e381131c98ea87d54fc"
@@ -588,9 +541,9 @@ version = "1.18.2+1"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
-git-tree-sha1 = "3e4b134270b372f2ed4d4d0e936aabaefc1802bc"
+git-tree-sha1 = "1713c74e00545bfe14605d2a2be1712de8fbcb58"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "1.25.0"
+version = "1.25.1"
 weakdeps = ["SparseArrays"]
 
     [deps.ChainRulesCore.extensions]
@@ -739,9 +692,9 @@ version = "2.2.8"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "f42a5b1e20e009a43c3646635ed81a9fcaccb287"
+git-tree-sha1 = "e51db81749b0777b2147fbe7b783ee79045b8e99"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
-version = "2.6.4+2"
+version = "2.6.4+3"
 
 [[deps.Extents]]
 git-tree-sha1 = "81023caa0021a41712685887db1fc03db26f41f5"
@@ -762,9 +715,9 @@ version = "1.8.0"
 
 [[deps.FFTW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "5cf2433259aa3985046792e2afc01fcec076b549"
+git-tree-sha1 = "4d81ed14783ec49ce9f2e168208a12ce1815aa25"
 uuid = "f5851436-0d7a-5f13-b9de-f02708fd171a"
-version = "3.3.10+2"
+version = "3.3.10+3"
 
 [[deps.FileIO]]
 deps = ["Pkg", "Requires", "UUIDs"]
@@ -877,9 +830,9 @@ version = "0.21.0+0"
 
 [[deps.Giflib_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "7141135f9073f135e68c5ee8df44fb0fb80689b8"
+git-tree-sha1 = "6570366d757b50fabae9f4315ad74d2e40c0560a"
 uuid = "59f7168a-df46-5410-90c8-f2779963d0ec"
-version = "5.2.2+1"
+version = "5.2.3+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE2_jll", "Zlib_jll"]
@@ -1091,9 +1044,9 @@ version = "0.1.5"
 
 [[deps.JpegTurbo_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "3447a92280ecaad1bd93d3fce3d408b6cfff8913"
+git-tree-sha1 = "eac1206917768cb54957c65a615460d87b455fc1"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
-version = "3.1.0+1"
+version = "3.1.1+0"
 
 [[deps.KernelDensity]]
 deps = ["Distributions", "DocStringExtensions", "FFTW", "Interpolations", "StatsBase"]
@@ -1109,9 +1062,9 @@ version = "3.100.2+0"
 
 [[deps.LERC_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "78e0f4b5270c4ae09c7c5f78e77b904199038945"
+git-tree-sha1 = "aaafe88dccbd957a8d82f7d05be9b69172e0cee3"
 uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
-version = "4.0.0+2"
+version = "4.0.1+0"
 
 [[deps.LLVMOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1121,9 +1074,9 @@ version = "18.1.7+0"
 
 [[deps.LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "16e6ec700154e8004dba90b4aec376f68905d104"
+git-tree-sha1 = "854a9c268c43b77b0a27f22d7fab8d33cdb3a731"
 uuid = "dd4b983a-f0e5-5f8d-a1b7-129d4a5fb1ac"
-version = "2.10.2+2"
+version = "2.10.2+3"
 
 [[deps.LaTeXStrings]]
 git-tree-sha1 = "dda21b8cbd6a6c40d9d02a73230f9d70fed6918c"
@@ -1189,9 +1142,9 @@ version = "1.7.0+0"
 
 [[deps.Libgpg_error_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "a7f43994b47130e4f491c3b2dbe78fe9e2aed2b3"
+git-tree-sha1 = "df37206100d39f79b3376afb6b9cee4970041c61"
 uuid = "7add5ba3-2f88-524e-9cd5-f83b8a55f7b8"
-version = "1.51.0+0"
+version = "1.51.1+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1201,21 +1154,21 @@ version = "1.17.0+1"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "d841749621f4dcf0ddc26a27d1f6484dfc37659a"
+git-tree-sha1 = "84eef7acd508ee5b3e956a2ae51b05024181dee0"
 uuid = "4b2f31a3-9ecc-558c-b454-b3730dcb73e9"
-version = "2.40.2+1"
+version = "2.40.2+2"
 
 [[deps.Libtiff_jll]]
 deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "XZ_jll", "Zlib_jll", "Zstd_jll"]
-git-tree-sha1 = "b404131d06f7886402758c9ce2214b636eb4d54a"
+git-tree-sha1 = "4ab7581296671007fc33f07a721631b8855f4b1d"
 uuid = "89763e89-9b03-5906-acba-b20f662cd828"
-version = "4.7.0+0"
+version = "4.7.1+0"
 
 [[deps.Libuuid_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "9d630b7fb0be32eeb5e8da515f5e8a26deb457fe"
+git-tree-sha1 = "edbf5309f9ddf1cab25afc344b1e8150b7c832f9"
 uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
-version = "2.40.2+1"
+version = "2.40.2+2"
 
 [[deps.LinearAlgebra]]
 deps = ["Libdl", "OpenBLAS_jll", "libblastrampoline_jll"]
@@ -1372,15 +1325,15 @@ version = "0.8.1+2"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "f58782a883ecbf9fb48dcd363f9ccd65f36c23a8"
+git-tree-sha1 = "7493f61f55a6cce7325f197443aa80d32554ba10"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "3.0.15+2"
+version = "3.0.15+3"
 
 [[deps.OpenSpecFun_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "418e63d434f5ca12b188bbb287dfbe10a5af1da4"
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "1346c9208249809840c91b26703912dff463d335"
 uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
-version = "0.5.5+1"
+version = "0.5.6+0"
 
 [[deps.Opus_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1828,9 +1781,9 @@ version = "0.4.1"
 
 [[deps.Unitful]]
 deps = ["Dates", "LinearAlgebra", "Random"]
-git-tree-sha1 = "01915bfcd62be15329c9a07235447a89d588327c"
+git-tree-sha1 = "c0667a8e676c53d390a09dc6870b3d8d6650e2bf"
 uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
-version = "1.21.1"
+version = "1.22.0"
 weakdeps = ["ConstructionBase", "InverseFunctions"]
 
     [deps.Unitful.extensions]
@@ -1863,33 +1816,33 @@ version = "1.1.42+0"
 
 [[deps.XZ_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "ecda72ccaf6a67c190c9adf27034ee569bccbc3a"
+git-tree-sha1 = "beef98d5aad604d9e7d60b2ece5181f7888e2fd6"
 uuid = "ffd25f8a-64ca-5728-b0f7-c24cf3aae800"
-version = "5.6.3+1"
+version = "5.6.4+0"
 
 [[deps.Xorg_libX11_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libxcb_jll", "Xorg_xtrans_jll"]
 git-tree-sha1 = "9dafcee1d24c4f024e7edc92603cedba72118283"
 uuid = "4f6342f7-b3d2-589e-9d20-edeb45f2b2bc"
-version = "1.8.6+1"
+version = "1.8.6+3"
 
 [[deps.Xorg_libXau_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "2b0e27d52ec9d8d483e2ca0b72b3cb1a8df5c27a"
 uuid = "0c0b7dd1-d40b-584c-a123-a41640f87eec"
-version = "1.0.11+1"
+version = "1.0.11+3"
 
 [[deps.Xorg_libXdmcp_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "02054ee01980c90297412e4c809c8694d7323af3"
 uuid = "a3789734-cfe1-5b06-b2d0-1dd0d9d62d05"
-version = "1.1.4+1"
+version = "1.1.4+3"
 
 [[deps.Xorg_libXext_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll"]
 git-tree-sha1 = "d7155fea91a4123ef59f42c4afb5ab3b4ca95058"
 uuid = "1082639a-0dae-5f34-9b06-72781eeb8cb3"
-version = "1.3.6+1"
+version = "1.3.6+3"
 
 [[deps.Xorg_libXrender_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll"]
@@ -1901,19 +1854,19 @@ version = "0.9.11+1"
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "fee57a273563e273f0f53275101cd41a8153517a"
 uuid = "14d82f49-176c-5ed1-bb49-ad3f5cbd8c74"
-version = "0.1.1+1"
+version = "0.1.1+3"
 
 [[deps.Xorg_libxcb_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "XSLT_jll", "Xorg_libXau_jll", "Xorg_libXdmcp_jll", "Xorg_libpthread_stubs_jll"]
 git-tree-sha1 = "1a74296303b6524a0472a8cb12d3d87a78eb3612"
 uuid = "c7cfdc94-dc32-55de-ac96-5a1b8d977c5b"
-version = "1.17.0+1"
+version = "1.17.0+3"
 
 [[deps.Xorg_xtrans_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "b9ead2d2bdb27330545eb14234a2e300da61232e"
 uuid = "c5fb5394-a638-5e4d-96e5-b29de1b5cf10"
-version = "1.5.0+1"
+version = "1.5.0+3"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
@@ -1922,9 +1875,9 @@ version = "1.2.13+1"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "7dc5adc3f9bfb9b091b7952f4f6048b7e37acafc"
+git-tree-sha1 = "622cf78670d067c738667aaa96c553430b65e269"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
-version = "1.5.6+2"
+version = "1.5.7+0"
 
 [[deps.isoband_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1957,15 +1910,15 @@ version = "2.0.3+0"
 
 [[deps.libpng_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Zlib_jll"]
-git-tree-sha1 = "9c42636e3205e555e5785e902387be0061e7efc1"
+git-tree-sha1 = "b7bfd3ab9d2c58c3829684142f5804e4c6499abc"
 uuid = "b53b4c65-9356-5827-b1ea-8c7a1a84506f"
-version = "1.6.44+1"
+version = "1.6.45+0"
 
 [[deps.libsixel_jll]]
-deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Pkg", "libpng_jll"]
-git-tree-sha1 = "80c5ae2c7b5163441018f4666b179f1ffca194c1"
+deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "Libdl", "libpng_jll"]
+git-tree-sha1 = "1e53ffe8941ee486739f3c0cf11208c26637becd"
 uuid = "075b6546-f08a-558a-be8f-8157d0f608a5"
-version = "1.10.3+2"
+version = "1.10.4+0"
 
 [[deps.libvorbis_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Ogg_jll", "Pkg"]
@@ -1975,9 +1928,9 @@ version = "1.3.7+2"
 
 [[deps.libwebp_jll]]
 deps = ["Artifacts", "Giflib_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libglvnd_jll", "Libtiff_jll", "libpng_jll"]
-git-tree-sha1 = "ccbb625a89ec6195856a50aa2b668a5c08712c94"
+git-tree-sha1 = "d2408cac540942921e7bd77272c32e58c33d8a77"
 uuid = "c5f90fcd-3b7e-5836-afba-fc50a0988cb2"
-version = "1.4.0+0"
+version = "1.5.0+0"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -2009,46 +1962,30 @@ version = "3.6.0+0"
 """
 
 # ╔═╡ Cell order:
+# ╟─f91b34af-c26d-4686-85d1-8ae26c7a3b35
 # ╟─ee9892b0-f2f4-4842-976e-ee4448597e56
-# ╠═0c61dc98-ba7c-4334-94e0-2aa16dcc7320
-# ╠═ec7b299a-7135-4a62-847d-1d1769827535
-# ╠═4afcdef2-295d-45cd-b0ba-8ffc6c6c1de9
-# ╠═81845178-9390-45a7-a323-b74d7407b599
-# ╠═1aa365d8-64ab-4264-8aec-2a598b71287c
-# ╠═10aa133c-9bee-45ae-942f-077aef7f1c1c
+# ╟─b5ae3737-3861-4fc1-bab3-09dae0a48bd3
+# ╠═7fd882c5-dfd7-42c7-8270-7b9e81de4d09
+# ╟─9857ba37-08b5-4b0f-980a-e18de8ce0523
+# ╟─f0806ca2-6950-449e-b619-22caba4a321f
+# ╟─1f62c0c0-67a0-46d4-8bc5-6b580a46029b
+# ╟─274920e6-7d8f-46dc-9016-17282264582e
+# ╟─3d67deec-190f-49d2-a296-e45edbce5a10
+# ╟─7585ca94-c148-4080-93b5-66a5c683e687
+# ╟─52257637-00c8-4d62-b1bc-241846328ce4
+# ╟─cc5558aa-53fc-4c39-a7bf-cc7590c7b2c8
+# ╟─85864612-faa0-4612-adcf-b9704d425a08
+# ╟─21f5793c-21b1-4e28-81a3-f6ecc4582b0e
+# ╟─e466874d-96ad-4653-aee3-6ac311eb9923
+# ╠═946cd105-b9ca-48ce-8d24-d45422f69458
+# ╟─19d0c01b-7d61-429b-9a90-5dc8446dc8fa
+# ╟─63c5dbd5-a65a-415e-97ec-63c88888461d
+# ╠═5c18331d-56a7-4d15-a93b-496191c75643
 # ╠═4da958fc-9d11-499d-95b3-e5e5fb367cf8
 # ╠═3cc7f016-19ff-423e-bfbd-d0ed98d2f526
-# ╠═97b471cf-8168-471a-94ed-e98cf517cde7
-# ╠═76c6fb59-59c1-4829-95d2-56ac79f5c7f4
-# ╠═9857ba37-08b5-4b0f-980a-e18de8ce0523
-# ╠═ed7383c3-0ab9-4130-b00f-4433b29cf4bf
-# ╠═1f62c0c0-67a0-46d4-8bc5-6b580a46029b
-# ╠═274920e6-7d8f-46dc-9016-17282264582e
-# ╠═21f5793c-21b1-4e28-81a3-f6ecc4582b0e
-# ╠═456bad95-34cb-4fc7-93f3-8f8f296f7b0f
-# ╠═81261658-78c5-45d3-b293-f2ef71001380
-# ╠═93f80cd0-3e00-4af9-8443-e879bf66873f
-# ╠═c398b22f-8f25-4259-8ddc-c6158ed840fb
-# ╠═ee363519-c423-4c21-99a1-f82b93e57421
-# ╠═1a85678e-995b-4585-aee9-9c252c107887
-# ╠═7585ca94-c148-4080-93b5-66a5c683e687
-# ╠═3d67deec-190f-49d2-a296-e45edbce5a10
-# ╠═5f059d50-1217-4bb1-99e8-b0cceb9b25ad
-# ╠═eb5d3f45-6997-4369-bdbb-e58750b7d9cd
-# ╠═52257637-00c8-4d62-b1bc-241846328ce4
-# ╠═aa79ebb8-947b-4c1c-8c0c-7319cf00c7e6
-# ╠═9843b9bd-baab-41c4-a739-fe39967c1e4e
-# ╠═94921f05-4f8f-42a8-bbf5-d93e6687e97c
 # ╠═4cdbc294-26dd-40e8-8aa3-a43789cca382
-# ╠═e466874d-96ad-4653-aee3-6ac311eb9923
-# ╠═2519804f-2a3f-4dd2-9e37-444acd5b5431
-# ╠═e2784371-c4a9-49dc-878b-e4960efc2892
-# ╠═619fa236-0beb-467c-a08c-ea4d56aa7d24
-# ╠═946cd105-b9ca-48ce-8d24-d45422f69458
-# ╠═65551ab1-6292-4e5a-ba35-1969f0268ac0
-# ╠═19d0c01b-7d61-429b-9a90-5dc8446dc8fa
-# ╠═63c5dbd5-a65a-415e-97ec-63c88888461d
-# ╠═5c18331d-56a7-4d15-a93b-496191c75643
-# ╠═bde09450-c5bb-11ef-33d3-a19c076eceaf
+# ╠═0c61dc98-ba7c-4334-94e0-2aa16dcc7320
+# ╟─bde09450-c5bb-11ef-33d3-a19c076eceaf
+# ╟─65551ab1-6292-4e5a-ba35-1969f0268ac0
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

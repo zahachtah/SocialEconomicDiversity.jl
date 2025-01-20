@@ -14,8 +14,8 @@ module SocialEconomicDiversity
     export γ_tradable_use_rights, ϕ_tradable_use_rights,regulate_tradable_use_rights
     export run
     export Uniform, LogNormal, Normal, Exponential, Dirac
-    export phase_plot!
-
+    export phase_plot!, bg_plot!, Γ_plot!, Φ_plot!, attractor_plot!, trajecory_plot!, target_plot!, arrow_arc!, arrow_arc_deg!, incomes_plot!
+    export incomes, regulation_scan, gini
 
     # ODE		
     function dxdt(dx,x,p,t)
@@ -46,14 +46,12 @@ module SocialEconomicDiversity
 		end
 
     # Solve ODE
-    function sim(s; u0=zeros(s.N), y0=1.0,ϕ0=0.0, regulation=0.0, start_from_OA=false)
-        
+    function sim(s; u0=zeros(s.N), y0=1.0,ϕ0=0.0, regulation=0.0, start_from_OA=false,t_end=1000.0)
         isempty(s.w̃.data) ?  dist!(s.w̃,s.N) : nothing
         isempty(s.ū.data) ?  dist!(s.ū,s.N) : nothing
-        tend=(0.0,1000.0)
-
+        tspan=(0.0,t_end)
         p=s.regulate(s,regulation)
-
+       
         if s.policy=="Tradable Use Rights"
             initVals=[u0;y0;ϕ0]
         else
@@ -63,12 +61,12 @@ module SocialEconomicDiversity
         if start_from_OA
             #q=change(p,policy="Open Access", γ=γ, ϕ=ϕ,  μ=μ,regulate=regulate)
             oa=p.regulate(p,0.0)
-            oaprob = ODEProblem(dxdt,initVals,tend,oa);
+            oaprob = ODEProblem(dxdt,initVals,tspan,oa);
             oasol=solve(oaprob,SSPRK432(;stage_limiter!),callback= TerminateSteadyState(1e-6,1e-4) )
             initVals[1:oa.N+1]=oasol[1:oa.N+1,end-2]
         end
 
-         prob = ODEProblem(dxdt,initVals,tend,p);
+         prob = ODEProblem(dxdt,initVals,tspan,p);
  
     
         sol=solve(prob,SSPRK432(;stage_limiter!),callback= TerminateSteadyState(1e-6,1e-4) )
@@ -131,10 +129,10 @@ end
         # f is the fraction users allowed to extract resource
         # scenario.reverse picks users from teh highest w̃
             R=zeros(1:scenario.N)
-            n=Int64(round((1-f)*scenario.N))# Integer fraction f of number of users
+            n=Int64(round((f)*scenario.N))# Integer fraction f of number of users
             if n!=0
                 if haskey(scenario,:reverse)
-                    scenario.reverse ? R[n:end].=1.0 : R[1:n].=1.0
+                    scenario.reverse ? R[max(1,end-n):end].=1.0 : R[1:n].=1.0
                 end
             end
             return change(scenario,R=R) # return use rights
@@ -202,18 +200,21 @@ end
 	end
 	
 	function yₚ(y::Float64, f_p::Float64,m::Float64; K::Float64=1.0, r::Float64=1.0,xK::Float64=0.0, xr::Float64=0.0)
-	    r_p=r*(1+xr)
+	    if f_p==0.0
+            return K
+        end
+        r_p=r*(1+xr)
 		K_p=K*(1+xK)
 	    # Calculate the scaled mobility factor
 	    k = (1.0 - f_p) / f_p * m
-	    
 	    # Compute the discriminant of the quadratic equation
-	    discriminant = (r_p - k)^2 + 4.0 * r_p * k * y / K_p
+	    discriminant = max(0.0,(r_p - k)^2 + 4.0 * r_p * k * y / K_p)
 	    
 	    # Ensure the discriminant is non-negative for real solutions
+
 	    if discriminant < 0
 	        error("No real solution exists: discriminant is negative.")
-	    end
+	    end 
 	    
 	    # Calculate the steady-state fish density in the protected area
 	    y_p = ((r_p - k) + sqrt(discriminant)) * K_p / (2.0 * r_p)
@@ -235,7 +236,7 @@ end
 	end
 	
 	function μ_economic_incentive(x,p,t)
-		return p.ū.-p.regulation/p.N
+		return p.ū.*(1-p.regulation)
 	end
 
     # Development
@@ -281,6 +282,64 @@ end
 
 
     high_incentives(; N=100, sigma=0.0)=(;N, α=0.1, w̃=sed(min=0.3,max=0.7, distribution=LogNormal), ū=sed(mean=1.0, sigma=sigma, normalize=true), R=ones(N), γ, ϕ, μ,regulate, policy="Open Access")
+
+    function incomes(x,p; summarize=false)
+        resource=x[1:p.N].*x[p.N+1]
+        wages=(p.ū.-x[1:p.N]).*p.w̃ #μ(x,p,0.0) ?
+        trade= p.policy=="Tradable Use Rights" ? (p.R.-x[1:p.N]).*x[p.N+2] : fill(0.0,p.N)
+        #println((sum(p.R),x[p.N+2]))
+        total=resource.+wages.+trade
+        g=gini(total)
+        ecological=x[p.N+1]
+        return summarize ? (;resource,wages,trade,total,g,ecological) : (;resource,wages,trade,total,gini=g,ecological)
+    end
+
+    function gini(x)
+        sum([abs(x[i]-x[j]) for i in 1:length(x), j in 1:length(x)])/(2*length(x)*sum(x))
+    end
+
+    function regulation_scan(p;m=100)
+        
+        r=range(0.0,stop=1.0,length=m)
+        RR=zeros(m)
+        WR=zeros(m)
+        TR=zeros(m)
+        ToR=zeros(m)
+        GI=zeros(m)
+        EH=zeros(m)
+        RI=zeros(m)
+        oau=zeros(p.N)
+        x0=zeros(p.N+2)
+        x0[p.N+1]=1.0
+        sols=zeros(m,p.N)
+        for (j,i) in enumerate(r)
+            #P=p.regulate(p,i)
+            sol=sim(p, regulation=i,t_end=1000)#, u0=x0[1:p.N],y0=x0[p.N+1], ϕ0=x0[p.N+1]
+
+            if j==1
+                oau=sol[1:p.N,end-1]
+            end
+            
+            inc=incomes(sol.u[end-1],sol.prob.p)
+            #println((sum(s.prob.p.R),sum(inc.total)))
+            RR[j]=sum(inc.resource)
+            WR[j]=sum(inc.wages)
+            TR[j]=sum(inc.trade)
+            ToR[j]=sum(inc.total)
+            GI[j]=inc.gini
+            EH[j]=inc.ecological
+            RI[j]=sum(abs.(oau.-sol[1:p.N,end-1]))
+            sols[j,:]=sol.u[end-1][1:p.N]
+        end
+        oRR=argmax(RR)
+        oWR=argmax(WR)
+        oTR=argmax(TR)
+        oToR=argmax(ToR)
+        oGI=argmin(GI)
+        oEH=argmax(EH)
+        oRI=argmax(EH)
+        return (;RR,WR,TR,ToR,GI,EH,RI,r,oRR,oWR,oTR,oToR,oGI,oEH,oRI,sols)
+    end
 
     # Socioeconomic diversity variable implementaiton
 
@@ -535,6 +594,46 @@ end
         [pdf(s.distribution,xx) for xx in s]
     end
 
+    function Γ_plot!(axis,sol;color=:darkorange, linewidth=3)
+        y=range(0.0,stop=1.0,length=100)
+        lines!(axis,y,Γ.(y,Ref(sol.prob.p),x=sol.u[end-1]); color, linewidth)
+    end
+
+    function Φ_plot!(axis,sol;color=:darkorange, linewidth=3)
+        y=range(0.0,stop=1.0,length=100)
+        lines!(axis,y,Φ.(y,Ref(sol.prob.p)); color, linewidth)
+    end
+
+    function attractor_plot!(axis,sol;color=:darkorange, markersize=15, marker=:circle)
+        N=sol.prob.p.N
+        scatter!(axis,[sol[N+1,end-2]],[sum(sol[1:N,end-2]./sol.prob.p.μ(sol.u[end-2],sol.prob.p,sol.t[end-2])./N)]; color, markersize,marker)
+    end
+
+    function trajecory_plot!(axis,sol; color=:darkorange, startcolor=:lightgray)
+        scenario=sol.prob.p
+        lines!(axis,[u[scenario.N+1] for u in sol.u[1:end]],[sum(u[1:scenario.N]./scenario.μ(u,scenario,sol.t[i]))/scenario.N for (i,u) in enumerate(sol.u[1:end])]; color, linestyle=:dot, colormap=cgrad([startcolor, color], [0.0, 0.5, 1.0]))
+    
+    end
+
+    function bg_plot!(axis;show_exploitation=true)
+        limits!(axis,0.0,1.0,0.0,1.0)
+        if show_exploitation
+            poly!(axis, Rect(0, 0, 0.5, 1), color=HSLA(10, 0.0, 0.5, 0.1))
+            #poly!(A, Rect(0, 0, 0.5, 1), color=HSLA(10, 0.5, 0.5, 0.1))
+            #poly!(A, Rect(0.5, 0, 0.5, 1), color=HSLA(180, 0.5, 0.5, 0.1))
+        end
+    end
+
+    function target_plot!(axis,sol;color=:darkorange, linestyle=:dash, linewidth=3)
+        scenario=sol.prob.p
+        y=range(0.0,stop=1.0,length=100)
+            if haskey(scenario,:policy_target)
+                Y=scenario.policy_target==:effort ? ones(length(y)) : y
+                lines!(axis,y,Φ.(1 .-(1-scenario.regulation)./Y,Ref(scenario)); color,linewidth, linestyle)
+            end
+
+    end
+
     function phase_plot!(axis,sol; show_trajectory=false, show_target=false, open_access_color=:lightgray, incentive_line_color=:darkorange, impact_line_color=:darkorange, t=0.0, show_exploitation=true)
 
 
@@ -587,4 +686,144 @@ end
         scenario.policy=="Tradable Use Rights" ? text!(axis,"ϕ: "*string(round(sol[end,end],digits=2))) : nothing
     end
 
+    function arrow_arc!(ax, origin, radius, start_angle, stop_angle; linewidth=1, color=:black,flip_arrow=false,linestyle=:dot)
+        # Draw the arc
+        arc!(ax, origin, radius, start_angle, stop_angle, linewidth=linewidth, color=color;linestyle)
+    
+        # Function to calculate a point on the circle
+        point_on_circle(θ) = origin .+ radius * Point2f(cos(θ), sin(θ))
+    
+        # Calculate the direction of the arrow at the start and end of the arc
+        start_dir = Point2f(cos(start_angle + π/2 + (flip_arrow ? pi/2 : 0)), sin(start_angle + π/2+ (flip_arrow ? pi/2 : 0)))
+        end_dir = Point2f(cos(stop_angle - π/2 + (flip_arrow ? pi : 0)), sin(stop_angle - π/2+ (flip_arrow ? pi : 0)))
+        dx=0.001
+        # Add arrow at the start and end of the arc
+        # Adjust the multiplier for start_dir and end_dir to control the arrow orientation
+        arrows!(ax, [point_on_circle(start_angle)[1]],[point_on_circle(start_angle)[2]], [start_dir[1]]*dx,[start_dir[2]]*dx, color=color, linewidth=linewidth)
+        arrows!(ax, [point_on_circle(stop_angle)[1]],[point_on_circle(stop_angle)[2]], [end_dir[1]]*dx,[end_dir[2]]*dx, color=color, linewidth=linewidth)
+    end
+
+
+    function arrow_arc_deg!(
+        ax,
+        origin,
+        radius,
+        start_angle_deg,
+        stop_angle_deg;
+        linewidth=1,
+        color=:black,
+        flip_arrow=false,
+        linestyle=:dot,
+        startarrow=false
+    )
+    
+        # Helper to convert from degrees to radians
+        deg2rad(θ_deg) = θ_deg * π / 180
+    
+        # Because we want 0° = up (i.e., the positive y-axis),
+        # we rotate by 90°, so:
+        #
+        #   rad(θ_deg) = (90° - θ_deg) in radians
+        #
+        # This ensures that θ_deg = 0 => π/2 in radians => up.
+        rad_start = deg2rad(90 - start_angle_deg)
+        rad_stop  = deg2rad(90 - stop_angle_deg)
+    
+        # 1) Draw the arc in the new angles:
+        arc!(
+            ax,
+            origin,
+            radius,
+            rad_start,
+            rad_stop,
+            linewidth=linewidth,
+            color=color;
+            linestyle=linestyle
+        )
+    
+        # 2) Function to calculate a point on the circle at a given *degree* measure:
+        point_on_circle_deg(θ_deg) = origin .+ radius * Point2f(
+            cos(deg2rad(90 - θ_deg)),
+            sin(deg2rad(90 - θ_deg))
+        )
+    
+        # 3) Arrow directions at start and end.
+        #
+        #   - We add ± π/2 so that the direction is tangent to the circle.
+        #   - The flip_arrow boolean is preserved as in your code, toggling extra phase shifts.
+        #
+        start_dir = Point2f(
+            cos(rad_start + π/2 + (flip_arrow ? π/2 : 0)),
+            sin(rad_start + π/2 + (flip_arrow ? π/2 : 0))
+        )
+        end_dir = Point2f(
+            cos(rad_stop - π/2 + (flip_arrow ? π : 0)),
+            sin(rad_stop - π/2 + (flip_arrow ? π : 0))
+        )
+    
+        # A small offset so the arrows do not vanish
+        dx = 0.001
+    
+        startarrow ? arrows!(
+            ax,
+            [point_on_circle_deg(start_angle_deg)[1]],
+            [point_on_circle_deg(start_angle_deg)[2]],
+            [start_dir[1]] .* dx,
+            [start_dir[2]] .* dx,
+            color=color,
+            linewidth=linewidth
+        ) : nothing
+    
+        arrows!(
+            ax,
+            [point_on_circle_deg(stop_angle_deg)[1]],
+            [point_on_circle_deg(stop_angle_deg)[2]],
+            [end_dir[1]] .* dx,
+            [end_dir[2]] .* dx,
+            color=color,
+            linewidth=linewidth
+        )
+    end
+
+    function incomes_plot!(aa,sol; order=false, color=:darkorange)
+        p=sol.prob.p
+        oa=sim(p,regulation=0.0)
+
+        oa_resource_revenue=oa[1:p.N,end-1].*oa[p.N+1,end-1]
+        oa_alt_revenues=p.w̃.*(p.μ(oa[:,end-1],p,0.0) .-oa[1:p.N,end-1])
+
+        resource_revenue=sol[1:p.N,end-1].*sol[p.N+1,end-1]
+        alt_revenues=p.w̃.*(p.μ(sol[:,end-1],p,0.0) .-sol[1:p.N,end-1])
+        trade_revenues=p.policy=="Tradable Use Rights" ? (p.R.-sol[1:p.N,end-1])*sol[end,end-1] : fill(0.0,p.N) 
+        income=resource_revenue+alt_revenues+trade_revenues
+        inc=resource_revenue+alt_revenues
+
+        oa_inc=incomes(oa.u[end-1],oa.prob.p)
+        r_inc=incomes(sol.u[end-1],sol.prob.p)
+
+        resource_revenue=r_inc.resource
+        alt_revenues=r_inc.wages
+        trade_revenues=r_inc.trade
+        income=r_inc.total
+        inc=resource_revenue+alt_revenues
+        id=order ? sortperm(income) : collect(1:p.N)
+        barplot!(aa,inc[id], color=order ? p.w̃[id] : color, alpha=1.0, offset=trade_revenues[id])
+        barplot!(aa,trade_revenues[id], color=order ? p.w̃[id] : color)
+        barplot!(aa,trade_revenues[id], color=HSLA(0,0,0,0.2))
+        barplot!(aa,trade_revenues[id], color=HSLA(0,0,0,0.2))
+        fir=findall(resource_revenue[id].>0.0)
+        fia=findall(alt_revenues[id].>0.0)
+        oafir=findall(oa_resource_revenue[id].>0.0)
+        oafia=findall(oa_alt_revenues[id].==0.0)
+        #scatter!(aa,collect(1:p.N)[fia],alt_revenues[id][fia].+trade_revenues[id][fia], color=:crimson, markersize=10, marker=:hline)
+        #scatter!(aa,collect(1:p.N)[oafir],oa_resource_revenue[id][oafir], color=:darkgray, markersize=5)
+        #scatter!(aa,collect(1:p.N)[oafia],oa_alt_revenues[id][oafia], color=:lightgray, markersize=5)
+        #lines!(aa,1:p.N,fill(0.0,p.N), color=:white)
+    
+    end
+
 end
+
+
+
+
