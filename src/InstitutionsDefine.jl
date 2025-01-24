@@ -2,7 +2,7 @@
 TRY HAVING INCOMES ABOVE AND BELOW AND PHASEPLOTS IN THE MIDDLE????
 
 =#
-
+oldFig4()
 
 function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     s1=scenario(s,policy="Open Access")
@@ -15,31 +15,65 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     s5=scenario(s,policy="Economic Incentives", policy_target=:μ, policy_method=:taxation)
     s6a=scenario(s,policy="Development")
     s6b=scenario(SocialEconomicDiversity.change(s,ū=sed(mean=0.5,sigma=0.0, normalize=true)),policy="Development")
-
-    f=Figure(size=(1200+300,1800))
-    a_oa=Axis(f[1:2,1])#,title=s1.policy)
-    a_aur=Axis(f[1:2,2])#,title=s2a.policy)
-    a_tur=Axis(f[1:2,3])#,title=s3a.policy)
-    a_pa=Axis(f[3:4,1])#,title=s4a.policy)
-    a_ei=Axis(f[3:4,2])#,title=s5.policy)
-    a_d=Axis(f[3:4,3])#,title=s6.policy)
+    base_size=300
+    f=Figure(size=(4*base_size,6*base_size))
+    a_oa=Axis(f[1:2,2])#,title=s1.policy)
+    a_aur=Axis(f[3:4,2])#,title=s2a.policy)
+    a_tur=Axis(f[5:6,2])#,title=s3a.policy)
+    a_pa=Axis(f[7:8,2])#,title=s4a.policy)
+    a_ei=Axis(f[9:10,2])#,title=s5.policy)
+    a_d=Axis(f[11:12,2])#,title=s6.policy)
     [hidedecorations!(a) for a in [a_oa,a_aur,a_tur,a_pa,a_ei, a_d]]
-    b_oa=Axis(f[5:6,3])#,title=s1.policy)
-    b_aur=Axis(f[5:6,2])#,title=s2a.policy)
+    b_oa=Axis(f[1:2,3])#,title=s1.policy)
+    b_aur_1=Axis(f[3,3])#,title=s2a.policy)
+    b_aur_2=Axis(f[4,3])#,title=s2a.policy)
     b_tur=Axis(f[5:6,3])#,title=s3a.policy)
-    b_pa=Axis(f[7:8,1])#,title=s4a.policy)
-    b_ei=Axis(f[7:8,2])#,title=s5.policy)
-    b_d=Axis(f[7:8,3])#,title=s6.policy)
+    b_pa=Axis(f[7:8,3])#,title=s4a.policy)
+    b_ei=Axis(f[9:10,3])#,title=s5.policy)
+    b_d=Axis(f[11:12,3])#,title=s6.policy)
+    [hidedecorations!(a) for a in [b_oa,b_aur_1,b_aur_2,b_tur,b_pa,b_ei, b_d]]
+    t_oa=Axis(f[1:2,1])#,title=s1.policy)
+    t_aur=Axis(f[3:4,1])#,title=s2a.policy)
+    t_tur=Axis(f[5:6,1])#,title=s3a.policy)
+    t_pa=Axis(f[7:8,1])#,title=s4a.policy)
+    t_ei=Axis(f[9:10,1])#,title=s5.policy)
+    t_d=Axis(f[11:12,1])#,title=s6.policy)
+    [hidedecorations!(a) for a in [t_oa,t_aur,t_tur,t_pa,t_ei, t_d]]
+    colsize!(f.layout, 1, Relative(1/2))
 
     oa_plot!(a_oa,s1)
     aur_plot!(a_aur,s2a)
     tur_plot!(a_tur,s3a, regulation=0.51, colorid=3)
     tur_plot!(a_tur,s3b, regulation=0.75, colorid=4)
+    pa_plot!(a_pa,s4a)
 
     incomes_plot!(b_tur, sim(s3a,regulation=0.51))
+    incomes_plot!(b_aur_1, sim(s2a,regulation=0.4))
+    incomes_plot!(b_aur_2, sim(s2b,regulation=0.4))
+    incomes_plot!(b_pa, sim(s4a,regulation=0.4))
+
+    t="text"
+    D=policy_descriptions()
+    text!(t_tur,0.0,0.9,text=rich("Tradable use rights", color=:forestgreen, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
+    text!(t_tur,0.0,0.9,text=D["Tradable Use Rights"], word_wrap_width= base_size*2*0.9, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
+
+text!(t_pa,0.0,0.9,text=rich("Protected areas", color=:forestgreen, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
+text!(t_pa,0.0,0.9,text=L"Some %$(t) and some math: $\frac{2\alpha+1}{y}$, Tradable use rights are modeled to capture the dynamics of resource allocation and usage. The equations describe how individual utility depends on direct usage, costs from deviations in allocation, and market-based rights values. Resource utilization changes based on yield and costs, with limits set by predefined caps. The value of tradable rights adjusts dynamically with market demand and supply, influencing the overall costs of usage. These equations provide a framework for understanding how tradable rights integrate market forces into resource management, promoting efficiency and sustainability.", word_wrap_width= base_size*2*0.9, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
     f
 end
+
 newFig4()
+
+
+function policy_descriptions()
+    D=Dict()
+    D["Tradable Use Rights"]=L"are formalized as a cost/revenue that is proportional to wether one extracts resource above or below one's alloted use rights and the current price, $I(u_i)=(R_i-u_i) \phi$. Thus we approximate discrete transaction as a continuous rent as if the transaction is equivalent to paying a continuous rent for a loan or getting the interest for an investment of gained capital (by selling the use right). The price of the use rights is set by the supply (currently unused use rights) vs the demmand (sum of potential desire to increase $\sum \left( \max \left( \dot{u}_i,0 \right) \right)$. The resulting incentives are additive: $\gamma=\tilde{w}+\phi$"
+    return D
+end
+
+Tradable use rights are modeled to capture the dynamics of resource allocation and usage. The equations describe how individual utility depends on direct usage, costs from deviations in allocation, and market-based rights values. Resource utilization changes based on yield and costs, with limits set by predefined caps. The value of tradable rights adjusts dynamically with market demand and supply, influencing the overall costs of usage. These equations provide a framework for understanding how tradable rights integrate market forces into resource management, promoting efficiency and sustainability.
+
+policy_descriptions()
 
 function oa_plot!(a,s; color=ColorSchemes.tab20[16], trajectory=false)
     sol=sim(s;regulation=0.0)
@@ -50,8 +84,8 @@ function oa_plot!(a,s; color=ColorSchemes.tab20[16], trajectory=false)
     trajectory ? trajecory_plot!(a,sol;color) : nothing
 end
 
-function aur_plot!(a,s; colorid=1, colorsheme=ColorSchemes.tab20, regulation=0.75)
-    color=colorsheme[colorid]
+function aur_plot!(a,s; colorid=1, colorscheme=ColorSchemes.tab20, regulation=0.75, annotation_font_size=18)
+    color=colorscheme[colorid]
     sol=sim(s;regulation)
     oa_plot!(a,s)
     Γ_plot!(a,sol;color)
@@ -67,8 +101,8 @@ function aur_plot!(a,s; colorid=1, colorsheme=ColorSchemes.tab20, regulation=0.7
     attractor_plot!(a,sol; color)                     
 end
 
-function tur_plot!(a,s; colorid=1, colorsheme=ColorSchemes.tab20, regulation=0.75)
-    color=colorsheme[colorid]
+function tur_plot!(a,s; colorid=1, colorscheme=ColorSchemes.tab20, regulation=0.75, annotation_font_size=18)
+    color=colorscheme[colorid]
     sol=sim(s;regulation)
     oa_plot!(a,s)
     Γ_plot!(a,sol; color)
@@ -80,7 +114,35 @@ function tur_plot!(a,s; colorid=1, colorsheme=ColorSchemes.tab20, regulation=0.7
     text!(a,0.12,0.52,text="Price ϕ=0.45", font=:bold, fontsize=annotation_font_size;color)
     text!(a,0.52,0.11,text="Yield limit=0.25", font=:bold, rotation=-pi/17, fontsize=annotation_font_size;color)
     text!(a,0.55,0.27,text="Effort limit=0.5", font=:bold, fontsize=annotation_font_size;color)
-    attractor_plot!(a3,sol;color)
+    attractor_plot!(a,sol;color)
+end
+
+function pa_plot!(a,s;colorid=1, colorscheme=ColorSchemes.tab20, regulation=0.75, annotation_font_size=18)
+#=
+pa1_sol=sim(s;regulation=0.3)
+pa2_sol=sim(s;regulation=0.5)
+pa3_sol=sim(s;regulation=0.7)
+pa4_sol=sim(s;regulation=0.8)
+pa5_sol=sim(s;regulation=0.9)
+pa6_sol=sim(s;regulation=0.95)
+=#
+oa_plot!(a,s)
+
+color=colorscheme[colorid]
+cases=[s]
+[Γ_plot!(a,sim(s;regulation);color) for sol in cases]
+[Φ_plot!(a,sim(s;regulation); color,linewidth=1) for sol in cases]
+APA=[sim(s;regulation=r) for r in range(0.0,stop=1.0,length=40)]
+[attractor_plot!(a,sim(s;regulation=r), color=color, markersize=8) for r in range(0.0,stop=1.0,length=40)]
+#arrow_arc!(a4, [0.0,0.0], 0.75, pi/2-pi/10, pi/8)
+arrow_arc_deg!(a, [0.0,0.0], 0.85, 14, 37, color=color, linewidth=1, linestyle=:solid)
+text!(a,0.26,0.82,text="Exclusion", color=color, font=:bold, rotation=-pi/8, fontsize=annotation_font_size)
+arrow_arc_deg!(a, [0.7,0.16], 0.35, -59, -34, color=color, linewidth=1, linestyle=:solid)
+text!(a,0.45,0.22,text="Spillover", color=color, font=:bold, rotation=pi/4, fontsize=annotation_font_size)
+attractor_plot!(a,sim(s;regulation=0.3), color=color, markersize=8)
+attractor_plot!(a,sim(s;regulation=0.8), color=color, markersize=8)
+text!(a,0.16,0.53,text="fₚ=0.3", color=color, font=:bold, fontsize=annotation_font_size)
+text!(a,0.53,0.56,text="fₚ=0.8", color=color, font=:bold, fontsize=annotation_font_size)
 end
 
 newFig4()
@@ -252,11 +314,14 @@ hidedecorations!(a31)
 text!(a31,0.0,0.9,text=rich("Tradable use rights", color=tur1_color, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
 text!(a31,0.0,0.9,text="Tradable use rights are modeled to capture the dynamics of resource allocation and usage. The equations describe how individual utility depends on direct usage, costs from deviations in allocation, and market-based rights values. Resource utilization changes based on yield and costs, with limits set by predefined caps. The value of tradable rights adjusts dynamically with market demand and supply, influencing the overall costs of usage. These equations provide a framework for understanding how tradable rights integrate market forces into resource management, promoting efficiency and sustainability.", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
 
+
+
 a41=Axis(f[4,1], width=450,limits=(0,1,0,1))
 hidespines!(a41)
 hidedecorations!(a41)
+t="text"
 text!(a41,0.0,0.9,text=rich("Protected areas", color=pa1_color, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(a41,0.0,0.9,text="Tradable use rights are modeled to capture the dynamics of resource allocation and usage. The equations describe how individual utility depends on direct usage, costs from deviations in allocation, and market-based rights values. Resource utilization changes based on yield and costs, with limits set by predefined caps. The value of tradable rights adjusts dynamically with market demand and supply, influencing the overall costs of usage. These equations provide a framework for understanding how tradable rights integrate market forces into resource management, promoting efficiency and sustainability.", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
+text!(a41,0.0,0.9,text=L"Some %$(t) and some math: $\frac{2\alpha+1}{y}$, Tradable use rights are modeled to capture the dynamics of resource allocation and usage. The equations describe how individual utility depends on direct usage, costs from deviations in allocation, and market-based rights values. Resource utilization changes based on yield and costs, with limits set by predefined caps. The value of tradable rights adjusts dynamically with market demand and supply, influencing the overall costs of usage. These equations provide a framework for understanding how tradable rights integrate market forces into resource management, promoting efficiency and sustainability.", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
 
 a51=Axis(f[5,1], width=450,limits=(0,1,0,1))
 hidespines!(a51)
@@ -289,7 +354,7 @@ incomes_plot!(a24, sol2a, color=aur1_color)
 incomes_plot!(a34, sol3a, color=tur1_color)
 incomes_plot!(a44, pa1_sol, color=pa1_color)
 incomes_plot!(a54, sim(s5;regulation), color=ei1_color)
-incomes_plot!(a64,sim(s6;regulation), color=ColorSchemes.tab20[9])
+incomes_plot!(a64,sim(s6a;regulation), color=ColorSchemes.tab20[9])
 
 linkyaxes!([a14,a24,a34,a44,a54,a64]...)
 
@@ -297,5 +362,19 @@ println(sum(incomes(sol3a.u[end-1],sol3a.prob.p).trade))
 f
 end
 #ftemp
-
+oldFig4()
 #save("figures/Figure_4.png",f)
+
+#= Do universal basic incomes add to w̃ or do they max(w̃,UBI)? UBI does not "take away" from ū as it is not linked to use of time, meaning that alternative opporunities are added on top of UBI?
+
+1) protected area, does decreased impact change revenues?
+2) gear economic incentives, how to link to regulation? go back to the version with effort cost (fuel cost)
+fuel subsidy increased revenue has to outweigh the loan cost
+3) universal basic incomes, additive to incentives? 
+
+w/pKq
+
+ēq/r
+
+
+=#

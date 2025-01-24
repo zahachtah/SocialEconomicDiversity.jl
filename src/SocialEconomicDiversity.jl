@@ -274,7 +274,7 @@ end
         end
     end
 
-    base(; N=100, sigma=0.0)=(;N, α=0.1, w̃=sed(min=0.01,max=0.6, distribution=LogNormal), ū=sed(mean=1.0, sigma=sigma, normalize=true), R=ones(N), γ, ϕ, μ,regulate, policy="Open Access")
+    base(; N=100, sigma=0.0, random=false)=(;N, α=0.1, w̃=sed(min=0.01,max=0.6, distribution=LogNormal, random=random), ū=sed(mean=1.0, sigma=sigma, normalize=true, random=random), R=ones(N), γ, ϕ, μ,regulate, policy="Open Access")
 
     high_impact(; N=100, sigma=0.0)=(;N, α=0.1, w̃=sed(min=0.01,max=0.6, distribution=LogNormal), ū=sed(mean=2.0, sigma=sigma, normalize=true), R=ones(N), γ, ϕ, μ,regulate, policy="Open Access")
 
