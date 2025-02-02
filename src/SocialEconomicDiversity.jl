@@ -12,7 +12,7 @@ module SocialEconomicDiversity
     export Γ, Φ
     export γ_assigned_use_rights, regulate_assigned_use_rights
     export γ_tradable_use_rights, ϕ_tradable_use_rights,regulate_tradable_use_rights
-    export run
+    export γ_economic_incentive, μ_economic_incentive, regulate_economic_incentive
     export Uniform, LogNormal, Normal, Exponential, Dirac
     export phase_plot!, bg_plot!, Γ_plot!, Φ_plot!, attractor_plot!, trajecory_plot!, target_plot!, arrow_arc!, arrow_arc_deg!, incomes_plot!
     export incomes, regulation_scan, gini
@@ -236,8 +236,28 @@ end
 	end
 	
 	function μ_economic_incentive(x,p,t)
-		return p.ū.*(1-p.regulation)
+        if :μ in vcat(p.policy_target)
+		    return p.ū.*(1-p.regulation * (p.policy_method==:taxation ? -1.0 : 1.0))
+        else 
+            return p.ū
+        end
 	end
+
+    function γ_economic_incentive(x,p,t)
+        if :γ in vcat(p.policy_target)
+            if p.policy_method==:additive
+                return p.w̃.+p.regulation
+            else
+                return p.w̃.*(1-p.regulation*(p.policy_method==:taxation ? -1.0 : 1.0))
+            end
+        else
+            return p.w̃
+        end
+	end
+
+    #=
+
+        =#
 
     # Development
     function regulate_development(p,f)
@@ -268,7 +288,7 @@ end
             #check if temp has mobility_rate
             return (;temp..., γ=γ_protected_area, μ=μ_protected_area, regulate=regulate_protected_area)
         elseif temp.policy=="Economic Incentives"
-            return (;temp..., μ=μ_economic_incentive, regulate=regulate_economic_incentive)
+            return (;temp..., μ=μ_economic_incentive, regulate=regulate_economic_incentive, γ=γ_economic_incentive)
         elseif temp.policy=="Development"
             return (;temp...,γ=γ_development, μ=μ_development, regulate=regulate_development)
         end
