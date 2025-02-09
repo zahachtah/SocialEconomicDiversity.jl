@@ -265,12 +265,12 @@ end
 	end
 	
 	function μ_development(x,p,t)
-		return p.ū.+p.regulation*2/p.N*t/1000
+		return p.ū.+p.regulation*2/p.N*t/1000*p.μ_value
 	end
 
 	function γ_development(x,p,t)
 		
-		return p.w̃.+p.regulation*t/1000
+		return p.w̃.+p.regulation*t/1000*p.γ_value
 	end
 
     # scenario management
@@ -290,7 +290,7 @@ end
         elseif temp.policy=="Economic Incentives"
             return (;temp..., μ=μ_economic_incentive, regulate=regulate_economic_incentive, γ=γ_economic_incentive)
         elseif temp.policy=="Development"
-            return (;temp...,γ=γ_development, μ=μ_development, regulate=regulate_development)
+            return (;temp...,γ=γ_development, μ=μ_development, regulate=regulate_development, μ_value=0.5, γ_value=0.5)
         end
     end
 
@@ -614,14 +614,14 @@ end
         [pdf(s.distribution,xx) for xx in s]
     end
 
-    function Γ_plot!(axis,sol;color=:darkorange, linewidth=3)
+    function Γ_plot!(axis,sol;color=:darkorange, linewidth=3, t=0.0)
         y=range(0.0,stop=1.0,length=100)
-        lines!(axis,y,Γ.(y,Ref(sol.prob.p),x=sol.u[end-1]); color, linewidth)
+        lines!(axis,y,Γ.(y,Ref(sol.prob.p),x=sol.u[end-1]; t); color, linewidth)
     end
 
-    function Φ_plot!(axis,sol;color=:darkorange, linewidth=3)
+    function Φ_plot!(axis,sol;color=:darkorange, linewidth=3, t=0.0)
         y=range(0.0,stop=1.0,length=100)
-        lines!(axis,y,Φ.(y,Ref(sol.prob.p)); color, linewidth)
+        lines!(axis,y,Φ.(y,Ref(sol.prob.p); t); color, linewidth)
     end
 
     function attractor_plot!(axis,sol;color=:darkorange, markersize=15, marker=:circle)
@@ -629,9 +629,9 @@ end
         scatter!(axis,[sol[N+1,end-2]],[sum(sol[1:N,end-2]./sol.prob.p.μ(sol.u[end-2],sol.prob.p,sol.t[end-2])./N)]; color, markersize,marker)
     end
 
-    function trajecory_plot!(axis,sol; color=:darkorange, startcolor=:lightgray)
+    function trajecory_plot!(axis,sol; color=:darkorange, startcolor=:lightgray, linewidth=2)
         scenario=sol.prob.p
-        lines!(axis,[u[scenario.N+1] for u in sol.u[1:end]],[sum(u[1:scenario.N]./scenario.μ(u,scenario,sol.t[i]))/scenario.N for (i,u) in enumerate(sol.u[1:end])]; color, linestyle=:dot, colormap=cgrad([startcolor, color], [0.0, 0.5, 1.0]))
+        lines!(axis,[u[scenario.N+1] for u in sol.u[1:end-2]],[sum(u[1:scenario.N]./scenario.μ(u,scenario,sol.t[i]))/scenario.N for (i,u) in enumerate(sol.u[1:end-2])]; color, linestyle=:dot, colormap=cgrad([startcolor, color], [0.0, 0.5, 1.0]),linewidth)
     
     end
 
