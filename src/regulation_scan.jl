@@ -1,5 +1,5 @@
-function regscan(; u=false)
-    s=high_impact()
+@everywhere function regscan(; u=false,s=high_impact())
+    
     policies=[
     scenario(s,policy="Assigned Use Rights", reverse=true)
     scenario(s,policy="Assigned Use Rights", reverse=false)
@@ -107,7 +107,117 @@ Sensational findings:
 Extremely large difference between resource revenues and societal revenues
 MUST think about the cost to society!
 =#
-f=Figure()
+@everywhere function monte_carlo_scan(;N=1, k=[0.2,1.0,-0.3,0.2])
+    RE=[]
+    O=[]
+    for i in 1:N
+        print(string(i)*", ")
+        mean_w̃=rand()
+        sigma_w̃=rand()
+        mean_ū=2*rand()
+        sigma_ū=rand()*mean_ū
+        s=scenario(base(),w̃=sed(mean=mean_w̃, sigma=sigma_w̃, distribution=LogNormal), ū=sed(mean=mean_ū, sigma=sigma_ū, normalize=true))
+        policies=[
+            scenario(s,policy="Assigned Use Rights", reverse=true)
+            scenario(s,policy="Assigned Use Rights", reverse=false)
+            scenario(s,policy="Tradable Use Rights", policy_target=:effort, market_rate=0.05)
+            scenario(s,policy="Tradable Use Rights", policy_target=:yield, market_rate=0.05)
+            scenario(s,policy="Protected Area", m=0.3)
+            scenario(s,policy="Protected Area", m=0.05)
+            scenario(s,policy="Economic Incentives", policy_target=:μ, policy_method=:taxation)
+            scenario(s,policy="Economic Incentives", policy_target=:γ, policy_method=:taxation)
+            scenario(s,policy="Economic Incentives", policy_target=:μ, policy_method=:subsidy)
+            scenario(s,policy="Economic Incentives", policy_target=:γ, policy_method=:subsidy)
+        
+            ]
+        
+            maxG=[]
+            regulation=[]
+            y0=[]
+            part0=[]
+            y=[]
+            part=[]
+        for scenario in policies
+            #try
+            R=regulation_scan(scenario)
+            G=R.RR.^k[1].+R.ToR.^k[2].+R.GI.^k[3].+R.EH.^k[4]
+            push!(maxG,maximum(G))
+            push!(regulation,R.r[argmax(G)])
+            push!(y0,R.EH[1])
+            push!(y,R.EH[argmax(G)])
+            push!(part0,sum(R.sols[1,:]./scenario.ū)./scenario.N)
+            push!(part,sum(R.sols[argmax(G),:]./scenario.ū)./scenario.N)
+            #=catch
+                push!(RE,scenario)
+                println((mean_w̃,mean_ū,sigma_w̃,sigma_ū, scenario.policy) )
+            end=#
+        end
+        i=argmax(maxG)
+        push!(O,(policies[i]...,regulation=regulation[i],y0=y0[1],y=y[i], part0=part0[1], part=part[i]))
+    end
+    return O
+end
 
-a=Axis(f[1,1], limits=(0,1,0,1),xticks=([0.0,1],["0.2",""]))
+@everywhere using SocialEconomicDiversity
+#=
+R_R_only=monte_carlo_scan(N=1000,k=[1.0,0.0,0.0,0.0])
+R_T_only=monte_carlo_scan(N=1000,k=[0.0,1.0,0.0,0.0])
+R_G_only=monte_carlo_scan(N=1000,k=[0.0,0.0,-1.0,0.0])
+R_A_only=monte_carlo_scan(N=1000,k=[0.2,1.0,-0.4,0.0])
+=#
+# Launch each call on a different process asynchronously
+r1 = @spawn monte_carlo_scan(N=1000, k=[1.0, 0.0, 0.0, 0.0])
+r2 = @spawn monte_carlo_scan(N=1000, k=[0.0, 1.0, 0.0, 0.0])
+r3 = @spawn monte_carlo_scan(N=1000, k=[0.0, 0.0, -1.0, 0.0])
+r4 = @spawn monte_carlo_scan(N=1000, k=[0.2, 1.0, -0.4, 0.0])
+
+# Retrieve the results (this blocks until the results are ready)
+R_R_only = fetch(r1)
+R_T_only = fetch(r2)
+R_G_only = fetch(r3)
+R_A_only = fetch(r4)
+
+overuse_R=findall([r.y0<0.5 for r in R_R_only].==1)
+overuse_T=findall([r.y0<0.5 for r in R_T_only].==1)
+overuse_G=findall([r.y0<0.5 for r in R_G_only].==1)
+overuse_A=findall([r.y0<0.5 for r in R_A_only].==1)
+
+pol=["Assigned Use Rights", "Tradable Use Rights", "Protected Area", "Economic Incentives"]
+
+pR=[count(i->(i==in),[r.policy for r in R_R_only[overuse_R]]) for in in pol]
+pT=[count(i->(i==in),[r.policy for r in R_T_only[overuse_T]]) for in in pol]
+pG=[count(i->(i==in),[r.policy for r in R_G_only[overuse_G]]) for in in pol]
+pA=[count(i->(i==in),[r.policy for r in R_A_only[overuse_A]]) for in in pol]
+
+cmap=ColorSchemes.tab20[[1,3,5,7]]
+
+f=Figure(size=(800,800))
+a=Axis(f[1,1], limits=(0,1,0,1),title="Resource Revenues, R")
+b=Axis(f[1,2], limits=(0,1,0,1),title="Total Revenues, T")
+c=Axis(f[2,1], limits=(0,1,0,1),title="Gini, G")
+d=Axis(f[2,2], limits=(0,1,0,1),title=L"R^{0.2}+T^{1.0}+G^{-0.4}")
+[hidespines!(a) for a in [a,b,c,d]]
+scatter!(a,[r.y0 for r in R_R_only],[r.part0 for r in R_R_only], color=[findall(r.policy.==pol)[1] for r in R_R_only], colormap=cmap)
+scatter!(b,[r.y0 for r in R_T_only],[r.part0 for r in R_T_only], color=[findall(r.policy.==pol)[1] for r in R_T_only], colormap=cmap)
+scatter!(c,[r.y0 for r in R_G_only],[r.part0 for r in R_G_only], color=[findall(r.policy.==pol)[1] for r in R_G_only], colormap=cmap)
+scatter!(d,[r.y0 for r in R_A_only],[r.part0 for r in R_A_only], color=[findall(r.policy.==pol)[1] for r in R_A_only], colormap=cmap)
+Legend(f[0,1:2],
+[ MarkerElement(color = cmap[1], marker = :circle, markersize = 15),MarkerElement(color = cmap[2], marker = :circle, markersize = 15),MarkerElement(color = cmap[3], marker = :circle, markersize = 15),MarkerElement(color = cmap[4], marker = :circle, markersize = 15)],
+pol,orientation=:horizontal,framevisible=false)
+
 f
+
+f1=Figure(size=(800,800))
+a1=Axis(f1[1,1], limits=(0,1,0,1),title="Resource Revenues, R")
+b1=Axis(f1[1,2], limits=(0,1,0,1),title="Total Revenues, T")
+c1=Axis(f1[2,1], limits=(0,1,0,1),title="Gini, G")
+d1=Axis(f1[2,2], limits=(0,1,0,1),title=L"R^{0.2}+T^{1.0}+G^{-0.4}")
+[hidespines!(a) for a in [a1,b1,c1,d1]]
+scatter!(a1,[r.y for r in R_R_only],[r.part for r in R_R_only], color=[findall(r.policy.==pol)[1] for r in R_R_only], colormap=cmap)
+scatter!(b1,[r.y for r in R_T_only],[r.part for r in R_T_only], color=[findall(r.policy.==pol)[1] for r in R_T_only], colormap=cmap)
+scatter!(c1,[r.y for r in R_G_only],[r.part for r in R_G_only], color=[findall(r.policy.==pol)[1] for r in R_G_only], colormap=cmap)
+scatter!(d1,[r.y for r in R_A_only],[r.part for r in R_A_only], color=[findall(r.policy.==pol)[1] for r in R_A_only], colormap=cmap)
+Legend(f1[0,1:2],
+[ MarkerElement(color = cmap[1], marker = :circle, markersize = 15),MarkerElement(color = cmap[2], marker = :circle, markersize = 15),MarkerElement(color = cmap[3], marker = :circle, markersize = 15),MarkerElement(color = cmap[4], marker = :circle, markersize = 15)],
+pol,orientation=:horizontal,framevisible=false)
+f1

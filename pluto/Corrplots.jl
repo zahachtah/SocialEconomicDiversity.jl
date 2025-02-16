@@ -26,7 +26,7 @@ begin
 	ses3=rand(LogNormal(-1,0.5),N)
 	ses4=rand(LogNormal(-2,0.5),N)
 	ses5=rand(LogNormal(-2,0.5),N)
-	qf=2
+	
 	ef=rand(Uniform(0.01,0.1),N)
 	q1=ses1*0.2+rand(LogNormal(0,0.5),N)*0.05
 	q2=ses1*0.0+rand(LogNormal(0,0.5),N)*0.05

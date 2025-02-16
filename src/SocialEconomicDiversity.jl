@@ -2,9 +2,11 @@ module SocialEconomicDiversity
 
     using Colors, Statistics, Distributions, OrdinaryDiffEq, CairoMakie, FileIO,  Random,  ColorSchemes
     using DiffEqCallbacks: TerminateSteadyState
+    using Parameters
     import Base: show
     using Base: @kwdef
 
+    include("sed.jl")
     export SED,sed, dist!,astext
     export sim
     export scenario, base, high_impact, low_impact, high_incentives
@@ -360,7 +362,7 @@ end
         oRI=argmax(EH)
         return (;RR,WR,TR,ToR,GI,EH,RI,r,oRR,oWR,oTR,oToR,oGI,oEH,oRI,sols)
     end
-
+#=
     # Socioeconomic diversity variable implementaiton
 
     Constant=Dirac
@@ -613,6 +615,7 @@ end
     function pdf(s::SED)
         [pdf(s.distribution,xx) for xx in s]
     end
+    =#
 
     function Γ_plot!(axis,sol;color=:darkorange, linewidth=3, t=0.0)
         y=range(0.0,stop=1.0,length=100)

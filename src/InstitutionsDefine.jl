@@ -10,9 +10,18 @@
 
 function policy_descriptions()
     D=Dict()
-    D["Tradable Use Rights"]=L"are formalized as a cost/revenue that is proportional to wether one extracts resource above or below one's alloted use rights and the current price, $I(u_i)=(R_i-u_i) \phi$. Thus we approximate discrete transaction as a continuous rent as if the transaction is equivalent to paying a continuous rent for a loan or getting the interest for an investment of gained capital (by selling the use right). The price of the use rights is set by the supply (currently unused use rights) vs the demmand (sum of potential desire to increase $\sum \left( \max \left( \dot{u}_i,0 \right) \right)$. The resulting incentives are additive: $\gamma=\tilde{w}+\phi$"
-    D["Assigned Use Rights"]=L"are formalized as a cost/revenue that is proportional to wether one extracts resource above or below one's alloted use rights and the current price, $I(u_i)=(R_i-u_i) \phi$. Thus we approximate discrete transaction as a continuous rent as if the transaction is equivalent to paying a continuous rent for a loan or getting the interest for an investment of gained capital (by selling the use right). The price of the use rights is set by the supply (currently unused use rights) vs the demmand (sum of potential desire to increase $\sum \left( \max \left( \dot{u}_i,0 \right) \right)$. The resulting incentives are additive: $\gamma=\tilde{w}+\phi$"
-    D["Protected Area"]="assumes that actors are excluded from a portion of the total resource area which results in higher resource density and regeneration rates, but reduces incentives to harvest due to lower potential revenues. Spillover from protected areas amend the regeneration rate in the harvested area, thus reducing impact by better balancing harvest rates. The benefitial effect of protected areas depends on the mobility rate of the resource"
+
+    D["Open Access"]=L"Under open access only the current distributions of alternative income distributions, $\tilde{w}$, and the impact distributions, $\bar{u}$, determibe the shape of the incentive and impact curves. Individual actor participation is determined by the balance of resource availability and alternative income opportunities as $\dot{u}=y-\tilde{w}-I(u)$, were institutional impact, $I(u)=0$, under open access. "
+
+    D["Assigned Use Rights"]=L"resource access is allocated to selected actors based on criteria such as alternative income opportunities or socio-economic status, meaning that only a predetermined fraction (e.g., 30%) of actors are permitted to participate. Depending on whether the exclusion targets those with low or high economic status (depicted in dark blue or light blue, respectively), the system converges to the same equilibrium state—marked by blue circles—but results in markedly different income distributions among the actors. Institutional impact $I(u)_i=\text{excluded} ? 1 : 0$"
+
+    D["Tradable Use Rights"]=L"Tradable use rights are implemented as a cost or revenue mechanism that activates when an actor's extraction deviates from an allotted quota. The price of these rights is dynamically determined by the supply of unused rights relative to the total demand to increase extraction, leading to an additive shift in the incentive curve—moving it to the right compared to the open access scenario (shown in gray). This adjustment drives the system outcome closer to the Maximum Sustainable Yield (MSY). The tangency between the yield limitation and the impact curve highlights that yield restrictions become less robust near MSY levels, compatred to effort regulation that is inherently more robust at MSY due to a larger slope betwen the target and impact curve. Institutional impact is equal to use right price, i.e. $I(u)=ϕ$"
+
+    D["Protected Area"]="Actors are excluded from a portion of the resource, resulting in higher resource density and increased regeneration rates within the protected zone. This exclusion, however, reduces the incentives to harvest in adjacent areas due to diminished potential revenues, while spillover effects from the protected zone enhance regeneration in the harvested area, thereby balancing extraction impacts. The overall benefit of this approach is sensitive to the mobility of the resource. Institutional impact is a reduciton in incentives (eq) as as well as impacts (eq)"
+
+    D["Economic Incentives"]="Economic incentives encompass a variety of tools that result in modifying either or both the incentive and impact curves by changing the socio-economic context. For instance, royalties or subsidies that are proportional to yield adjust the incentive curve by tilting it upward or downward, while direct economic compensation for reduced effort shifts the curve to the right. Similarly, investments aimed at pollution mitigation can improve regeneration rates and reduce harvesting impacts—resulting in an upward tilt of the impact curve—whereas loans that facilitate improved harvesting technology tend to lower the impact by tilting the impact curve downward."
+
+    D["Development"]="broadly captures indirect socio-economic improvements, including enhanced alternative income opportunities, advancements in technology, increased knowledge, and greater economic capital. In our simulation, development is modeled as a rightward shift in the incentive curve, reflecting improved socio-economic alternatives that make harvesting less attractive, coupled with a downward tilt in the impact curve, indicating more efficient and less harmful extraction practices. Depending on the initial conditions—represented by gray circles—the development trajectory can follow a Kuznets-type pattern, characterized by an initial decline in ecosystem state due to overextraction from increased efficiency, followed by a recovery as better alternative income opportunities gradually reduce the incentive to harvest when resources are low."
     return D
 end
 
@@ -361,6 +370,7 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     b_aur_1=Axis(f[3,3])#,title=s2a.policy)
     b_aur_2=Axis(f[4,3])#,title=s2a.policy)
     b_tur=Axis(f[5:6,3])#,title=s3a.policy)
+    ylims!(b_tur,(-0.02,0.012))
     b_pa=Axis(f[7:8,3])#,title=s4a.policy)
     b_ei=Axis(f[9:10,3])#,title=s5.policy)
     b_d=Axis(f[11:12,3])#,title=s6.policy)
@@ -377,7 +387,7 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     oa_plot!(a_oa,s1)
 
     aur_plot!(a_aur,s2a)
-    aur_plot!(a_aur,s2b)
+    aur_plot!(a_aur,s2b,colorid=2)
 
     tur_plot!(a_tur,s3a, regulation=0.51, colorid=3)
     tur_plot!(a_tur,s3b, regulation=0.75, colorid=4)
@@ -428,28 +438,33 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     incomes_plot!(b_oa_1, sim(s1,regulation=0.0),color=:lightgray)
     incomes_plot!(b_tur, sim(s3a,regulation=0.51))
     incomes_plot!(b_aur_1, sim(s2a,regulation=0.4), color=ColorSchemes.tab20[1])
-    incomes_plot!(b_aur_2, sim(s2b,regulation=0.4), color=ColorSchemes.tab20[1])
+    incomes_plot!(b_aur_2, sim(s2b,regulation=0.4), color=ColorSchemes.tab20[2])
     incomes_plot!(b_pa, sim(s4a,regulation=0.4), color=ColorSchemes.tab20[5])
     incomes_plot!(b_ei, sim(s5a,regulation=0.4), color=ColorSchemes.tab20[7])
 
     t="text"
     D=policy_descriptions()
 
+    description_font_size=20
+
+    text!(t_oa,0.0,0.9,text=rich("Open Access", color=ColorSchemes.tab20[13], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
+    text!(t_oa,0.0,0.9,text=D["Open Access"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
+
     text!(t_aur,0.0,0.9,text=rich("Assigned use rights", color=ColorSchemes.tab20[1], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-    text!(t_aur,0.0,0.9,text=D["Assigned Use Rights"], word_wrap_width= base_size*2*0.9, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
+    text!(t_aur,0.0,0.9,text=D["Assigned Use Rights"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
 
 
     text!(t_tur,0.0,0.9,text=rich("Tradable use rights", color=ColorSchemes.tab20[3], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-    text!(t_tur,0.0,0.9,text=D["Tradable Use Rights"], word_wrap_width= base_size*2*0.9, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
+    text!(t_tur,0.0,0.9,text=D["Tradable Use Rights"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
 
 text!(t_pa,0.0,0.9,text=rich("Protected areas", color=ColorSchemes.tab20[5], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(t_pa,0.0,0.9,text=D["Protected Area"], word_wrap_width= base_size*2*0.9, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
+text!(t_pa,0.0,0.9,text=D["Protected Area"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
 
 text!(t_ei,0.0,0.9,text=rich("Economic incentives outcomes", color=ColorSchemes.tab20[7], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(t_ei,0.0,0.9,text=L"Some %$(t) and some math: $\frac{2\alpha+1}{y}$, Tradable use rights are modeled to capture the dynamics of resource allocation and usage. The equations describe how individual utility depends on direct usage, costs from deviations in allocation, and market-based rights values. Resource utilization changes based on yield and costs, with limits set by predefined caps. The value of tradable rights adjusts dynamically with market demand and supply, influencing the overall costs of usage. These equations provide a framework for understanding how tradable rights integrate market forces into resource management, promoting efficiency and sustainability.", word_wrap_width= base_size*2*0.9, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
+text!(t_ei,0.0,0.9,text=D["Economic Incentives"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
  
 text!(t_d,0.0,0.9,text=rich("Development", color=ColorSchemes.tab20[9], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(t_d,0.0,0.9,text=L"Some %$(t) and some math: $\frac{2\alpha+1}{y}$, Tradable use rights are modeled to capture the dynamics of resource allocation and usage. The equations describe how individual utility depends on direct usage, costs from deviations in allocation, and market-based rights values. Resource utilization changes based on yield and costs, with limits set by predefined caps. The value of tradable rights adjusts dynamically with market demand and supply, influencing the overall costs of usage. These equations provide a framework for understanding how tradable rights integrate market forces into resource management, promoting efficiency and sustainability.", word_wrap_width= base_size*2*0.9, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
+text!(t_d,0.0,0.9,text=D["Development"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
  
 
 f
