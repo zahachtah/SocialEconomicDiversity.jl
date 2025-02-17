@@ -371,10 +371,11 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     b_aur_2=Axis(f[4,3])#,title=s2a.policy)
     b_tur=Axis(f[5:6,3])#,title=s3a.policy)
     ylims!(b_tur,(-0.02,0.012))
-    b_pa=Axis(f[7:8,3])#,title=s4a.policy)
+    b_pa1=Axis(f[7,3])#,title=s4a.policy)
+    b_pa2=Axis(f[8,3])#,title=s4a.policy)
     b_ei=Axis(f[9:10,3])#,title=s5.policy)
     b_d=Axis(f[11:12,3])#,title=s6.policy)
-    [hidedecorations!(a) for a in [b_oa_1,b_aur_1,b_aur_2,b_tur,b_pa,b_ei, b_d]]
+    [hidedecorations!(a) for a in [b_oa_1,b_aur_1,b_aur_2,b_tur,b_pa1,b_pa2,b_ei, b_d]]
     t_oa=Axis(f[1:2,1])#,title=s1.policy)
     t_aur=Axis(f[3:4,1])#,title=s2a.policy)
     t_tur=Axis(f[5:6,1])#,title=s3a.policy)
@@ -439,7 +440,8 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     incomes_plot!(b_tur, sim(s3a,regulation=0.51))
     incomes_plot!(b_aur_1, sim(s2a,regulation=0.4), color=ColorSchemes.tab20[1])
     incomes_plot!(b_aur_2, sim(s2b,regulation=0.4), color=ColorSchemes.tab20[2])
-    incomes_plot!(b_pa, sim(s4a,regulation=0.4), color=ColorSchemes.tab20[5])
+    incomes_plot!(b_pa1, sim(s4a,regulation=0.4), color=ColorSchemes.tab20[5])
+    incomes_plot!(b_pa2, sim(s4b,regulation=0.4), color=ColorSchemes.tab20[5])
     incomes_plot!(b_ei, sim(s5a,regulation=0.4), color=ColorSchemes.tab20[7])
 
     t="text"

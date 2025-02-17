@@ -307,13 +307,17 @@ end
 
     function incomes(x,p; summarize=false)
         resource=x[1:p.N].*x[p.N+1]
-        wages=(p.ū.-x[1:p.N]).*p.w̃ #μ(x,p,0.0) ?
+        wages=(p.μ(x,p,0.0).-x[1:p.N]).*p.γ(x,p,0.0) 
         trade= p.policy=="Tradable Use Rights" ? (p.R.-x[1:p.N]).*x[p.N+2] : fill(0.0,p.N)
         #println((sum(p.R),x[p.N+2]))
         total=resource.+wages.+trade
         g=gini(total)
         ecological=x[p.N+1]
         return summarize ? (;resource,wages,trade,total,g,ecological) : (;resource,wages,trade,total,gini=g,ecological)
+    end
+
+    function incomes(s)
+        return incomes(s.u[end],s.prob.p)
     end
 
     function gini(x)
@@ -813,10 +817,10 @@ end
         oa=sim(p,regulation=0.0)
 
         oa_resource_revenue=oa[1:p.N,end-1].*oa[p.N+1,end-1]
-        oa_alt_revenues=p.w̃.*(p.μ(oa[:,end-1],p,0.0) .-oa[1:p.N,end-1])
+        oa_alt_revenues=p.γ(oa[:,end-1],p,0.0).*(p.μ(oa[:,end-1],p,0.0) .-oa[1:p.N,end-1])
 
         resource_revenue=sol[1:p.N,end-1].*sol[p.N+1,end-1]
-        alt_revenues=p.w̃.*(p.μ(sol[:,end-1],p,0.0) .-sol[1:p.N,end-1])
+        alt_revenues=p.γ(sol[:,end-1],p,0.0).*(p.μ(sol[:,end-1],p,0.0) .-sol[1:p.N,end-1])
         trade_revenues=p.policy=="Tradable Use Rights" ? (p.R.-sol[1:p.N,end-1])*sol[end,end-1] : fill(0.0,p.N) 
         income=resource_revenue+alt_revenues+trade_revenues
         inc=resource_revenue+alt_revenues
