@@ -13,7 +13,7 @@ function policy_descriptions()
 
     D["Open Access"]=L"Under open access only the current distributions of alternative income distributions, $\tilde{w}$, and the impact distributions, $\bar{u}$, determibe the shape of the incentive and impact curves. Individual actor participation is determined by the balance of resource availability and alternative income opportunities as $\dot{u}=y-\tilde{w}-I(u)$, were institutional impact, $I(u)=0$, under open access. "
 
-    D["Assigned Use Rights"]=L"resource access is allocated to selected actors based on criteria such as alternative income opportunities or socio-economic status, meaning that only a predetermined fraction (e.g., 30%) of actors are permitted to participate. Depending on whether the exclusion targets those with low or high economic status (depicted in dark blue or light blue, respectively), the system converges to the same equilibrium state—marked by blue circles—but results in markedly different income distributions among the actors. Institutional impact $I(u)_i=\text{excluded} ? 1 : 0$"
+    D["Exclusive Use Rights"]=L"resource access is allocated to selected actors based on criteria such as alternative income opportunities or socio-economic status, meaning that only a predetermined fraction (e.g., 30%) of actors are permitted to participate. Depending on whether the exclusion targets those with low or high economic status (depicted in dark blue or light blue, respectively), the system converges to the same equilibrium state—marked by blue circles—but results in markedly different income distributions among the actors. Institutional impact $I(u)_i=\text{excluded} ? 1 : 0$"
 
     D["Tradable Use Rights"]=L"Tradable use rights are implemented as a cost or revenue mechanism that activates when an actor's extraction deviates from an allotted quota. The price of these rights is dynamically determined by the supply of unused rights relative to the total demand to increase extraction, leading to an additive shift in the incentive curve—moving it to the right compared to the open access scenario (shown in gray). This adjustment drives the system outcome closer to the Maximum Sustainable Yield (MSY). The tangency between the yield limitation and the impact curve highlights that yield restrictions become less robust near MSY levels, compatred to effort regulation that is inherently more robust at MSY due to a larger slope betwen the target and impact curve. Institutional impact is equal to use right price, i.e. $I(u)=ϕ$"
 
@@ -117,8 +117,8 @@ annotation_font_color=:black
 #Test with historical use rights
 s=high_impact(N=100)
 s1=scenario(s,policy="Open Access")
-s2a=scenario(s,policy="Assigned Use Rights", reverse=true)
-s2b=scenario(s,policy="Assigned Use Rights", reverse=false)
+s2a=scenario(s,policy="Exclusive Use Rights", reverse=true)
+s2b=scenario(s,policy="Exclusive Use Rights", reverse=false)
 s3a=scenario(s,policy="Tradable Use Rights", policy_target=:effort, market_rate=0.05)
 s3b=scenario(s,policy="Tradable Use Rights", policy_target=:yield, market_rate=0.05)
 s4a=scenario(s,policy="Protected Area", m=0.3)
@@ -130,14 +130,13 @@ s6b=scenario(SocialEconomicDiversity.change(s,ū=sed(mean=0.5,sigma=0.0, normal
 # Switch back to using "regulation" instead of regulation
 
 regulation=0.5
-f=Figure(size=(1200+300,1800))
+f=Figure(size=(900+300,1800))
 a1=Axis(f[1,3])#,title=s1.policy)
 a2=Axis(f[2,3])#,title=s2a.policy)
 a3=Axis(f[3,3])#,title=s3a.policy)
 a4=Axis(f[4,3])#,title=s4a.policy)
 a5=Axis(f[5,3])#,title=s5.policy)
 a6=Axis(f[6,3])#,title=s6.policy)
-d6=Axis(f[6,4])#,title=s6.policy)
 [hidedecorations!(a) for a in [a1,a2,a3,a4,a5]]
 
 #Open access
@@ -266,7 +265,7 @@ text!(a11,0.0,0.9,text="In the absence of any policy incentives, actors base the
 a21=Axis(f[2,1], width=450,limits=(0,1,0,1))
 hidespines!(a21)
 hidedecorations!(a21)
-text!(a21,0.0,0.9,text=rich("Assigned use rights", color=aur1_color, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
+text!(a21,0.0,0.9,text=rich("Exclusive use rights", color=aur1_color, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
 text!(a21,0.0,0.9,text="In the absence of any policy incentives, actors base their use of resource on the incentives provided by the alternative opportunity cost such as wage labor.  In the absence of any policy incentives, actors base their use of resource on the incentives provided by the alternative opportunity cost such as wage labor.  In the absence of any policy incentives, actors base their use of resource on the incentives provided by the alternative opportunity cost such as wage labor", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
 
 
@@ -302,23 +301,8 @@ text!(a61,0.0,0.9,text="Alternative income opportunitites and harvest efficienci
 Label(f[0,1], "Policy instruments:", fontsize=labelsize, tellwidth=false,color=:black, font=:bold, halign=:left)
 Label(f[0,2], "Formalization", fontsize=labelsize, tellwidth=false,color=:black, font=:bold)
 Label(f[0,3], "Visualization", fontsize=labelsize, tellwidth=false,color=:black, font=:bold)
-Label(f[0,4], "Distributional outcomes", fontsize=labelsize, tellwidth=false,color=:black, font=:bold)
 
-a14=Axis(f[1,4])
-a24=Axis(f[2,4])
-a34=Axis(f[3,4])
-a44=Axis(f[4,4])
-a54=Axis(f[5,4])
-a64=Axis(f[6,4])
 
-incomes_plot!(a14, sol, color=ColorSchemes.tab20[16])
-incomes_plot!(a24, sol2a, color=aur1_color)
-incomes_plot!(a34, sol3a, color=tur1_color)
-incomes_plot!(a44, pa1_sol, color=pa1_color)
-incomes_plot!(a54, sim(s5;regulation), color=ei1_color)
-incomes_plot!(a64,sim(s6a;regulation), color=ColorSchemes.tab20[9])
-
-linkyaxes!([a14,a24,a34,a44,a54,a64]...)
 
 println(sum(incomes(sol3a.u[end-1],sol3a.prob.p).trade))
 f
@@ -340,13 +324,139 @@ ēq/r
 
 
 =#
+function exclusive_use_right_plot()
+    f=Figure(size=(400,400))
+    a=Axis(f[1,1])
+    s=scenario(high_impact(),policy="Exclusive Use Rights", reverse=true)
+    s2=scenario(high_impact(),policy="Exclusive Use Rights", reverse=false)
+     colorid=1; colorscheme=ColorSchemes.tab20; regulation=0.74; annotation_font_size=18
+    color=colorscheme[colorid]
+    sol=sim(s;regulation)
+    sol2=sim(s2;regulation)
+    oa_plot!(a,s)
+    Γ_plot!(a,sol;color)
+    Γ_plot!(a,sol2;color)
+    Φ_plot!(a,sol, linewidth=1; color)
+    attractor_plot!(a,sol; color)
+    arrows!(a,[0.05],[0.25],[0.0],[0.72], linewidth=1; color)
+    arrows!(a,[0.05],[1.0],[0.0],-[0.72], linewidth=1;color)
+    text!(a,0.07,0.85,text="high w̃ excluded",  font=:bold, fontsize=annotation_font_size;color)
 
+    arrows!(a,[0.14],[0.0],[0.0],[0.72], linewidth=1;color)
+    arrows!(a,[0.14],[0.75],[0.0],-[0.72], linewidth=1;color)
+    text!(a,0.16,0.5,text="low w̃ excluded", font=:bold, fontsize=annotation_font_size;color)
+    attractor_plot!(a,sol; color)  
+    hidedecorations!(a)
+    hidespines!(a)  
+    f
+end
+save(homedir()*"/.julia/dev/SocialEconomicDiversity/figures/Exlusive_Use_Rights.png",exclusive_use_right_plot())
 
+function tradable_use_rights_plot()
+    s=high_impact()
+    f=Figure(size=(400,400))
+    a=Axis(f[1,1])
+    colorid=3
+     colorscheme=ColorSchemes.tab20
+      regulation=0.75
+       annotation_font_size=18
+    color=colorscheme[colorid]
+    s3a=scenario(s,policy="Tradable Use Rights", policy_target=:effort, market_rate=0.05)
+    s3b=scenario(s,policy="Tradable Use Rights", policy_target=:yield, market_rate=0.05)
+    sol=sim(s3a; regulation=0.5)
+    sol2=sim(s3b; regulation=0.75)
+    oa_plot!(a,sol.prob.p)
+    Γ_plot!(a,sol; color)
+    Φ_plot!(a,sol, linewidth=1;color)
+    attractor_plot!(a,sol; color)
+    target_plot!(a,sol, linewidth=2;color)
+    target_plot!(a,sol2, linewidth=2;color)
+
+    arrows!(a,[0.1], [0.5], [0.4], [0.0]; color)
+    text!(a,0.12,0.52,text="Price ϕ=0.45", font=:bold, fontsize=annotation_font_size;color)
+    text!(a,0.52,0.11,text="Yield limit=0.25", font=:bold, rotation=-pi/17, fontsize=annotation_font_size;color)
+    text!(a,0.55,0.27,text="Effort limit=0.5", font=:bold, fontsize=annotation_font_size;color)
+    attractor_plot!(a,sol;color)
+    hidedecorations!(a)
+    hidespines!(a)  
+    f
+end
+save(homedir()*"/.julia/dev/SocialEconomicDiversity/figures/Tradable_Use_Rights.png",tradable_use_rights_plot())
+
+function development_plot()
+    f=Figure(size=(400,400))
+    a_d=Axis(f[1,1])
+    annotation_font_size=18
+    s6a=scenario(s,policy="Development")
+    s6b=scenario(SocialEconomicDiversity.change(s,ū=sed(mean=0.5,sigma=0.0, normalize=true)),policy="Development")
+    d1_color=ColorSchemes.tab20[9]
+    d2_color=ColorSchemes.tab20[10]
+    sol6aOA=sim(s6a;regulation=0.0)
+    sol6bOA=sim(s6b;regulation=0.0)
+    u0=sol6aOA.u[end][1:sol6aOA.prob.p.N]
+    y0=sol6aOA.u[end][sol6aOA.prob.p.N+1]
+    sol6a=sim(s6a;regulation=0.9,u0, y0)
+    u0=sol6bOA.u[end][1:sol6bOA.prob.p.N]
+    y0=sol6bOA.u[end][sol6bOA.prob.p.N+1]
+    sol6b=sim(s6b;regulation=0.9,u0, y0)
+    oa_plot!(a_d,high_impact())
+    Φ_plot!(a_d,sol6a, color=d1_color, linewidth=1)
+    Φ_plot!(a_d,sol6b, color=d2_color, linewidth=1)
+    Φ_plot!(a_d,sol6a, color=d1_color, linewidth=1, t=1000.0)
+    Φ_plot!(a_d,sol6b, color=d2_color, linewidth=1, t=1000.0)
+    Γ_plot!(a_d,sol6a, color=d1_color, t=1000.0)
+    attractor_plot!(a_d,sim(s6a;regulation=0.0), color=:darkgray, markersize=20)
+    attractor_plot!(a_d,sim(s6b;regulation=0.0), color=:darkgray, markersize=20)
+    attractor_plot!(a_d,sim(s6a;regulation=0.9), color=ColorSchemes.tab20[9], markersize=20)
+    attractor_plot!(a_d,sim(s6b;regulation=0.9), color=ColorSchemes.tab20[10], markersize=20)
+    trajecory_plot!(a_d,sol6a, color=d1_color, linewidth=4)
+    trajecory_plot!(a_d,sol6b, color=d2_color, linewidth=4)
+    arrows!(a_d,[0.6], [0.7], [-0.25], [0.0], color=ColorSchemes.tab20[7])
+    text!(a_d,0.6, 0.75,text="Kuznets\ndevelopment\nwith low\ninitial\nimpact", align=(:left,:top),color=ColorSchemes.tab20[7], font=:bold, fontsize=annotation_font_size)
+    text!(a_d,0.55, 0.3,text="Development\nwith high \ninitial impact", align=(:left,:top),color=ColorSchemes.tab20[7], font=:bold, fontsize=annotation_font_size)
+    hidedecorations!(a_d)
+    hidespines!(a_d)  
+    f
+end
+save(homedir()*"/.julia/dev/SocialEconomicDiversity/figures/development.png",development_plot())
+
+function economic_incentives_plot()
+    annotation_font_size=18
+    f=Figure(size=(400,400))
+    a_ei=Axis(f[1,1])
+    s5a=scenario(s,policy="Economic Incentives", policy_target=:μ, policy_method=:subsidy)
+    s5b=scenario(s,policy="Economic Incentives", policy_target=:γ, policy_method=:taxation)
+    s5c=scenario(s,policy="Economic Incentives", policy_target=:γ, policy_method=:subsidy)
+    s5d=scenario(s,policy="Economic Incentives", policy_target=:γ, policy_method=:additive)
+    ei_plot!(a_ei,s5a, colorid=7)
+    ei_plot!(a_ei,s5b, colorid=7)
+    ei_plot!(a_ei,s5c, colorid=7)
+    ei_plot!(a_ei,s5d, regulation=0.3, colorid=7)
+    arrow_arc_deg!(a_ei, [1.0,0.0], 0.65, -29,-62, color=ColorSchemes.tab20[7], linewidth=1, linestyle=:solid)
+    text!(a_ei,0.55,0.3,text="Impact", color=ColorSchemes.tab20[7], font=:bold, rotation=pi/4, fontsize=annotation_font_size)
+
+    arrow_arc_deg!(a_ei, [0.0,0.0], 0.75, 4, 15, color=ColorSchemes.tab20[7], linewidth=1, linestyle=:solid)
+    text!(a_ei,0.22,0.75,text="Taxes", color=ColorSchemes.tab20[7], font=:bold, rotation=pi/3.7, fontsize=annotation_font_size)
+    text!(a_ei,0.1,0.75,text="Subsidy", color=ColorSchemes.tab20[7], font=:bold, rotation=pi/2.7, fontsize=annotation_font_size)
+
+    arrows!(a_ei,[0.07], [0.2], [0.25], [0.0], color=ColorSchemes.tab20[7])
+    text!(a_ei,0.09,0.1,text="Effort", color=ColorSchemes.tab20[7], font=:bold, fontsize=annotation_font_size)
+    hidedecorations!(a_ei)
+    hidespines!(a_ei)  
+    f
+end
+save(homedir()*"/.julia/dev/SocialEconomicDiversity/figures/economic_incentives.png",economic_incentives_plot())
+function testfig()
+    f=Figure()
+    a=Axis(f[1,1])
+    text!(a,0.1,0.5,text=L"\begin{align}s = & \frac{w+r}{s+e} \\ s = & \frac{w+r}{s+e} \end{align}")
+    f
+end
 
 function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     s1=scenario(s,policy="Open Access")
-    s2a=scenario(s,policy="Assigned Use Rights", reverse=true)
-    s2b=scenario(s,policy="Assigned Use Rights", reverse=false)
+    s2a=scenario(s,policy="Exclusive Use Rights", reverse=true)
+    s2b=scenario(s,policy="Exclusive Use Rights", reverse=false)
     s3a=scenario(s,policy="Tradable Use Rights", policy_target=:effort, market_rate=0.05)
     s3b=scenario(s,policy="Tradable Use Rights", policy_target=:yield, market_rate=0.05)
     s4a=scenario(s,policy="Protected Area", m=0.3)
@@ -366,6 +476,7 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     a_ei=Axis(f[9:10,2])#,title=s5.policy)
     a_d=Axis(f[11:12,2])#,title=s6.policy)
     [hidedecorations!(a) for a in [a_oa,a_aur,a_tur,a_pa,a_ei, a_d]]
+    [hidespines!(a) for a in [a_oa,a_aur,a_tur,a_pa,a_ei, a_d]]
     b_oa_1=Axis(f[2,3])#,title=s1.policy)
     b_aur_1=Axis(f[3,3])#,title=s2a.policy)
     b_aur_2=Axis(f[4,3])#,title=s2a.policy)
@@ -399,7 +510,7 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     ei_plot!(a_ei,s5b, colorid=7)
     ei_plot!(a_ei,s5c, colorid=7)
     ei_plot!(a_ei,s5d, regulation=0.3, colorid=7)
-    arrow_arc_deg!(a_ei, [1.0,0.0], 0.65, -62, -29, color=ColorSchemes.tab20[7], linewidth=1, linestyle=:solid)
+    arrow_arc_deg!(a_ei, [1.0,0.0], 0.65, -29,-62, color=ColorSchemes.tab20[7], linewidth=1, linestyle=:solid)
     text!(a_ei,0.55,0.3,text="Impact", color=ColorSchemes.tab20[7], font=:bold, rotation=pi/4, fontsize=annotation_font_size)
 
     arrow_arc_deg!(a_ei, [0.0,0.0], 0.75, 4, 15, color=ColorSchemes.tab20[7], linewidth=1, linestyle=:solid)
@@ -448,25 +559,25 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     D=policy_descriptions()
 
     description_font_size=20
-
+    textcolor=:black
     text!(t_oa,0.0,0.9,text=rich("Open Access", color=ColorSchemes.tab20[13], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-    text!(t_oa,0.0,0.9,text=D["Open Access"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
+    text!(t_oa,0.0,0.9,text=D["Open Access"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top), color=textcolor)
 
-    text!(t_aur,0.0,0.9,text=rich("Assigned use rights", color=ColorSchemes.tab20[1], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-    text!(t_aur,0.0,0.9,text=D["Assigned Use Rights"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
+    text!(t_aur,0.0,0.9,text=rich("Exclusive use rights", color=ColorSchemes.tab20[1], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
+    text!(t_aur,0.0,0.9,text=D["Exclusive Use Rights"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top), color=textcolor)
 
 
     text!(t_tur,0.0,0.9,text=rich("Tradable use rights", color=ColorSchemes.tab20[3], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-    text!(t_tur,0.0,0.9,text=D["Tradable Use Rights"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
+    text!(t_tur,0.0,0.9,text=D["Tradable Use Rights"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top), color=textcolor)
 
 text!(t_pa,0.0,0.9,text=rich("Protected areas", color=ColorSchemes.tab20[5], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(t_pa,0.0,0.9,text=D["Protected Area"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
+text!(t_pa,0.0,0.9,text=D["Protected Area"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top), color=textcolor)
 
 text!(t_ei,0.0,0.9,text=rich("Economic incentives outcomes", color=ColorSchemes.tab20[7], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(t_ei,0.0,0.9,text=D["Economic Incentives"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
+text!(t_ei,0.0,0.9,text=D["Economic Incentives"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top), color=textcolor)
  
 text!(t_d,0.0,0.9,text=rich("Development", color=ColorSchemes.tab20[9], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(t_d,0.0,0.9,text=D["Development"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top))
+text!(t_d,0.0,0.9,text=D["Development"], word_wrap_width= base_size*2*0.9, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top), color=textcolor)
  
 
 f
@@ -474,3 +585,13 @@ end
 
 f4=newFig4()
 
+function compPA(s,s2)
+    f=Figure(size=(400,600))
+    a=Axis(f[1,1])
+    phase_plot!(a,s, show_oa=false)
+    phase_plot!(a,s2, show_oa=false)
+    b=Axis(f[2,1])
+    [attractor_plot!(b,sim(s2.prob.p,regulation=r), color=:crimson, markersize=4) for r in range(1/100,stop=1-1/100,length=100)]
+    [attractor_plot!(b,sim(s.prob.p,regulation=r), color=:steelblue, markersize=4) for r in range(1/100,stop=1-1/100,length=100)]
+    f
+end

@@ -56,6 +56,8 @@ module SocialEconomicDiversity
        
         if s.policy=="Tradable Use Rights"
             initVals=[u0;y0;ϕ0]
+        elseif s.policy=="Protected Area Two Pop"
+            initVals=[u0;y0;y0]
         else
             initVals=[u0;y0]
         end
@@ -123,11 +125,11 @@ function Φ(y,p; t=0.0)
 end
 
     # Assigned use rights
-    function γ_assigned_use_rights(x,p,t)
+    function γ_exclusive_use_rights(x,p,t)
 		return p.w̃.+p.R
     end
 
-    function regulate_assigned_use_rights(scenario,f)
+    function regulate_exclusive_use_rights(scenario,f)
         # f is the fraction users allowed to extract resource
         # scenario.reverse picks users from teh highest w̃
             R=zeros(1:scenario.N)
@@ -191,9 +193,24 @@ end
 		
 	end
 
+    function ϕ_protected_area_two_pop(dx,x,p,t)
+        mx=x[p.N+2]-x[p.N+1]
+        dx[p.N+2] =(1.0-x[p.N+2])-(1.0-p.regulation)/p.regulation*p.m*mx
+        dx[p.N+1] +=p.regulation/(1.0-p.regulation)*p.m*mx
+    end
+
+    function γ_protected_area_two_pop(x,p,t)
+		# Market price ϕ=x[end] is added to the incentive
+		return p.w̃
+	end
+
     #Protected area
     function regulate_protected_area(p,f)
 		return change(p,regulation=f)
+	end
+
+    function μ_protected_area_two_pop(x,p,t)
+		return p.ū
 	end
 	
 	function γ_protected_area(x,p,t)
@@ -281,14 +298,17 @@ end
         temp=(; p...,  policy="Open Access",kwargs...)
         if temp.policy=="Open Access"
             return (;temp...)
-        elseif temp.policy=="Assigned Use Rights"
-            return (;temp..., γ=γ_assigned_use_rights, regulate=regulate_assigned_use_rights)
+        elseif temp.policy=="Exclusive Use Rights"
+            return (;temp..., γ=γ_exclusive_use_rights, regulate=regulate_exclusive_use_rights)
         elseif temp.policy=="Tradable Use Rights"
             # check if temp has target and market_rate
             return (;temp..., γ=γ_tradable_use_rights, ϕ=ϕ_tradable_use_rights, regulate=regulate_tradable_use_rights)
         elseif temp.policy=="Protected Area"
             #check if temp has mobility_rate
             return (;temp..., γ=γ_protected_area, μ=μ_protected_area, regulate=regulate_protected_area)
+        elseif temp.policy=="Protected Area Two Pop"
+            #check if temp has mobility_rate
+            return (;temp..., γ=γ_protected_area, μ=μ_protected_area_two_pop, regulate=regulate_protected_area, ϕ=ϕ_protected_area_two_pop)
         elseif temp.policy=="Economic Incentives"
             return (;temp..., μ=μ_economic_incentive, regulate=regulate_economic_incentive, γ=γ_economic_incentive)
         elseif temp.policy=="Development"
@@ -307,7 +327,7 @@ end
 
     function incomes(x,p; summarize=false)
         resource=x[1:p.N].*x[p.N+1]
-        wages=(p.μ(x,p,0.0).-x[1:p.N]).*p.γ(x,p,0.0) 
+        wages=(p.μ(x,p,0.0).-x[1:p.N]).*p.w̃# γ(x,p,0.0) 
         trade= p.policy=="Tradable Use Rights" ? (p.R.-x[1:p.N]).*x[p.N+2] : fill(0.0,p.N)
         #println((sum(p.R),x[p.N+2]))
         total=resource.+wages.+trade
@@ -338,6 +358,7 @@ end
         x0=zeros(p.N+2)
         x0[p.N+1]=1.0
         sols=zeros(m,p.N)
+        incdist=zeros(m,p.N)
         for (j,i) in enumerate(r)
             #P=p.regulate(p,i)
             sol=sim(p, regulation=i,t_end=1000)#, u0=x0[1:p.N],y0=x0[p.N+1], ϕ0=x0[p.N+1]
@@ -356,6 +377,7 @@ end
             EH[j]=inc.ecological
             RI[j]=sum(abs.(oau.-sol[1:p.N,end-1]))
             sols[j,:]=sol.u[end-1][1:p.N]
+            incdist[j,:]=inc.total
         end
         oRR=argmax(RR)
         oWR=argmax(WR)
@@ -364,7 +386,7 @@ end
         oGI=argmin(GI)
         oEH=argmax(EH)
         oRI=argmax(EH)
-        return (;RR,WR,TR,ToR,GI,EH,RI,r,oRR,oWR,oTR,oToR,oGI,oEH,oRI,sols)
+        return (;RR,WR,TR,ToR,GI,EH,RI,r,oRR,oWR,oTR,oToR,oGI,oEH,oRI,sols,incdist)
     end
 #=
     # Socioeconomic diversity variable implementaiton
@@ -661,7 +683,7 @@ end
 
     end
 
-    function phase_plot!(axis,sol; show_trajectory=false, show_target=false, open_access_color=:lightgray, incentive_line_color=:darkorange, impact_line_color=:darkorange, t=0.0, show_exploitation=true)
+    function phase_plot!(axis,sol; show_trajectory=false, show_target=false, open_access_color=:lightgray, incentive_line_color=:darkorange, impact_line_color=:darkorange, t=0.0, show_exploitation=true, show_oa=true)
 
 
         if show_exploitation
@@ -677,9 +699,10 @@ end
     
         y=range(0.0,stop=1.0,length=100)
         γ_array=scenario.γ(sol.u[end],scenario,sol.t[end])
-        oa=change(scenario,γ=γ, μ=μ,regulate=regulate, ϕ=ϕ)
-        oasol=sim(oa,regulation=0.0)
-
+        if show_oa
+            oa=change(scenario,γ=γ, μ=μ,regulate=regulate, ϕ=ϕ)
+            oasol=sim(oa,regulation=0.0)
+        end
         if show_target
             if haskey(scenario,:policy_target)
                 Y=scenario.policy_target==:effort ? ones(length(y)) : y
@@ -688,11 +711,11 @@ end
         end
     
         # Cumulative incentive distributions
-        lines!(axis,y,Γ.(y,Ref(oa),x=sol.u[end-1]), color=open_access_color, linewidth=3)
+        show_oa ? lines!(axis,y,Γ.(y,Ref(oa),x=sol.u[end-1]), color=open_access_color, linewidth=3) : nothing
         lines!(axis,y,Γ.(y,Ref(scenario),x=sol.u[end-1];t), color=incentive_line_color, linewidth=3)
     
         # Cumulative impact istributions
-        lines!(axis,y,Φ.(y,Ref(oa)), color=open_access_color, linewidth=1)
+        show_oa ? lines!(axis,y,Φ.(y,Ref(oa)), color=open_access_color, linewidth=1) : nothing
         lines!(axis,y,Φ.(y,Ref(scenario);t), color=impact_line_color,linewidth=1)
     
         if show_trajectory
@@ -703,7 +726,7 @@ end
         # Show the attractor
         scatter!(axis,[sol[N+1,end-2]],[sum(sol[1:N,end-2]./scenario.μ(sol.u[end-2],scenario,sol.t[end-2])./N)], color=:black, markersize=10)
 
-        scatter!(axis,[oasol[N+1,end-2]],[sum(oasol[1:N,end-2]./oa.μ(oasol.u[end-2],oa,oasol.t[end-2])./N)], color=:black, markersize=15, marker='o')
+        show_oa ? scatter!(axis,[oasol[N+1,end-2]],[sum(oasol[1:N,end-2]./oa.μ(oasol.u[end-2],oa,oasol.t[end-2])./N)], color=:black, markersize=15, marker='o') : nothing
 
         if scenario.policy=="Development"
             scatter!(axis,[sol[N+1,1]],[sum(sol[1:N,1]./scenario.μ(sol.u[end-1],scenario,sol.t[1])./N)], color=:white, markersize=15)

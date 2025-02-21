@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.4
+# v0.20.3
 
 using Markdown
 using InteractiveUtils
@@ -35,7 +35,7 @@ Protected areas represent a multidisciplinary challenge, as they involve not onl
 
 ## A two-population model
 
-We consider a simple two-population model where fish populations within protected and unprotected areas interact through movement. The mobility flux between these areas is influenced by the relative size between the protected and harvested area. In the unprotected area, harvesting is permitted and is represented by the harvesting term $hx$.
+We consider a simple two-population model where fish populations within protected and unprotected areas interact through movement. The mobility flux between these areas is influenced by the relative size between the protected and harvested area. In the unprotected area, harvesting is permitted and is represented by the harvesting term $hx$. The units are in density, so to convert into total biomass one needs to multiply all values by the area of consideration.
 
 The dynamics of the system are described by the following set of differential equations:
 
@@ -417,7 +417,7 @@ PlutoUI = "~0.7.60"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.2"
+julia_version = "1.11.0"
 manifest_format = "2.0"
 project_hash = "51d6e0caeab8ccc440d502a8b57c64a430cc4b08"
 
