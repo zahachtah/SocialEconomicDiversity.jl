@@ -11,7 +11,7 @@
 function policy_descriptions()
     D=Dict()
 
-    D["Open Access"]=L"Under open access only the current distributions of alternative income distributions, $\tilde{w}$, and the impact distributions, $\bar{u}$, determibe the shape of the incentive and impact curves. Individual actor participation is determined by the balance of resource availability and alternative income opportunities as $\dot{u}=y-\tilde{w}-I(u)$, were institutional impact, $I(u)=0$, under open access. "
+    D["Open Access"]=L"Under open access only the current distributions of alternative income distributions, $\tilde{w}$ is an incentive to not harvest resources setting the shape of the incentive curve (increasing thick line). The impact distributions, $\bar{u}$, determines the shape of the impact curves (decreasing thin line). Individual actor participation is determined by the balance of resource availability and alternative income opportunities as $\dot{u}=y-\tilde{w}-I(u)$, were institutional impact under open access is $I(u)=0$."
 
     D["Exclusive Use Rights"]=L"resource access is allocated to selected actors based on criteria such as alternative income opportunities or socio-economic status, meaning that only a predetermined fraction (e.g., 30%) of actors are permitted to participate. Depending on whether the exclusion targets those with low or high economic status (depicted in dark blue or light blue, respectively), the system converges to the same equilibrium state—marked by blue circles—but results in markedly different income distributions among the actors. Institutional impact $I_i=\text{if excluded: }1\text{ else: }0$"
 
@@ -472,7 +472,7 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     s6a=scenario(s,policy="Development")
     s6b=scenario(SocialEconomicDiversity.change(s,ū=sed(mean=0.5,sigma=0.0, normalize=true)),policy="Development")
     base_size=300
-    f=Figure(size=(4*base_size,6*base_size))
+    f=Figure(size=(4*base_size,6.3*base_size))
     a_oa=Axis(f[1:2,2])#,title=s1.policy)
     a_aur=Axis(f[3:4,2])#,title=s2a.policy)
     a_tur=Axis(f[5:6,2])#,title=s3a.policy)
@@ -587,7 +587,9 @@ text!(t_ei,0.0,0.9,text=D["Economic Incentives"], word_wrap_width=wrapwidth, fon
  
 text!(t_d,0.0,0.9,text=rich("Development", color=ColorSchemes.tab20[9], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
 text!(t_d,0.0,0.9,text=D["Development"], word_wrap_width= wrapwidth, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top), color=textcolor)
- 
+ Label(f[0,1],text="Policy Instrument", tellwidth=false, fontsize=25, font=:bold)
+ Label(f[0,2],text="Visualization", tellwidth=false, fontsize=25, font=:bold)
+ Label(f[0,3],text="Income\ndistributions", tellwidth=false, fontsize=25, font=:bold)
 
 f
 end
