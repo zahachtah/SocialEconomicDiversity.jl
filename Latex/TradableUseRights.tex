@@ -3,13 +3,15 @@
 \usepackage{amssymb} %maths
 \usepackage{amsmath} %maths
 \usepackage[utf8]{inputenc} %useful to type directly diacritic characters
+\usepackage[dvipsnames]{xcolor}
 \begin{document}
 \begin{align*}
-\text{Utility  }  U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;+\; \overbrace{(R_i - u_i)\,\phi}^{\text{Tradable use rights}}, \\[4pt] 
- \text{supply}  &= \max (0, \sum_{i} R_i - u_i ), \\[4pt]
- \text{demand}  &= \sum_{i} \begin{cases} \min \left( \dot{u}_i, \bar{u}-(u_i+\dot{u}_i) \right) & \text{if } \dot{u}_i > 0 , \\[4pt] 0 & \text{otherwise}. \end{cases} \\[4pt]
-\dot{u}_i = \frac{dU_i}{du} &= \begin{cases} y - (\tilde{w}_i + \phi) & \text{if } u_i < R_i \text{ and } supply>0 \\[4pt] \min \left(0,y - (\tilde{w}_i + \phi) \right)  & \text{otherwise}\end{cases} \\[4pt]
-\dot{\phi} &= \pi  \left( \text{demand} - \text{supply} \right),\\[4pt]
-\text{incentives   }  \gamma &= \tilde{w}_i + \phi, 
+\text{Utility  }  U_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Wage}} \;+\; \overbrace{\textcolor{Orange}{(R_i - u_i)\,\phi}}^{\text{Tradable use rights}}, \\[4pt]
+ \dot{u}_i & = \frac{dU_i}{du} = y - \underbrace{(\tilde{w}_i + \textcolor{Orange}{\phi})}_{Incentives} \\[4pt]
+ \textcolor{Orange}{ \text{supply} } &= \textcolor{Orange}{ \max (0, \sum_{i} R_i - u_i ) }, \\[4pt]
+\textcolor{Orange}{ \text{demand} } &= \textcolor{Orange}{ \sum_{i} \begin{cases} \min \left( \dot{u}_i, \bar{u}-(u_i+\dot{u}_i) \right) & \text{if } \dot{u}_i > 0 , \\[4pt] 0 & \text{otherwise}. \end{cases} } \\[4pt]
+\textcolor{Orange}{ \dot{\phi}} &= \textcolor{Orange}{ \pi  \left( \text{demand} - \text{supply} \right) },\\[4pt]
+\text{incentives   }  \gamma &= \tilde{w}_i + \textcolor{Orange}{ \phi}
  \end{align*}
+
 \end{document}

@@ -1,6 +1,6 @@
 @everywhere using SocialEconomicDiversity
 
-@everywhere function regscan(; u=false,s=high_impact())
+function regscan(; u=false,s=high_impact())
     
     policies=[
     scenario(s,policy="Exclusive Use Rights", reverse=true)
@@ -9,7 +9,7 @@
     scenario(s,policy="Tradable Use Rights", policy_target=:yield, market_rate=0.05)
     scenario(s,policy="Protected Area", m=0.3)
     #scenario(s,policy="Protected Area", m=0.05)
-    scenario(s,policy="Economic Incentives", policy_target=:μ, policy_method=:taxation)
+    scenario(s,policy="Economic Incentives", policy_target=:γ, policy_method=:taxation)
     ]
     Labels=Dict(
         :RR=>"Resource\nRevenues",
@@ -17,6 +17,7 @@
         :GI=>"Gini\n ",
         :EH=>"Ecological\nStatus",
         :RI=>"Regulation\nImpact",
+        :Gov=>"Governance\ngoal"
     )
     policylabels=[
         "Use Rights\nHIGH w̃\nexcluded",
@@ -24,13 +25,12 @@
         "Tradable \nUse Rights\nEFFORT",
         "Tradable \nUse Rights\nYIELD",
         "Protected Area\n\nmobility=0.3",
-        "Protected Area\n\nmobility=0.1",
-        "Economic incentive\n\nGear tax"
+        "Economic incentive\n\nRoyalties"
     ]
-    RS=[regulation_scan(scenario) for scenario in policies]
+    RS=[regulation_scan(scenario,kR=0.2, kT=1.0,kG=-0.2) for scenario in policies]
     f=Figure(size=(1000,1000))
    
-    outcomes=[:RR,:ToR,:GI,:EH,:RI]
+    outcomes=[:RR,:ToR,:GI,:EH,:RI,:Gov]
     #Label(f[0,1:length(RS)], text="Policy outcomes", fontsize=25, font=:bold)
     A=Dict()
     LL=0 
@@ -90,7 +90,7 @@
             A[i,LL+1]=Axis(f[LL+1,i],  ylabel=i==1 ? "Actors w̃\nlow → high" : "") 
             heatmap!(A[i,LL+1],rs.sols, colormap=cgrad(["#f1f1f1",ColorSchemes.tab20[i]]))
             hidexdecorations!( A[i,LL+1])
-            i==1 ? hideydecorations!(A[i,LL+1], label=false, ticklabels=true, grid=false) : hideydecorations!(A[i,LL+1], grid=false, ticklabels=true)
+            i==1 ? hideydecorations!(A[i,LL+1], label=false, ticklabels=true, minorgrid=false) : hideydecorations!(A[i,LL+1], minorgrid=false, ticklabels=true)
             #hidespines!( A[i,LL+1])
             Label(f[1,0], text="Participation in\nresource use " , tellheight=false)
 
@@ -104,14 +104,14 @@
         policylabels[i]
         Label(f[0,i], text=policylabels[i],color=ColorSchemes.tab20[i], tellwidth=false)
     end
-    Label(f[length(outcomes)+LL+3,1:length(RS)], text="None (0) ← Regulation level → Full (1)", tellwidth=false, fontsize=25, font=:bold)
+    Label(f[length(outcomes)+LL+3,1:length(RS)], text="Regulation level", tellwidth=false, fontsize=25, font=:bold)
         [linkyaxes!([A[i,j+LL] for i in 1:length(RS)]...) for j in 1:length(outcomes)]
 
     f
 end
 
 f5=regscan()
-
+save(homedir()*"/.julia/dev/SocialEconomicDiversity/figures/figure5.png",f5)
 #= questions
 
 why positive sum of trades? (fixed)

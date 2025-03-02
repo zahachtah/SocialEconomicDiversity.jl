@@ -23,7 +23,7 @@ function policy_descriptions()
     #$\dot{y_p}  =(1-y_p)y_p +(1-f_p)/f_p m (y-y_p)$ 
     D["Economic Incentives"]="Economic incentives use diverse tools to modify both incentive and impact curves by altering the socio-economic context. For example, yield-based royalties or subsidies tilt the incentive curve up or down, while compensation for reduced effort shifts it right. Similarly, investments in pollution mitigation boost regeneration and lessen harvesting impacts—raising the impact curve—whereas loans for improved harvesting technology increase the impact thereby  tilting the curve downward."
 
-    D["Development"]="broadly represents indirect socio-economic improvements—such as better alternative incomes, technological advances, increased knowledge, and more capital. In our simulation, it is modeled directly by shifting the incentive curve to the right (e.g. making harvesting less attractive through improved alternatives) and tilting the impact curve downward (reflecting more efficient, less damaging extraction). Depending on initial conditions (gray circles), the development path may follow a Kuznets pattern: an early decline in ecosystem state due to overextraction, followed by recovery as superior income options gradually reduce the incentive to harvest when resources dwindle."
+    D["Development"]="broadly represents indirect socio-economic improvements—such as better alternative incomes, technological advances, increased knowledge, and more capital. In our simulation, it is modeled directly by shifting the incentive curve to the right (e.g. making harvesting less attractive through improved alternatives) and tilting the impact curve downward (reflecting more efficient, less damaging extraction). Depending on initial conditions (gray circles), the development path may follow a Kuznets pattern: an early decline in ecosystem state due to overextraction, followed by recovery as superior income options gradually reduce the incentive to harvest."
     return D
 end
 
@@ -67,7 +67,7 @@ function tur_plot!(a,s; colorid=1, colorscheme=ColorSchemes.tab20, regulation=0.
 
     arrows!(a,[0.1], [0.5], [0.4], [0.0]; color)
     text!(a,0.12,0.52,text="Price ϕ=0.45", font=:bold, fontsize=annotation_font_size;color)
-    text!(a,0.52,0.11,text="Yield limit=0.25", font=:bold, rotation=-pi/17, fontsize=annotation_font_size;color)
+    #text!(a,0.52,0.11,text="Yield limit=0.25", font=:bold, rotation=-pi/17, fontsize=annotation_font_size;color)
     text!(a,0.55,0.27,text="Effort limit=0.5", font=:bold, fontsize=annotation_font_size;color)
     attractor_plot!(a,sol;color)
 end
@@ -81,7 +81,7 @@ pa4_sol=sim(s;regulation=0.8)
 pa5_sol=sim(s;regulation=0.9)
 pa6_sol=sim(s;regulation=0.95)
 =#
-oa_plot!(a,s)
+#oa_plot!(a,s)
 
 color=colorscheme[colorid]
 cases=[s]
@@ -103,7 +103,6 @@ end
 function ei_plot!(a,s;colorid=1, colorscheme=ColorSchemes.tab20, regulation=0.75, annotation_font_size=18)
     color=colorscheme[colorid]
     sol=sim(s;regulation)
-    oa_plot!(a,s)
     Γ_plot!(a,sol; color)
     Φ_plot!(a,sol, linewidth=1;color)
     attractor_plot!(a,sol; color)
@@ -376,7 +375,7 @@ function tradable_use_rights_plot()
 
     arrows!(a,[0.1], [0.5], [0.4], [0.0]; color)
     text!(a,0.12,0.52,text="Price ϕ=0.45", font=:bold, fontsize=annotation_font_size;color)
-    text!(a,0.52,0.11,text="Yield limit=0.25", font=:bold, rotation=-pi/17, fontsize=annotation_font_size;color)
+    #text!(a,0.52,0.11,text="Yield limit=0.25", font=:bold, rotation=-pi/17, fontsize=annotation_font_size;color)
     text!(a,0.55,0.27,text="Effort limit=0.5", font=:bold, fontsize=annotation_font_size;color)
     attractor_plot!(a,sol;color)
     hidedecorations!(a)
@@ -464,7 +463,7 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     R=ts.u[end][1:s3a.N].>0.0
     s3b=scenario(s,policy="Tradable Use Rights", policy_target=:effort, market_rate=0.05, historical_use_rights=true)
     s4a=scenario(s,policy="Protected Area", m=0.3)
-    s4b=scenario(s,policy="Protected Area", m=0.1)
+    s4b=scenario(s,policy="Protected Area Two Pop", m=0.1)
     s5a=scenario(s,policy="Economic Incentives", policy_target=:μ, policy_method=:subsidy)
     s5b=scenario(s,policy="Economic Incentives", policy_target=:γ, policy_method=:taxation)
     s5c=scenario(s,policy="Economic Incentives", policy_target=:γ, policy_method=:subsidy)
@@ -489,9 +488,10 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     #ylims!(b_tur,(-0.02,0.012))
     b_pa1=Axis(f[7,3])#,title=s4a.policy)
     b_pa2=Axis(f[8,3])#,title=s4a.policy)
-    b_ei=Axis(f[9,3])#,title=s5.policy)
+    b_ei_1=Axis(f[9,3])#,title=s5.policy)
+    b_ei_2=Axis(f[10,3])
     b_d=Axis(f[11:12,3])#,title=s6.policy)
-    [hidedecorations!(a) for a in [b_oa_1,b_aur_1,b_aur_2,b_tur_1,b_tur_2,b_pa1,b_pa2,b_ei, b_d]]
+    [hidedecorations!(a) for a in [b_oa_1,b_aur_1,b_aur_2,b_tur_1,b_tur_2,b_pa1,b_pa2,b_ei_1,b_ei_2, b_d]]
     t_oa=Axis(f[1:2,1])#,title=s1.policy)
     t_aur=Axis(f[3:4,1])#,title=s2a.policy)
     t_tur=Axis(f[5:6,1])#,title=s3a.policy)
@@ -510,15 +510,18 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
     tur_plot!(a_tur,s3a, regulation=0.51, colorid=3)
     tur_plot!(a_tur,s3b, regulation=0.5, colorid=4)
 
+    oa_plot!(a_pa,s1)
     pa_plot!(a_pa,s4a, colorid=5, regulation=0.82)
     pa_plot!(a_pa,s4b, colorid=6, regulation=0.87)
 
-    ei_plot!(a_ei,s5a, colorid=7)
+    oa_plot!(a_ei,s1)
+    #ei_plot!(a_ei,s5a, colorid=7)
+    Φ_plot!(a_d,sim(s5a,regulation=0.9), color=ColorSchemes.tab20[7], linewidth=1)
     ei_plot!(a_ei,s5b, colorid=7)
     ei_plot!(a_ei,s5c, colorid=7)
     ei_plot!(a_ei,s5d, regulation=0.3, colorid=7)
     arrow_arc_deg!(a_ei, [1.0,0.0], 0.65, -29,-62, color=ColorSchemes.tab20[7], linewidth=1, linestyle=:solid)
-    text!(a_ei,0.55,0.3,text="Impact", color=ColorSchemes.tab20[7], font=:bold, rotation=pi/4, fontsize=annotation_font_size)
+    text!(a_ei,0.55,0.3,text="Impact\n ē, q and r", color=ColorSchemes.tab20[7], font=:bold, rotation=pi/4, fontsize=annotation_font_size)
 
     arrow_arc_deg!(a_ei, [0.0,0.0], 0.75, 4, 15, color=ColorSchemes.tab20[7], linewidth=1, linestyle=:solid)
     text!(a_ei,0.22,0.75,text="Taxes", color=ColorSchemes.tab20[7], font=:bold, rotation=pi/3.7, fontsize=annotation_font_size)
@@ -555,13 +558,30 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
 
 
     incomes_plot!(b_oa_1, sim(s1,regulation=0.0),color=:lightgray)
-    incomes_plot!(b_tur_1, sim(s3a,regulation=0.51))
-    incomes_plot!(b_tur_2, sim(s3b,regulation=0.4))
+    incomes_plot!(b_tur_1, sim(s3a,regulation=0.51), color=ColorSchemes.tab20[3])
+    incomes_plot!(b_tur_2, sim(s3b,regulation=0.4), color=ColorSchemes.tab20[4])
     incomes_plot!(b_aur_1, sim(s2a,regulation=0.4), color=ColorSchemes.tab20[1])
     incomes_plot!(b_aur_2, sim(s2b,regulation=0.4), color=ColorSchemes.tab20[2])
     incomes_plot!(b_pa1, sim(s4a,regulation=0.82), color=ColorSchemes.tab20[5])
     incomes_plot!(b_pa2, sim(s4b,regulation=0.87), color=ColorSchemes.tab20[6])
-    incomes_plot!(b_ei, sim(s5a,regulation=0.4), color=ColorSchemes.tab20[7])
+    incomes_plot!(b_ei_1, sim(s5a,regulation=0.4), color=ColorSchemes.tab20[7])
+    incomes_plot!(b_ei_2, sim(s5b,regulation=0.4), color=ColorSchemes.tab20[8])
+
+    text!(b_oa_1,0.1,0.3, text="Resource revenue\nsurplus", space=:relative)
+    text!(b_oa_1,0.4,0.7, text="Alternative\nincomes only", space=:relative)
+    arrows!(b_oa_1,[70], [0.0075], [20], [-0.002], color=:black, space=:relative)
+    arrows!(b_oa_1,[10.0], [0.0032], [0.0], [-0.0016], color=:black, space=:relative)
+    arrows!(b_tur_1,[22.0], [-0.0034], [40], [0.003], color=:black, space=:relative)
+    text!(b_tur_1,32,-0.0054, text="Trade payments")
+
+    text!(b_tur_1,10,0.008, text="Equal use rights")
+    text!(b_tur_2,10,0.008, text="Historical use rights")
+
+    text!(b_ei_1,10,0.007, text="Taxes")
+    text!(b_ei_2,10,0.007, text="Impact")
+    #arrow_arc_deg!(b_tur_1, [20,-0.002], 0.75, 20, 0.2, color=ColorSchemes.tab20[7], linewidth=1, linestyle=:solid)
+
+
 
     t="text"
     D=policy_descriptions()
@@ -589,7 +609,7 @@ text!(t_d,0.0,0.9,text=rich("Development", color=ColorSchemes.tab20[9], font=:bo
 text!(t_d,0.0,0.9,text=D["Development"], word_wrap_width= wrapwidth, fontsize=description_font_size, font="georgia", space=:relative, align=(:left, :top), color=textcolor)
  Label(f[0,1],text="Policy Instrument", tellwidth=false, fontsize=25, font=:bold)
  Label(f[0,2],text="Visualization", tellwidth=false, fontsize=25, font=:bold)
- Label(f[0,3],text="Income\ndistributions", tellwidth=false, fontsize=25, font=:bold)
+ Label(f[0,3],text="Distributional\nEffects", tellwidth=false, fontsize=25, font=:bold)
 
 f
 end

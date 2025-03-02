@@ -326,8 +326,9 @@ end
     high_incentives(; N=100, sigma=0.0)=(;N, α=0.1, w̃=sed(min=0.3,max=0.7, distribution=LogNormal), ū=sed(mean=1.0, sigma=sigma, normalize=true), R=ones(N), γ, ϕ, μ,regulate, policy="Open Access")
 
     function incomes(x,p; summarize=false)
-        resource=x[1:p.N].*x[p.N+1]
-        wages=(p.μ(x,p,0.0).-x[1:p.N]).*p.w̃# γ(x,p,0.0) 
+        f=occursin("Protected Area",p.policy) ? p.regulation : 0.0
+        resource=x[1:p.N].*x[p.N+1].*(1-f)
+        wages=(p.ū.-x[1:p.N]).*p.w̃# γ(x,p,0.0) μ(x,p,0.0)
         trade= p.policy=="Tradable Use Rights" ? (p.R.-x[1:p.N]).*x[p.N+2] : fill(0.0,p.N)
         #println((sum(p.R),x[p.N+2]))
         total=resource.+wages.+trade
@@ -344,7 +345,7 @@ end
         sum([abs(x[i]-x[j]) for i in 1:length(x), j in 1:length(x)])/(2*length(x)*sum(x))
     end
 
-    function regulation_scan(p;m=100)
+    function regulation_scan(p;m=100,kR=0.0,kT=0.0,kG=0.0,kE=0.0,kI=0.0)
         
         r=range(0.0,stop=1.0,length=m)
         RR=zeros(m)
@@ -354,6 +355,7 @@ end
         GI=zeros(m)
         EH=zeros(m)
         RI=zeros(m)
+        Gov=zeros(m)
         oau=zeros(p.N)
         x0=zeros(p.N+2)
         x0[p.N+1]=1.0
@@ -375,7 +377,9 @@ end
             ToR[j]=sum(inc.total)
             GI[j]=inc.gini
             EH[j]=inc.ecological
-            RI[j]=sum(abs.(oau.-sol[1:p.N,end-1]))
+            regimpact=abs.(oau.-sol[1:p.N,end-1])
+            RI[j]=sum(regimpact)
+            Gov[j]=sum(inc.resource.^kR.+inc.total.^kT.+inc.gini.^kG.+inc.ecological.^kE.+regimpact.^kI)
             sols[j,:]=sol.u[end-1][1:p.N]
             incdist[j,:]=inc.total
         end
@@ -386,7 +390,7 @@ end
         oGI=argmin(GI)
         oEH=argmax(EH)
         oRI=argmax(EH)
-        return (;RR,WR,TR,ToR,GI,EH,RI,r,oRR,oWR,oTR,oToR,oGI,oEH,oRI,sols,incdist)
+        return (;RR,WR,TR,ToR,GI,EH,RI,Gov,r,oRR,oWR,oTR,oToR,oGI,oEH,oRI,sols,incdist)
     end
 
     function Γ_plot!(axis,sol;color=:darkorange, linewidth=3, t=0.0)
@@ -583,18 +587,9 @@ end
 
     function incomes_plot!(aa,sol; order=false, color=:darkorange)
         p=sol.prob.p
-        oa=sim(p,regulation=0.0)
 
-        oa_resource_revenue=oa[1:p.N,end-1].*oa[p.N+1,end-1]
-        oa_alt_revenues=p.γ(oa[:,end-1],p,0.0).*(p.μ(oa[:,end-1],p,0.0) .-oa[1:p.N,end-1])
 
-        resource_revenue=sol[1:p.N,end-1].*sol[p.N+1,end-1]
-        alt_revenues=p.γ(sol[:,end-1],p,0.0).*(p.μ(sol[:,end-1],p,0.0) .-sol[1:p.N,end-1])
-        trade_revenues=p.policy=="Tradable Use Rights" ? (p.R.-sol[1:p.N,end-1])*sol[end,end-1] : fill(0.0,p.N) 
-        income=resource_revenue+alt_revenues+trade_revenues
-        inc=resource_revenue+alt_revenues
-
-        oa_inc=incomes(oa.u[end-1],oa.prob.p)
+#        oa_inc=incomes(oa.u[end-1],oa.prob.p)
         r_inc=incomes(sol.u[end-1],sol.prob.p)
 
         resource_revenue=r_inc.resource
@@ -607,11 +602,11 @@ end
         barplot!(aa,trade_revenues[id], color=order ? p.w̃[id] : color)
         barplot!(aa,trade_revenues[id], color=HSLA(0,0,0,0.2))
         barplot!(aa,trade_revenues[id], color=HSLA(0,0,0,0.2))
-        lines!(aa,p.w̃.*p.ū, linewidth=1, color=:black)
+        lines!(aa,p.w̃.*p.ū, linewidth=2, color=:black, linestyle=:dot)
         fir=findall(resource_revenue[id].>0.0)
         fia=findall(alt_revenues[id].>0.0)
-        oafir=findall(oa_resource_revenue[id].>0.0)
-        oafia=findall(oa_alt_revenues[id].==0.0)
+#        oafir=findall(oa_resource_revenue[id].>0.0)
+#        oafia=findall(oa_alt_revenues[id].==0.0)
         #scatter!(aa,collect(1:p.N)[fia],alt_revenues[id][fia].+trade_revenues[id][fia], color=:crimson, markersize=10, marker=:hline)
         #scatter!(aa,collect(1:p.N)[oafir],oa_resource_revenue[id][oafir], color=:darkgray, markersize=5)
         #scatter!(aa,collect(1:p.N)[oafia],oa_alt_revenues[id][oafia], color=:lightgray, markersize=5)
