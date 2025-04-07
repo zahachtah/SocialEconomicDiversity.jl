@@ -2,6 +2,7 @@ using SocialEconomicDiversity
 using Test
 
 @testset "SocialEconomicDiversity.jl" begin
-    # Write your tests here.
+    # Run individual test modules
     include("diversity.jl")
+    include("sed_test.jl")
 end

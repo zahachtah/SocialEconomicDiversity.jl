@@ -8,11 +8,11 @@
 #
 # For example, you can write:
 #
-#     w̃ = sed(dependent=(ē = 1.0, q = 1.0, r = 1.0, fun = (dep -> (dep.ē * dep.q) / dep.r)), 
+#     w̃ = sed(dependent=(ē = 1.0, q = 1.0, r = 1.0, fun = (dep -> (dep.ē * dep.q) / dep.r)), 
 #              min = 0.1, max = 0.2, distribution = LogNormal)
 #
 # and later call `dist!(w̃, N, context)` where `context` is a NamedTuple containing
-# w̃ and the SEDs named `ē`, `q`, and `r`.
+# w̃ and the SEDs named `ē`, `q`, and `r`.
 #
 # Written with clarity, type safety, and efficiency in mind.
 # =============================================================================
@@ -82,7 +82,7 @@ dependencies on other variables.
     sum::Union{Nothing, Float64} = nothing
     random::Bool = false
     normalize::Bool = false
-    dependent::NamedTuple = NamedTuple()   # e.g., (ē = 1.0, q = 1.0, r = 1.0, fun = (dep -> (dep.ē * dep.q) / dep.r))
+    dependent::NamedTuple = NamedTuple()   # e.g., (ē = 1.0, q = 1.0, r = 1.0, fun = (dep -> (dep.ē * dep.q) / dep.r))
     distribution::Any = Uniform              # e.g., Uniform, LogNormal, etc.
     dependency_function::Function = (indep, dep) -> indep .+ dep
 end
@@ -181,25 +181,56 @@ end
 Returns true if `sed.distribution` is either exactly the bare type `T`
 (or a subtype of `T` when stored as a bare type) or is an instance of `T`.
 """
-function is_distribution_type(sed,dist)
+function is_distribution_type(sed, dist)
     return sed.distribution == dist || sed.distribution isa dist
 end
 
+"""
+    has_dependencies(sed::SED) -> Bool
+
+Returns true if the SED has dependencies.
+"""
+function has_dependencies(sed::SED)
+    return !isempty(sed.dependent)
+end
+
+"""
+    is_property_name(s::Symbol, property_name::Symbol) -> Bool
+
+Check if a symbol matches a parameter name, handling special cases
+like w̃ and ū.
+"""
+function is_property_name(s::Symbol, property_name::Symbol)
+    return s == property_name || 
+           (s == :w && property_name == :w̃) ||
+           (s == :u && property_name == :ū)
+end
+
+"""
+    find_sed_by_name(context::NamedTuple, name::Symbol) -> Union{SED, Nothing}
+
+Find an SED by name in the context, handling special cases for w̃ and ū.
+"""
+function find_sed_by_name(context::NamedTuple, name::Symbol)
+    for (k, v) in pairs(context)
+        if v isa SED && is_property_name(name, k)
+            return v
+        end
+    end
+    return nothing
+end
 
 # -----------------------------------------------------------------------------
 # Distribution Generation
 # -----------------------------------------------------------------------------
 
 """
-    dist!(sed::SED, N::Int, context::NamedTuple) -> sed
+    generate_distribution!(sed::SED, N::Int) -> sed
 
-Generate (or update) `sed.data` with `N` points using its specified distribution.
-After generating the independent data, apply dependency calculations using the
-provided `context`.
+Generate the distribution data for the SED, without applying dependencies.
 """
-function dist!(sed::SED, N::Int; context=nothing)
+function generate_distribution!(sed::SED, N::Int)
     rev = false  # Flag for reversed quantiles
-    #println(sed.distribution)
     
     if is_distribution_type(sed, LogNormal)
         # LogNormal branch...
@@ -279,14 +310,80 @@ function dist!(sed::SED, N::Int; context=nothing)
     end
 
     if sed.normalize
-        sed.data .= sed.data ./ N
+        sed.data .= sed.data ./ sum(sed.data)
     end
 
-    context!=nothing ? apply_dependencies!(sed, N, context) : nothing
     return sed
 end
 
+"""
+    dist!(sed::SED, N::Int; context=nothing) -> sed
 
+Generate (or update) `sed.data` with `N` points using the specified distribution.
+After generating the independent data, apply dependency calculations using the
+provided `context`.
+"""
+function dist!(sed::SED, N::Int; context=nothing)
+    # Generate the distribution
+    generate_distribution!(sed, N)
+    
+    # Apply dependencies if context is provided
+    if context !== nothing
+        apply_dependencies!(sed, N, context)
+    end
+    
+    return sed
+end
+
+"""
+    dist!(s, param_name::Symbol) -> SED
+
+Generate distributions for the SED parameter specified by name.
+Uses s.N as the length of the distribution.
+"""
+function dist!(s, param_name::Symbol)
+    N = s.N
+    sed = find_sed_by_name(s, param_name)
+    if sed === nothing
+        error("Could not find SED parameter named $(param_name) in the scenario")
+    end
+    return dist!(sed, N; context=s)
+end
+
+"""
+    dist!(s) -> NamedTuple
+
+Generate distributions for all SED parameters in the scenario.
+First processes independent SEDs, then dependent ones.
+Uses s.N as the length of the distributions.
+"""
+function dist!(s)
+    N = s.N
+    
+    # Identify all SED parameters
+    sed_params = []
+    for (k, v) in pairs(s)
+        if v isa SED
+            push!(sed_params, (k, v, has_dependencies(v)))
+        end
+    end
+    
+    # First process independent SEDs
+    for (k, v, has_deps) in sed_params
+        if !has_deps
+            dist!(v, N)
+        end
+    end
+    
+    # Then process dependent SEDs
+    for (k, v, has_deps) in sed_params
+        if has_deps
+            dist!(v, N; context=s)
+        end
+    end
+    
+    return s
+end
 
 """
     dist!(context::NamedTuple, N::Int) -> NamedTuple
@@ -295,8 +392,8 @@ Applies `dist!(sed, N, context)` to each SED in the provided context and returns
 a new NamedTuple with the updated SEDs.
 """
 function dist!(context::NamedTuple, N::Int)
-    new_context = map(x -> (x isa SED ? dist!(x, N, context) : x), context)
-    return NamedTuple(new_context)
+    new_context = map(x -> (x isa SED ? dist!(x, N; context=context) : x), context)
+    return new_context
 end
 
 # -----------------------------------------------------------------------------

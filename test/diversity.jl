@@ -5,9 +5,9 @@ using Distributions
 
 # Define a helper function to create an SED instance and call dist!
 function create_sed_and_dist!(; kwargs...)
-    sed = SED(; kwargs...)
-    dist!(sed, 100)
-    return sed
+    sed_obj = sed(; kwargs...)
+    dist!(sed_obj, 100)
+    return sed_obj
 end
 
 # Test cases
