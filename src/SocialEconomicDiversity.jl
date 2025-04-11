@@ -5,6 +5,8 @@ module SocialEconomicDiversity
     using Parameters
     import Base: show
     using Base: @kwdef
+    using Reexport
+    @reexport using CairoMakie, FileIO, ColorSchemes
 
     include("sed.jl")
     export SED, sed, dist!, astext

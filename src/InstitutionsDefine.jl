@@ -1,13 +1,4 @@
 
-
-#=
-* understand the bump in PA incomes for resource users...
-* do better economic incentives. royalties and 
-
-=#
-
-
-
 function policy_descriptions()
     D=Dict()
 
