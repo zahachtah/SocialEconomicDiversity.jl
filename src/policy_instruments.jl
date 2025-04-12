@@ -357,7 +357,7 @@ Create a base scenario with Open Access policy.
 """
 function base(; N=100, sigma=0.0, random=false)
     (; N, α=0.1, 
-       w̃=sed(min=0.01, max=0.6, distribution=LogNormal, random=random), 
+       w̃=sed(min=0.01, max=1.0, distribution=LogNormal, random=random), 
        ū=sed(mean=1.0, sigma=sigma, normalize=true, random=random), 
        R=ones(N), γ, ϕ, μ, regulate, policy="Open Access")
 end
@@ -369,7 +369,7 @@ Create a scenario with high impact (ū has mean=2.0).
 """
 function high_impact(; N=100, sigma=0.0)
     (; N, α=0.1, 
-       w̃=sed(min=0.01, max=0.6, distribution=LogNormal), 
+       w̃=sed(min=0.01, max=1.0, distribution=LogNormal), 
        ū=sed(mean=2.0, sigma=sigma, normalize=true), 
        R=ones(N), γ, ϕ, μ, regulate, policy="Open Access")
 end

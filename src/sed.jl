@@ -231,7 +231,6 @@ Generate the distribution data for the SED, without applying dependencies.
 """
 function generate_distribution!(sed::SED, N::Int)
     rev = false  # Flag for reversed quantiles
-    
     if is_distribution_type(sed, LogNormal)
         # LogNormal branch...
         if sed.min !== nothing && sed.max !== nothing
@@ -291,6 +290,10 @@ function generate_distribution!(sed::SED, N::Int)
             qs = quantile.(Ref(sed.distribution), range(1 / N, stop = 1 - 1 / N, length = N))
             sed.data = (N == 1) ? [quantile(sed.distribution, 0.5)] : (rev ? reverse(qs) : qs)
         end
+    elseif is_distribution_type(sed, Dirac)
+        p = sed.mean !== nothing ? sed.mean :
+        sed.distribution = Dirac(p)
+        sed.data = rand(sed.distribution, N)
     elseif is_distribution_type(sed, Bernoulli)
         # Bernoulli branch: use sed.mean as the probability parameter.
         p = sed.mean !== nothing ? sed.mean :
@@ -310,7 +313,7 @@ function generate_distribution!(sed::SED, N::Int)
     end
 
     if sed.normalize
-        sed.data .= sed.data ./ sum(sed.data)
+        sed.data .= sed.data ./ N
     end
 
     return sed

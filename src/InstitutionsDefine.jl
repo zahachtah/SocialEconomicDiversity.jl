@@ -445,7 +445,8 @@ function testfig()
     f
 end
 
-function newFig4(; labelsize=25,annotation_font_size=18,s=high_impact(N=100))
+function newFig4(; labelsize=25,annotation_font_size=18,s=base(N=100))
+    println(s.ū)
     s1=scenario(s,policy="Open Access")
     s2a=scenario(s,policy="Exclusive Use Rights", reverse=true)
     s2b=scenario(s,policy="Exclusive Use Rights", reverse=false)

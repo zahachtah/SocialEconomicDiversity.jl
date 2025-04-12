@@ -238,7 +238,7 @@ Plot the distribution of incomes.
 function incomes_plot!(aa, sol; order=false, color=:darkorange)
     p = sol.prob.p
     
-    r_inc = incomes(sol.u[end-1], sol.prob.p)
+    r_inc = incomes(sol.u[end-1], p)
 
     resource_revenue = r_inc.resource
     alt_revenues = r_inc.wages

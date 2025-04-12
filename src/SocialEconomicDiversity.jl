@@ -99,9 +99,11 @@ module SocialEconomicDiversity
     end
 
     function incomes(x, p; summarize=false)
+
         f = occursin("Protected Area", p.policy) ? p.regulation : 0.0
         resource = x[1:p.N] .* x[p.N+1] .* (1 - f)
-        wages = (p.ū .- x[1:p.N]) .* p.w̃ # γ(x,p,0.0) μ(x,p,0.0)
+        W=occursin("Economic Incentives", p.policy) ? p.γ(x,p,0.0) : p.w̃
+        wages = (p.ū .- x[1:p.N]) .* W #γ(x,p,0.0) #w̃ #γ(x,p,0.0) #p.w̃ #γ(x,p,0.0) #p.w̃ # γ(x,p,0.0) μ(x,p,0.0)
         trade = p.policy == "Tradable Use Rights" ? (p.R .- x[1:p.N]) .* x[p.N+2] : fill(0.0, p.N)
         total = resource .+ wages .+ trade
         g = gini(total)
