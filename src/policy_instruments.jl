@@ -89,6 +89,35 @@ end
 Regulation function for Tradable Use Rights. 
 Allocates tradable use rights to users.
 """
+function regulate_tradable_use_rights_new(s, f)
+    R=fill(f==0 ? 1.0 : (1-Float64(f))/s.N, s.N)
+   
+        u0 = zeros(s.N); y0 = 1.0; ϕ0 = 0.0
+        oaprob = ODEProblem(dxdt, [u0; y0; ϕ0], (0, 1000), s)
+        oasol = solve(oaprob, SSPRK432(; stage_limiter!), callback=TerminateSteadyState(1e-6, 1e-4))
+        hur = haskey(s, :historical_use_rights) ? oasol[1:s.N, end-1] .> 0.0 : 1:s.N
+        if s.policy_target == :yield
+            # historical effort levels at steady state
+            hist_u = oasol[1:s.N, end-1]
+            hist_y = oasol[s.N+1, end-1]
+            hist_yield = hist_u .* hist_y
+          
+            # now allocate the *yield* quotas so they sum to (1 - f) * total_yield
+            total_hist_yield = sum(hist_yield)
+            R = hist_yield .* (1 - f) ./ total_hist_yield
+          
+          else
+            # your existing effort‐share logic
+            R = hur .* (1 - f) ./ sum(hur)
+          end
+
+    #R = haskey(s, :historical_use_rights) ? hur .* (1-Float64(f)) ./ sum(hur) : fill(f==0 ? 1.0 : (1-Float64(f))/s.N, s.N)
+
+    q = change(s, R=R, regulation=f)
+    
+    return q
+end
+
 function regulate_tradable_use_rights(s, f)
     if haskey(s, :historical_use_rights)
         u0 = zeros(s.N); y0 = 1.0; ϕ0 = 0.0
@@ -118,11 +147,47 @@ end
 Additional dynamics for Tradable Use Rights. 
 Implements the market dynamics for trading use rights.
 """
+function ϕ_tradable_use_rights_new(dx, x, p, t)
+    # we calculate the sum of all unused Use Rights and assume they are for sale
+    # if the market is for quota (yield) then effort is yield/resource_density
+    if p.policy_target == :yield
+        supply = sum( clamp.( p.R .- (x[1:p.N] .* x[p.N+1]), 0.0, Inf ) )
+    elseif p.policy_target == :effort
+        supply = sum(clamp.( p.R .- x[1:p.N],0.0,Inf ))
+    else
+        println("please supply policy_target (:yield or :effort")
+    end
+
+    # To calculate demand we need to find all who want to increase their effort
+    id = findall((dx[1:p.N] .> 0.0))
+
+    # Calculate individual demand for increased usage, but assure they do not demand more than their physical limit, ū	    
+    if p.policy_target == :yield
+        max_extra_yield = (p.ū[id] .- x[id]) .* x[p.N+1]
+
+        # desire to increase yield = Δu * y
+        desired_extra_yield = dx[id] .* x[p.N+1]      
+
+        ind_demand = min.(max_extra_yield, desired_extra_yield)
+    else
+        ind_demand = min.(p.ū[id] - x[id], dx[id])
+    end
+    demand = sum(ind_demand)
+
+    # Update the tradable quota price based on the difference between demand and supply
+    dx[p.N+2] = p.market_rate * (demand - supply)
+
+    # adjust rate of change of increase in effort to account for limited supply. The condition assures that we never divide by zero demand.
+    if demand > supply
+        dx[id] .= supply .* ind_demand ./ demand
+    end
+end
+
 function ϕ_tradable_use_rights(dx, x, p, t)
     # we calculate the sum of all unused Use Rights and assume they are for sale
     # if the market is for quota (yield) then effort is yield/resource_density
     if p.policy_target == :yield
-        supply = max.(0.0, sum(p.R .- x[1:p.N] * x[p.N+1])) 
+        supply = clamp(sum(p.R .- x[1:p.N] * x[p.N+1]),0.0,Inf) 
     elseif p.policy_target == :effort
         supply = max.(0.0, sum(p.R .- x[1:p.N]))
     else
@@ -133,7 +198,11 @@ function ϕ_tradable_use_rights(dx, x, p, t)
     id = findall((dx[1:p.N] .> 0.0))
 
     # Calculate individual demand for increased usage, but assure they do not demand more than their physical limit, ū	    
-    ind_demand = min.(p.ū[id] - x[id], dx[id])
+    if p.policy_target == :yield
+        ind_demand = min.((p.ū[id] - x[id])*x[p.N+1], dx[id]*x[p.N+1])
+    else
+        ind_demand = min.(p.ū[id] - x[id], dx[id])
+    end
     demand = sum(ind_demand)
 
     # Update the tradable quota price based on the difference between demand and supply
@@ -155,7 +224,7 @@ Implements the population dynamics with protected and unprotected areas.
 """
 function ϕ_protected_area_two_pop(dx, x, p, t)
     mx = x[p.N+2] - x[p.N+1]
-    dx[p.N+2] = (1.0 - x[p.N+2]) - (1.0 - p.regulation) / p.regulation * p.m * mx
+    dx[p.N+2] = (1.0 - x[p.N+2])*dx[p.N+2] - (1.0 - p.regulation) / p.regulation * p.m * mx
     dx[p.N+1] += p.regulation / (1.0 - p.regulation) * p.m * mx
 end
 
@@ -174,7 +243,11 @@ end
 Impact function for Protected Area with Two Populations.
 """
 function μ_protected_area_two_pop(x, p, t)
-    return p.ū
+    y_u = x[p.N+1]    # unprotected density
+    y_p = x[p.N+2]    # protected   density
+    # per‑capita spillover rate into the unprotected area:
+    r_s_local = ((1.0-p.regulation)/p.regulation)*p.m*(y_p - y_u) / y_u
+    return p.ū .* (1 .+ r_s_local).^(-1) # still need to adust μ because of spillover effect!
 end
 
 # ===== Protected Area =====
@@ -327,7 +400,7 @@ Create a scenario with a specific policy.
 Returns a NamedTuple with the appropriate policy functions.
 """
 function scenario(p; kwargs...)
-    temp = (; p..., policy="Open Access", kwargs...)
+    temp = (; p..., policy="Open Access",γ=γ,ϕ=ϕ,μ=μ,regulate=regulate, kwargs...)
     if temp.policy == "Open Access"
         return (; temp...)
     elseif temp.policy == "Exclusive Use Rights"
@@ -357,7 +430,7 @@ Create a base scenario with Open Access policy.
 """
 function base(; N=100, sigma=0.0, random=false)
     (; N, α=0.1, 
-       w̃=sed(min=0.01, max=1.0, distribution=LogNormal, random=random), 
+       w̃=sed(min=0.1, max=1.0, distribution=LogNormal, random=random), 
        ū=sed(mean=1.0, sigma=sigma, normalize=true, random=random), 
        R=ones(N), γ, ϕ, μ, regulate, policy="Open Access")
 end

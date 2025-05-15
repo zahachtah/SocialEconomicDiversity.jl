@@ -17,7 +17,7 @@ function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize
 		#(du[p.N+1],sum(du[1:p.N]))
 		radian_angle-pi/2,sqrt(sum(du[1:p.N])^2+du[p.N+1]^2)
 	end
-
+	s=base()
 	nc=10	
 	(low,medium,high)=cs
 	
@@ -61,45 +61,45 @@ function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize
 	phase_plot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.16,max=0.36, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
 	phase_plot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.88, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
 =#
-	phase_plot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.25,sigma=0.0, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phase_plot!(inequality,sim(scenario(s,ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.25,sigma=0.0, normalize=true, distribution=LogNormal),color=low,N=N)),show_trajectory=false,show_exploitation=true)
+	phase_plot!(inequality,sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium,N=N)),show_trajectory=false,  show_exploitation=false)
+	phase_plot!(inequality,sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high,N=N)),show_trajectory=false,  show_exploitation=false)
 
 
 	#text!(ax12_fig3,0.6,0.7,text="Some actors will\nnot participate\neven with max resource",font="Gloria Hallelujah", fontsize=10,align=(:left, :top), color=:black)
 
-	d1=scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.15,sigma=0.4, normalize=true, distribution=LogNormal),color=low;N)
-	d2=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N)
-	d3=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.35,sigma=0.4, normalize=true, distribution=LogNormal),color=high;N)
-	phase_plot!(development,d1,show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(development,d2,show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(development,d3,show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	d1=sim(scenario(s,ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.15,sigma=0.4, normalize=true, distribution=LogNormal),color=low,N=N))
+	d2=sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium,N=N))
+	d3=sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.35,sigma=0.4, normalize=true, distribution=LogNormal),color=high,N=N))
+	phase_plot!(development,d1,show_trajectory=false,show_exploitation=true)
+	phase_plot!(development,d2,show_trajectory=false,  show_exploitation=false)
+	phase_plot!(development,d3,show_trajectory=false,show_exploitation=false)
 	
-	di1=scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N)
-	di2=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.65, normalize=true, distribution=LogNormal),color=medium;N)
-	di3=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.95, normalize=true, distribution=LogNormal),color=high;N)
+	di1=sim(scenario(s,ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low,N=N))
+	di2=sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.65, normalize=true, distribution=LogNormal),color=medium,N=N))
+	di3=sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.95, normalize=true, distribution=LogNormal),color=high,N=N))
 	
-	phase_plot!(development_inequality,di1,show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(development_inequality,di2,show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(development_inequality,di3,show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phase_plot!(development_inequality,di1,show_trajectory=false,show_exploitation=true)
+	phase_plot!(development_inequality,di2,show_trajectory=false,  show_exploitation=false)
+	phase_plot!(development_inequality,di3,show_trajectory=false,  show_exploitation=false)
    
-	phase_plot!(impact_potential,scenario(ū=sed(mean=0.5, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(impact_potential,scenario(ū=sed(mean=1.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(impact_potential,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phase_plot!(impact_potential,sim(scenario(s,ū=sed(mean=0.5, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low,N=N)),show_trajectory=false, show_exploitation=true)
+	phase_plot!(impact_potential,sim(scenario(s,ū=sed(mean=1.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium,N=N)),show_trajectory=false,  show_exploitation=false)
+	phase_plot!(impact_potential,sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high,N=N)),show_trajectory=false,  show_exploitation=false)
    
-	phase_plot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=-2.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=2.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phase_plot!(covar_impact,sim(scenario(s,ū=sed(mean=2.0, sigma=-2.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low,N=N)),show_trajectory=false, show_exploitation=true)
+	phase_plot!(covar_impact,sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium,N=N)),show_trajectory=false, show_exploitation=false)
+	phase_plot!(covar_impact,sim(scenario(s,ū=sed(mean=2.0, sigma=2.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high,N=N)),show_trajectory=false,  show_exploitation=false)
    
 
-	phase_plot!(Behavioural_adaptability,scenario(α=sed(mean=0.5,sigma=0.0, normalize=true),	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=true, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(Behavioural_adaptability,scenario(α=sed(mean=2.0,sigma=0.0, normalize=true),ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=true, attractor_size=30,show_attractor=false, show_exploitation=false)
+	phase_plot!(Behavioural_adaptability,sim(scenario(s,α=0.05,	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low,N=N)),show_trajectory=true, show_exploitation=true)
+	phase_plot!(Behavioural_adaptability,sim(scenario(s,α=0.2,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high,N=N)),show_trajectory=true,  show_exploitation=false)
 	
 
 
 	#Main Phaseplot
     
-	s13=scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.25,max=0.55, normalize=true, distribution=LogNormal),color=medium;N)#scenario(w=sed(min=0.15,max=0.95,normalize=true,distribution=LogNormal),α=sed(mean=2.0,sigma=0.0, normalize=true),color=colorant"crimson";N)
+	s13=scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.25,max=0.55, normalize=true, distribution=LogNormal),color=medium,N=N)#scenario(w=sed(min=0.15,max=0.95,normalize=true,distribution=LogNormal),α=sed(mean=2.0,sigma=0.0, normalize=true),color=colorant"crimson";N)
 	#=
 	points = [Point2f(x/11, y/11) for y in 1:10 for x in 1:10]
 	rotations = [get_deriv_vector(p[1],p[2],s13)[1] for p in points]
@@ -107,10 +107,10 @@ function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize
 
 	scatter!(ax13_fig3,points, rotations = rotations, markersize = markersize13, marker = '↑', color=:lightgray)
 	=#
-	phase_plot!(vector_field,s13,vector_field=true)
+	
 
 	#Label(Income_distribution[0,1], "Income distributions", fontsize=fontsize, font=font, tellwidth=false)
-	i1=Axis(Income_distribution[1,1])
+	#=i1=Axis(Income_distribution[1,1])
 	hidedecorations!(i1)
 	hidespines!(i1)
 	incomes!(i1,d1, indexed=:w̃)
@@ -122,7 +122,7 @@ function figure3(; font="Georgia", annotation_font="Gloria Hallelujah", fontsize
 	hidedecorations!(i3)
 	hidespines!(i3)
 	incomes!(i3,d3, indexed=:w̃)
-	individual_u!(individual,s13)
+	individual_u!(individual,s13)=#
  
 	fig3
 end
@@ -168,15 +168,15 @@ function figure3_newSED(; font="Georgia", annotation_font="Gloria Hallelujah", f
 	#hideydecorations!(ax23_fig3)
 	#ax23_fig3.ylabel="resource use"
 	#ax33_fig3=Axis(fig3[3,4], title="ū")
-
+	
 #=
 	phase_plot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.25,max=0.25, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
 	phase_plot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.16,max=0.36, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
 	phase_plot!(inequality,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.05,max=0.88, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
 =#
-	phase_plot!(inequality,scenario(s,ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.25,sigma=0.0, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(inequality,scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(inequality,scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phase_plot!(inequality,sim(scenario(s,ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.25,sigma=0.0, normalize=true, distribution=LogNormal),color=low;N)),show_trajectory=false, show_exploitation=true)
+	phase_plot!(inequality,sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N)),show_trajectory=false,  show_exploitation=false)
+	phase_plot!(inequality,sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.8, normalize=true, distribution=LogNormal),color=high;N)),show_trajectory=false,  show_exploitation=false)
 
 
 	#text!(ax12_fig3,0.6,0.7,text="Some actors will\nnot participate\neven with max resource",font="Gloria Hallelujah", fontsize=10,align=(:left, :top), color=:black)
@@ -184,29 +184,29 @@ function figure3_newSED(; font="Georgia", annotation_font="Gloria Hallelujah", f
 	d1=scenario(s,ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(median=0.15,sigma=0.4, normalize=true, distribution=LogNormal),color=low;N)
 	d2=scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.25,sigma=0.4, normalize=true, distribution=LogNormal),color=medium;N)
 	d3=scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(median=0.35,sigma=0.4, normalize=true, distribution=LogNormal),color=high;N)
-	phase_plot!(development,d1,show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(development,d2,show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(development,d3,show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phase_plot!(development,sim(d1),show_trajectory=false, show_exploitation=true)
+	phase_plot!(development,sim(d2),show_trajectory=false,  show_exploitation=false)
+	phase_plot!(development,sim(d3),show_trajectory=false,  show_exploitation=false)
 	
 	di1=scenario(s,ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N)
 	di2=scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.65, normalize=true, distribution=LogNormal),color=medium;N)
 	di3=scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.95, normalize=true, distribution=LogNormal),color=high;N)
 	
-	phase_plot!(development_inequality,di1,show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(development_inequality,di2,show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(development_inequality,di3,show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phase_plot!(development_inequality,sim(di1),show_trajectory=false, show_exploitation=true)
+	phase_plot!(development_inequality,sim(di2),show_trajectory=false,  show_exploitation=false)
+	phase_plot!(development_inequality,sim(di3),show_trajectory=false,  show_exploitation=false)
    
-	phase_plot!(impact_potential,scenario(ū=sed(mean=0.5, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(impact_potential,scenario(ū=sed(mean=1.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(impact_potential,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phase_plot!(impact_potential,sim(scenario(s,ū=sed(mean=0.5, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low,N=N)),show_exploitation=true)
+	phase_plot!(impact_potential,sim(scenario(s,ū=sed(mean=1.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium,N=N)),show_exploitation=false)
+	phase_plot!(impact_potential,sim(scenario(s,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high,N=N)), show_exploitation=false)
    
-	phase_plot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=-2.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=false, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium;N),show_trajectory=false, attractor_size=30,show_attractor=false, show_exploitation=false)
-	phase_plot!(covar_impact,scenario(ū=sed(mean=2.0, sigma=2.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=false, attractor_size=20,show_attractor=false, show_exploitation=false)
+	phase_plot!(covar_impact,sim(scenario(s, ū=sed(mean=2.0, sigma=-2.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low,N=N)), show_exploitation=true)
+	phase_plot!(covar_impact,sim(scenario(s, ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=medium,N=N)),show_exploitation=false)
+	phase_plot!(covar_impact,sim(scenario(s, ū=sed(mean=2.0, sigma=2.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high,N=N)), show_exploitation=false)
    
 
-	phase_plot!(Behavioural_adaptability,scenario(α=sed(mean=0.5,sigma=0.0, normalize=true),	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low;N),show_trajectory=true, attractor_size=40,show_attractor=false,show_exploitation=true)
-	phase_plot!(Behavioural_adaptability,scenario(α=sed(mean=2.0,sigma=0.0, normalize=true),ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high;N),show_trajectory=true, attractor_size=30,show_attractor=false, show_exploitation=false)
+	phase_plot!(Behavioural_adaptability,sim(scenario(s,α=0.05,	ū=sed(mean=2.0, sigma=0.0, normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=low,N=N)),show_trajectory=true, show_exploitation=true)
+	phase_plot!(Behavioural_adaptability,sim(scenario(s,α=0.2,ū=sed(mean=2.0, sigma=0.0,  normalize=true),w=sed(min=0.15,max=0.35, normalize=true, distribution=LogNormal),color=high,N=N)),show_trajectory=true, show_exploitation=false)
 	
 
 
@@ -223,7 +223,8 @@ function figure3_newSED(; font="Georgia", annotation_font="Gloria Hallelujah", f
 	
 
 	#Label(Income_distribution[0,1], "Income distributions", fontsize=fontsize, font=font, tellwidth=false)
-	i1=Axis(Income_distribution[1,1])
+	
+	#=i1=Axis(Income_distribution[1,1])
 	hidedecorations!(i1)
 	hidespines!(i1)
 	incomes!(i1,d1, indexed=:w̃)
@@ -235,7 +236,7 @@ function figure3_newSED(; font="Georgia", annotation_font="Gloria Hallelujah", f
 	hidedecorations!(i3)
 	hidespines!(i3)
 	incomes!(i3,d3, indexed=:w̃)
-	individual_u!(individual,s13)
+	individual_u!(individual,s13)=#
  
 	fig3
 end

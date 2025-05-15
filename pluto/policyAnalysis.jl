@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.5
+# v0.20.8
 
 using Markdown
 using InteractiveUtils
@@ -91,23 +91,9 @@ begin
         return f / p.N
     end
 
-    function incomes(x, p; summarize=false)
+	incomes(sol::ODESolution;dimensional=false) = incomes(sol.u[end], sol.prob.p; dimensional)
 
-        f = occursin("Protected Area", p.policy) ? p.regulation : 0.0
-        resource = x[1:p.N] .* x[p.N+1] .* (1 - f)
-        W=occursin("Economic Incentives", p.policy) ? p.γ(x,p,0.0) : p.w̃
-        wages = (p.ū .- x[1:p.N]) .* W #γ(x,p,0.0) #w̃ #γ(x,p,0.0) #p.w̃ #γ(x,p,0.0) #p.w̃ # γ(x,p,0.0) μ(x,p,0.0)
-        trade = p.policy == "Tradable Use Rights" ? (p.R .- x[1:p.N]) .* x[p.N+2] : fill(0.0, p.N)
-        total = resource .+ wages .+ trade
-        g = gini(total)
-        ecological = x[p.N+1]
-        return summarize ? (; resource, wages, trade, total, g, ecological) : 
-                           (; resource, wages, trade, total, gini=g, ecological)
-    end
 
-    function incomes(s)
-        return incomes(s.u[end], s.prob.p)
-    end
 
     function gini(x)
         sum([abs(x[i] - x[j]) for i in 1:length(x), j in 1:length(x)]) / (2 * length(x) * sum(x))
@@ -623,10 +609,504 @@ begin
 end
 
 
-# ╔═╡ 5cda772a-1480-11f0-051b-71408a039c25
+# ╔═╡ 48c10996-812c-4d41-8d23-c46dabefc6aa
+md"
+## Utilities
+
+$\begin{align}
+U^{OA}_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u} -u_i)\,\tilde{w}_i}^{\text{Alt. incomes}}\\\\
+
+U^{EUR}_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Alt. incomes}} \;-\; \overbrace{(\text{if  }u_i - R_i>0 \text{ then: } S u_i \text{ else: }0)}^{\text{Regulation}}\\\\
+
+U^{TUR}_i &= \overbrace{u_i y}^{\text{Resource}} \;-\; \overbrace{(\bar{u}-u_i)\,\tilde{w}_i}^{\text{Alt. incomes}} \;+\; \overbrace{(R_i - u_i)\,\phi}^{\text{Use rights market}}, \phi=\text{price of use rights}\\\\
+
+U^{PA}_i &= \overbrace{u_i y}^{\text{Resource}} \underbrace{(1-f_p)}_{\text{Protected area}} \;-\; \overbrace{(\bar{u}^*-u_i)\,\tilde{w}_i}^{\text{Alt. incomes}} \quad \overbrace{\bar{u}^*=\tfrac{p q}{r} \frac{1}{1+\tfrac{r_{splillover}}{r}}}^{\text{Spillover effect}}\\\\
+
+U^{EP}_i &= \overbrace{u_i y }^{\text{Resource}} \;-\; \overbrace{(\bar{u}^* -u_i)\,\tilde{w}_i^*}^{\text{Alt. incomes}} \quad \overbrace{\bar{u}^*=\tfrac{ p(EI) q(EI)}{r(EI)}, \tilde{w}_i^*=\tfrac{w(EI)}{p(EI) q(EI) K(EI)}}^{\text{Economic policy outcomes}}
+\end{align}$
+"
+
+# ╔═╡ 4f97c07d-1752-455b-b935-a581d4b63b81
+md"
+## u̇
+The dynamics of the system are given by
+
+$\begin{align}\dot{y}& =(1-y)y-\sum_{N=1}u_i^N{}\\\dot{u_i}&=\frac{\partial U_i}{\partial u}\end{align}$ 
+
+or for each policy:
+
+$\begin{align}
+\dot{u}^{OA}_i &= y \;-\; \tilde{w}_i\quad \text{s.t.} \quad 0<u_i<\bar{u}_i\\\\
+
+\dot{u}^{EUR}_i &= y \;-\; \tilde{w}_i\;-\; \text{ifelse}(u_i - R_i>0,S,0)\quad \text{s.t.} \quad 0<u_i<\bar{u}_i\\\\
+\dot{u}^{TUR}_i &= y \;-\; \tilde{w}_i\;+\;\phi \quad \text{s.t.} \quad 0<u_i<\bar{u}_i\\\\
+\dot{u}^{PA}_i &= y (1-f_p)\;-\; \tilde{w}_i \quad \text{s.t.} \quad 0<u_i<\tfrac{p q}{r} \frac{1}{1+\tfrac{r_{splillover}}{r}}\\\\
+\dot{u}^{EI}_i &=  y  \;-\; \tilde{w}_i^*\quad \text{s.t.} \quad 0<u_i<\tfrac{ p(EI) q(EI)}{r(EI)}, \tilde{w}_i^*=\tfrac{w(EI)}{p(EI) q(EI) K(EI)}
+\end{align}$
+"
+
+# ╔═╡ 9dad4642-5446-4adc-a6c7-68da82ef43e6
+md"
+Under full compliance, resouce (R), wage (W) and trade (T) incomes are given as
 
 
-# ╔═╡ 70c80389-18c3-401b-afa6-e1e82066aa72
+$\begin{align}
+R^{OA}_i  &= y u_i               &\quad W^{OA}_i  &= (\bar{u} - u_i)\tilde{w} \\\\
+R^{EUR}_i &= y u_i               &\quad W^{EUR}_i &= (\bar{u} - u_i)\tilde{w} \\\\
+R^{TUR}_i &= y u_i               &\quad W^{TUR}_i &= (\bar{u} - u_i)\tilde{w} &\quad T^{TUR}_i &= (R_i - u_i)\phi \\\\
+R^{PA}_i  &= y u_i (1 - f_p)     &\quad W^{PA}_i &= (\bar{u}^* - u_i)\tilde{w}\\\\
+R^{EI}_i  &= y u_i 			     &\quad W^{EI}_i &= (\bar{u}^* - u_i)\tilde{w}^*
+\end{align}$
+Remember that EI can change $\bar{u}$ distribution and thus the $u_i$ distribution thus affecting resource distributions
+"
+
+# ╔═╡ c5e52012-1a6e-4c7b-8077-2856895503bd
+md"
+## Governance costs?
+
+"
+
+# ╔═╡ 569d5054-d912-4bdb-87f1-6138d0320cf3
+
+function incomes(x, p;  dimensional::Bool=false)
+    # --- unpack state and parameters ---
+    y = x[p.N+1]
+    u = x[1:p.N]
+    f = occursin("Protected Area", p.policy) ? p.regulation : 0.0
+
+    # nondimensional revenues
+    resource_nd = u .* y .* (1 .- f)
+    
+	μ = p.μ(x, p, 0.0)
+    γ = γ = occursin("Protected Area", p.policy) || occursin("Protected Area", p.policy) ? p.w̃ : p.γ(x, p, 0.0)
+    wages_nd = (μ .- u) .* γ
+	
+    trade_nd    = p.policy == "Tradable Use Rights" ? (p.R .- u) .* x[p.N+2] : zeros(p.N)
+	
+    total_nd    = resource_nd .+ wages_nd .+ trade_nd
+
+    # gini and ecology always nondimensional
+    g = gini(total_nd)
+    ecological = y
+
+
+	scale = dimensional ? p.rpk : 1.0
+	resource = resource_nd .* scale
+	wages    = wages_nd    .* scale
+	trade    = trade_nd    .* scale
+	total    = total_nd    .* scale
+
+
+    return  (; resource, wages, trade, total,
+            gini = g,
+            ecological)
+end
+
+# ╔═╡ 898ab558-f10f-42e6-9b16-9cb2c3e845dd
+md"
+Protected area means that even if y becomes betteer, actors only have access to $y (1-f_p)$, thus
+
+$\dot{u}=y (1-f_p) - \tilde{w}$
+
+But when I calculate incentives as in the plot I use
+
+$\gamma_i=\tilde{w} \tfrac{1}{(1-f_p)}$
+
+Also, impact adjusted for spillover is calculated as
+
+$\bar{u}_i^*(y) = \frac{pq}{r}\frac{1}{1 + \frac{r_{\text{spill}}(y)}{r}}.$
+
+and is used as such in the derivative to limit $u_i$. so I need to use that to calculate the wage incomes which are 
+
+
+$ū^*_i(y^*) \tilde{w}_i$
+
+"
+
+# ╔═╡ b76c3f9c-2ad5-497e-a341-6a8294edef24
+#=╠═╡
+function testPA(;regulation=0.2)
+    a=scenario(s,policy="Protected Area", m=0.3)
+    b=scenario(s,policy="Protected Area Two Pop", m=0.3)
+    r=range(0.0, stop=1.0,length=100)
+    sa=sim(a;regulation)
+    sb=sim(b;regulation)
+    f=Figure()
+    ax=Axis(f[1,1])
+   # lines!(ax,sa.t,sa[end,:])
+    #lines!(ax,sb.t,sb[end-1,:])
+    ##lines!(ax,sa.t,sum(sa[1:a.N,:], dims=1)[:])
+    #lines!(ax,sb.t,sum(sb[1:a.N,:],dims=1)[:])
+    PA=[sim(a;regulation)[end,end] for regulation in r]
+    PA2P=[sim(b;regulation)[end-1,end] for regulation in r]
+    lines!(ax,r,PA)
+    lines!(ax,r,PA2P)
+    f
+end
+  ╠═╡ =#
+
+# ╔═╡ 3398ac1b-9530-44e6-b3a7-b93822c71e30
+md"
+## Exclusive Use Rights (EUR)
+
+A fine is paid when use exceeds assigned exclusive use rigths, $R_i$, proportional to the transgression
+
+$$I_i(u_i)=\begin{cases} S u_i & \text{if  } u_i>R_i \\ 0 & \text{otherwise} \end{cases} \quad \text{thus} \quad \frac{\partial I_i(u_i)}{\partial u_i}=\begin{cases} S & \text{if  } u_i>R_i \\ 0 & \text{otherwise} \end{cases}$$
+
+
+If we assume that $S>1$ then for all users with no use rights ($R_i=0$) $\dot{u}_i=y-\tilde{w}-\tfrac{\partial I_i(u_i)}{\partial u_i} <0$ and will thus be always in full compliance, i.e. $u_i=0$, since $y<=1$
+
+### Incomes
+$$\begin{align}
+\text{resource} & =y*u_i \\
+\text{wages} & =w̃ (ū-uᵢ) \\
+\text{sanctions} & = \max(0,R_i-u_i) S \\
+\text{total} & =y*u_i + w̃ (ū-uᵢ) + \max(0,R_i-u_i) S \\
+\text{governance} & = \sum{(R_i-u_i) S}-C_{\text{Institution}}
+\end{align}$$
+
+"
+
+# ╔═╡ fb7ef10e-01fa-4a5f-9b06-d4668fea6fed
+md"
+## Tradable Use Rights (TUR)
+
+Unused use rights, $\sum{R_i-u_i}$ provide the **supply**, while **demand** is $\sum{\max (0,\dot{u}_i)}$, subject to $u_i<\bar{u}_i$. Price of use rigths, $\phi$, then changes as $\dot{\phi}= k (demand-supply)$, were k sets timescale of price changes. We assume that use rights payments can be represented as continuous rents on capital (see SM for details), the Institutional utility term becomes:
+$I_i(u_i)=(R_i-u_i) * \phi$, resulting in 
+
+$$\dot{u}_i=y-\tilde{w}-\phi$$
+
+were a social planner can set the total and distribution of use rights, $\sum{R_i}$. For example, use rights can be distributed equally (dark orange), or to those that had historical use under open access (light orange).
+
+### Incomes
+$$\begin{align}
+\text{resource} & =y*u_i \\
+\text{wages} & =w̃ (ū-uᵢ) \\
+\text{trade} & = (Rᵢ-uᵢ)ϕ \\
+\text{total} & =y*u_i + w̃ (ū-uᵢ) + (Rᵢ-uᵢ)ϕ \\
+\text{governance} & = -C_{\text{fixed}}
+\end{align}$$
+"
+
+
+# ╔═╡ 308e5df5-614e-4c7e-ab25-2a45c0fb32dc
+md"
+# is price of yield calculated correctly?"
+
+# ╔═╡ ca2a18a8-5109-44e3-97eb-027d02277bad
+md"
+# Protected Area (PA): Spillover, Impact, and Income Explained
+
+## 1. Two–Population Dynamics
+
+We divide the system into an unprotected patch $x$ and a protected patch $x_p$, with areas $1 - f_p$ and $f_p$ respectively:
+
+$
+\begin{align}
+\dot{x} & =\overbrace{r \left(1-\frac{x}{K}\right) x}^{\text{regeneration}} - \overbrace{h x}^{\text{harvest}}  + \overbrace{\frac{f_p}{1-f_p}m (x_p-x)}^{\text{mobility}} \\
+\dot{x_p} & =\underbrace{r_p \left(1-\frac{x_p}{K_p}\right) x_p}_{\text{regeneration}} +\underbrace{\frac{1-f_p}{f_p}m (x-x_p)}_{\text{mobility}}
+\end{align}
+$
+
+The terms with $m$ represent spillover between the patches.
+
+
+
+"
+
+# ╔═╡ d37a1931-1250-48ad-85f5-3d74004fcc4f
+md"
+# The issue!!
+
+**The crux is to deal with (1-regulation) for y rather than for w̃. I think the issue is that I want (1-regulation) for the phase plot, but can't use it for the income calculations!**
+
+I think I need to rethink the λ and γ functions!
+"
+
+# ╔═╡ de59b7d4-c55d-47af-a754-f70e699c955c
+
+
+# ╔═╡ 09c6eaf8-af4a-4348-8eca-31f89b3ddada
+md"
+## Understanding policies
+
+Incentives are the main driver of the system. Incomes are a central goal for any actor and we can define the non-dimensional total revenue, or utility, as 
+
+$$\text{utility}_i=\overbrace{f y u_i}^{\text{resource}} + \overbrace{(\bar{u}_i-u_i) \tilde{w}_i}^{\text{wages}} + \overbrace{I_i(u_i)}^{\text{institutions}}$$
+
+1) revenues calculations in dimensions or dimensionless?
+2) sometimes I(u) is a price, e.g. tradable quotas. Sometimes it is sanctioing which can be monetary, but does not have to be. 
+2) Sometimes we change $$\tilde{w}$$, e.g. by economic incentives which results in changed total incomes, but sometimes we only \"simulate\" the effect on  $$\tilde{w}$$, not $$\tilde{w}$$ itself, e.g. protected areas. But we simulate a change in r, not $$\tilde{w}$$
+3) 
+
+Thus incentives to NOT harvest can be many, foremost alternative livelihood opportunities and institutions, such as norms and rules. Thus the general decision problem is 
+
+$$\dot{u}_i=y-\tilde{w}_i-\frac{\partial I_i(u_i)}{\partial u_i}$$
+
+were 
+
+$$\text{incentives}_i=\gamma_i=\tilde{w}_i+\frac{\partial I_i(u_i)}{\partial u_i}$$
+
+
+
+were f is the fraction of the total area available. remember that y is scaled with K that has dimension biomass/area, or, if we have defined the system as a given area, just biomass. Note that $I_i$ can be non-monetary, e.g. social sanctioning.
+
+To convert to dimensional revenues one simply multiplies by the \"system scaling\" factor, $r p K$ (include how we deal with cost of harvesting and can do away with it without loss of generality).
+
+for economic incentives one generally tries to affect the distribution of the dimensional variables. these then translate into changes in e.g. $\tilde{w}$ or $\bar{u}$. This would for example lift total revneues by increasing $\tilde{w}$ or reduce participation by increasing impact, $\bar{u}$
+
+If we assume revenues to be the goal (utility) then we can take the derivative with respect to the control variable, u, do find the optimal decision equation
+"
+
+# ╔═╡ dc784cd8-6be0-4d08-8a76-494fdb9ab239
+md"
+# Protected Area (PA): Spillover, Impact, and Income Explained
+
+## 1. Two–Population Dynamics
+
+We divide the system into an unprotected patch $x$ and a protected patch $x_p$, with areas $1 - f_p$ and $f_p$ respectively:
+
+$
+\begin{align}
+\dot{x} & =\overbrace{r \left(1-\frac{x}{K}\right) x}^{\text{regeneration}} - \overbrace{h x}^{\text{harvest}}  + \overbrace{\frac{f_p}{1-f_p}m (x_p-x)}^{\text{mobility}} \\
+\dot{x_p} & =\underbrace{r_p \left(1-\frac{x_p}{K_p}\right) x_p}_{\text{regeneration}} +\underbrace{\frac{1-f_p}{f_p}m (x-x_p)}_{\text{mobility}}
+\end{align}
+$
+
+The terms with $m$ represent spillover between the patches.
+
+## Effective Growth Rate
+
+In a fast-mixing limit, the mobility terms create an effective growth rate in the unprotected area:
+
+
+$$
+r^*(y) = r + r_{\text{spill}}(y),
+$$
+
+where
+
+$$
+r_{\text{spill}}(y) = \frac{f_p}{1 - f_p} m \cdot \frac{y_p(y) - y}{y}.
+$$
+
+This adjustment affects the dynamics but **not** the scaling back to real units.
+
+
+
+### Adjusted Impact Cap
+
+The original nondimensional impact cap (a proxy for max effort) is:
+
+$$
+\bar{u}_i = \frac{q\,\bar{e}_i}{r}
+$$
+
+With spillover, the cap is reduced to:
+
+$$
+\bar{u}_i^*(y) = \frac{\bar{u}_i}{1 + \frac{r_{\text{spill}}(y)}{r}}.
+$$
+
+This captures that spillover limits how much pressure each actor can exert.
+
+
+---
+
+
+
+### 4. Wage Rate Remains Fixed
+
+The nondimensional wage rate is:
+
+$$
+\tilde{w} = \frac{w}{p\,q\,K}
+$$
+
+This is **not** affected by spillover, because $w$, $p$, $q$, and $K$ are constant unless a policy explicitly changes them. So:
+
+$$
+\tilde{w}^* = \tilde{w}
+$$
+
+even when $f_p > 0$.
+
+---
+
+
+
+### 5. Nondimensional Incomes
+
+At equilibrium, actors either fish at their cap $u_i = \bar{u}_i^*$, or not at all.
+
+For harvesters:
+
+$$
+\begin{aligned}
+\text{Resource}_i^{\text{nd}} &= (1 - f_p)\, y^*\, \bar{u}_i^* \\
+\text{Wages}_i^{\text{nd}} &= 0 \\
+\text{Total}_i^{\text{nd}} &= (1 - f_p)\, y^*\, \bar{u}_i^*
+\end{aligned}
+$$
+
+
+For non-harvesters:
+
+$$
+\text{Wages}_i^{\text{nd}} = \tilde{w} \cdot \bar{u}_i^*
+$$
+
+and total income equals this wage.
+
+---
+
+
+
+### 6. Dimensional Incomes and the Jacobian
+
+To recover dimensional incomes (e.g. money per time), we multiply by:
+
+$$
+r\,p\,K
+$$
+
+This scaling factor arises from the non-dimensionalization:
+
+- $y = \frac{x}{K}$
+- $u = \frac{q\,e}{r}$
+- $\tau = r\,t$
+
+So dimensional incomes are:
+
+$$
+\begin{aligned}
+\text{Resource}_i^{\text{dim}} &= r\,p\,K \cdot (1 - f_p)\, y^*\, u_i \\\\
+\text{Wages}_i^{\text{dim}} &= r\,p\,K \cdot (\bar{u}_i^* - u_i) \cdot \tilde{w}
+\end{aligned}
+$$
+
+**Important**: We **never** replace $r$ by $r^*$ in the Jacobian. The policy effect is already captured in $y^*$ and $\bar{u}_i^*$. Using $r^*$ again would double-count the spillover effect.
+
+---
+
+
+### 7. Interpretation
+
+- **Spillover increases $y^*$** → more resource income for those who fish.
+- **Spillover decreases $\bar{u}_i^*$** → fewer wage hours for harvesters.
+- **Non-harvesters** earn $\tilde{w} \cdot \bar{u}_i^*$, slightly less than in open access.
+
+This is why, in your plots:
+
+- The bars for non-fishers stop exactly at $\tilde{w} \cdot \bar{u}_i^*$.
+- The dashed line for max wages must also reflect this policy-adjusted cap.
+
+
+$$\tilde{w}\bar{u} \frac{1}{1-f_p} \frac{1}{1+\frac{r_{spillover}(y,f_p,m)}{r}}$$
+"
+
+# ╔═╡ 677a6f32-5341-4061-9507-7c468f4c0b71
+md"
+## Economic Incentives (EI)
+
+A problem of economic policies is to understand how the cost or income for the policy translates into changes in socioeconomic or resource factors.
+
+The outcomes of economic incentives level, $\rho$, on dimensional variables can be stated as, for example, $q\rightarrow q*(1+\rho)$, resulting in $\tilde{w} \rightarrow \tfrac{w}{p K q*(1+\rho)} = \tilde{w} \tfrac{1}{1+\rho}$ or for $w\rightarrow w*(1+\rho)$, resulting in $\tilde{w} \rightarrow \tfrac{w*(1+\rho)}{p K q} = \tilde{w} (1+\rho)$ 
+
+## resource and total cost?
+
+if we add a royalty, $p_{royalty}$ then this equates to lower price ($p^*=p-p_{royalty}$, i.e. resource revenue goes down (and thus w̃ up). simulataneously society gets $\sum p_{royalty} \cdot u_i \cdot y$
+
+## affecting gear is more difficult.
+"
+
+
+# ╔═╡ f112d50b-d9ca-48ef-841f-fe0b420971ba
+md"
+
+## Development (DE)
+"
+
+# ╔═╡ d369d46f-7c93-46cd-926e-36c0a1e7ab13
+# ╠═╡ disabled = true
+#=╠═╡
+begin
+	s=scenario(high_impact(N=100), policy="Protected Area", m=0.1, regulation=0.74)
+
+end
+  ╠═╡ =#
+
+# ╔═╡ b77bdaa8-4054-47ff-95fa-adae6f7e36bf
+#=╠═╡
+ss=deepcopy(s)
+  ╠═╡ =#
+
+# ╔═╡ 73bf06a1-9e0c-49da-af50-31fba13c283f
+#=╠═╡
+ssol=sim(ss, regulation=0.74)
+  ╠═╡ =#
+
+# ╔═╡ f5bbec84-e323-43bf-9bb4-b1baec83d413
+#=╠═╡
+ssol[end,:]
+  ╠═╡ =#
+
+# ╔═╡ 92eb46f7-2c3b-4242-b02e-ff5f0e9a4ff0
+#=╠═╡
+sol[end,:]
+  ╠═╡ =#
+
+# ╔═╡ 8c5f8c7c-e56d-4a98-9981-0fa36bd27227
+#=╠═╡
+s
+  ╠═╡ =#
+
+# ╔═╡ 4d7e72d7-490d-47be-8ee6-11af3dec9954
+#=╠═╡
+vcat(zeros(s.N),1.0)
+  ╠═╡ =#
+
+# ╔═╡ c0d3ffea-96bb-413d-bff1-7f4c03558d0e
+#=╠═╡
+s
+  ╠═╡ =#
+
+# ╔═╡ 4441ecc9-ef09-4402-b9c5-42073a10791d
+#=╠═╡
+begin
+	f=Figure(size=(800,400))
+	a=Axis(f[1,1])
+	b=Axis(f[1,2])
+	hidedecorations!(a)
+	hidespines!(a)
+		sol=sim(s, regulation=0.84)
+	
+	sol[end,:]
+	phase_plot!(a,sol, impact_line_color=:crimson, incentive_line_color=:crimson)
+	incomes_plot!(b,sol, color=:crimson)
+	f
+end
+  ╠═╡ =#
+
+# ╔═╡ 2978d2c6-257d-4ab6-86bd-cf2575be5f58
+
+
+# ╔═╡ 6406c67c-0cd6-4a8f-9598-a72b0429b034
+#=╠═╡
+IN=incomes(sol)
+  ╠═╡ =#
+
+# ╔═╡ 03401a9b-44e4-4335-812c-91652ab3b284
+#=╠═╡
+s.ū
+  ╠═╡ =#
+
+# ╔═╡ b21103c0-6be8-4826-b431-25a906e6a8bf
+#=╠═╡
+R=regulation_scan(s)
+  ╠═╡ =#
+
+# ╔═╡ a8a5c312-5cc2-47e4-a49a-5d40a0ada055
 
 
 # ╔═╡ c4c4528b-db37-43e9-bc82-90f21d1450ce
@@ -786,7 +1266,7 @@ Implements the population dynamics with protected and unprotected areas.
 """
 function ϕ_protected_area_two_pop(dx, x, p, t)
     mx = x[p.N+2] - x[p.N+1]
-    dx[p.N+2] = (1.0 - x[p.N+2]) - (1.0 - p.regulation) / p.regulation * p.m * mx
+    dx[p.N+2] = (1.0 - x[p.N+2])*dx[p.N+2] - (1.0 - p.regulation) / p.regulation * p.m * mx
     dx[p.N+1] += p.regulation / (1.0 - p.regulation) * p.m * mx
 end
 
@@ -805,7 +1285,11 @@ end
 Impact function for Protected Area with Two Populations.
 """
 function μ_protected_area_two_pop(x, p, t)
-    return p.ū
+    y_u = x[p.N+1]    # unprotected density
+    y_p = x[p.N+2]    # protected   density
+    # per‑capita spillover rate into the unprotected area:
+    r_s_local = ((1.0-p.regulation)/p.regulation)*p.m*(y_p - y_u) / y_u
+    return p.ū .* (1 .+ r_s_local).^(-1) # still need to adust μ because of spillover effect!
 end
 
 # ===== Protected Area =====
@@ -1030,8 +1514,17 @@ function high_incentives(; N=100, sigma=0.0)
 end
 end
 
-# ╔═╡ d369d46f-7c93-46cd-926e-36c0a1e7ab13
-s=scenario(base())
+# ╔═╡ 53d40e4a-c217-48cc-98c2-e34cae7730f0
+spa=scenario(high_impact(),policy="Protected Area", m=0.3)
+
+# ╔═╡ e0ce0b92-0e7f-4cfe-a794-804b4b0bb014
+simpa=sim(spa,regulation=0.9);
+
+# ╔═╡ 267f2e60-ee7c-440d-8077-4868459e62e7
+incpa=incomes(simpa)
+
+# ╔═╡ 20e7c7df-fd33-4d98-a115-ac936256e07f
+scatter(incpa.wages)
 
 # ╔═╡ 58db4f43-5c68-4d7d-a88b-f4c423e9ef94
 begin
@@ -1270,33 +1763,107 @@ end
 
 Plot the distribution of incomes.
 """
-function incomes_plot!(aa, sol; order=false, color=:darkorange)
+function incomes_plot!(ax, sol; order=false, color=:darkorange, dimensional::Bool=false)
     p = sol.prob.p
-    
-    r_inc = incomes(sol.u[end-1], p)
+    inc = incomes(sol.u[end-1], p; dimensional=dimensional)
 
-    resource_revenue = r_inc.resource
-    alt_revenues = r_inc.wages
-    trade_revenues = r_inc.trade
-    income = r_inc.total
-    inc = resource_revenue + alt_revenues
-    id = order ? sortperm(income) : collect(1:p.N)
-    barplot!(aa, inc[id], color=order ? p.w̃[id] : color, alpha=1.0, offset=trade_revenues[id])
-    barplot!(aa, trade_revenues[id], color=order ? p.w̃[id] : color)
-    barplot!(aa, trade_revenues[id], color=HSLA(0,0,0,0.2))
-    barplot!(aa, trade_revenues[id], color=HSLA(0,0,0,0.2))
-    lines!(aa, p.w̃.*p.ū, linewidth=2, color=:black, linestyle=:dot)
-    fir = findall(resource_revenue[id].>0.0)
-    fia = findall(alt_revenues[id].>0.0)
+    # unpack for readability
+    res   = inc.resource
+    wage  = inc.wages
+    trd   = inc.trade
+    total = inc.total
+
+    # ordering
+    idx = order ? sortperm(total) : eachindex(total)
+
+    # bottom bars: resource + wages
+    barplot!(ax, (res[idx] .+ wage[idx]), color=color, alpha=1.0, offset=trd[idx])
+    # top bars: trade revenues
+    barplot!(ax, trd[idx], color=color)
+    barplot!(ax, trd[idx], color=HSLA(0,0,0,0.2))
+    # dotted line: max nondimensional effort*price curve
+
+   dim=dimensional ? p.rpk : 1.0
+    μ = p.μ(sol.u[end], p, 0.0)
+γ = p.γ(sol.u[end], p, 0.0)
+line_data = μ .* γ .* dim
+	line_data = wage
+    lines!(ax, line_data, linewidth=2, color=:black, linestyle=:dot)
+
+    return nothing
 end
 end
 
-# ╔═╡ 4441ecc9-ef09-4402-b9c5-42073a10791d
+# ╔═╡ e68d29f4-178f-4789-9e64-5de17faf1f17
 begin
-	f=Figure()
-	a=Axis(f[1,1])
-	phase_plot!(a,sim(s))
-	f
+	s_OA=scenario(high_impact(),policy="Protected Area",m=0.3, rpk=10.0)
+	regulation=0.7
+	solOA=sim(s_OA;regulation)
+	r_OA=incomes(solOA)
+	r_OA_dim=incomes(solOA, dimensional=true)
+	f_OA=Figure()
+	a_OA=Axis(f_OA[1,1])
+	a_OA_dim=Axis(f_OA[1,2])
+	lines!(a_OA,r_OA.resource)
+	lines!(a_OA,r_OA.wages)
+	
+	phase_plot!(a_OA_dim,solOA)
+	scatter!(a_OA_dim,[solOA.u[end][end]*(1-regulation)],[sum(solOA.u[end][1:100]./s_OA.μ(solOA.u[end],solOA.prob.p,0))/100])
+	f_OA
+end
+
+# ╔═╡ 18006082-c14e-4e14-9a1b-ec2e9d46e666
+sum(solOA.u[end][1:100]./s_OA.ū)
+
+# ╔═╡ 2c1dc01a-32df-4c35-9563-20cac708fcef
+begin
+	    s5a=scenario(high_impact(),policy="Economic Incentives", policy_target=:μ, policy_method=:subsidy)
+    s5b=scenario(high_impact(),policy="Economic Incentives", policy_target=:γ, policy_method=:taxation)
+	
+	regulationEI=0.7
+	solEI=sim(s5b,regulation=regulationEI)
+	r_EI=incomes(solEI)
+	
+	f_EI=Figure()
+	a_EI=Axis(f_EI[1,1])
+	a_EI_dim=Axis(f_EI[1,2])
+	lines!(a_EI,r_EI.resource)
+	lines!(a_EI,r_EI.wages)
+	
+	phase_plot!(a_EI_dim,solEI)
+
+	
+	f_EI
+end
+
+# ╔═╡ 5ca70131-ad82-4e1f-afad-671e7e3f359d
+begin
+	stur1=scenario(high_impact(),policy="Tradable Use Rights", policy_target=:effort, market_rate=0.05)
+	stur2=scenario(high_impact(),policy="Tradable Use Rights", policy_target=:yield, market_rate=0.05)
+	soltur1=sim(stur1,regulation=0.5)
+	soltur2=sim(stur2,regulation=0.75)
+	ftur=Figure()
+	Atur1=Axis(ftur[1,1])
+	Atur2=Axis(ftur[1,2])
+	Atur3=Axis(ftur[2,1])
+	Atur4=Axis(ftur[2,2])
+	phase_plot!(Atur1,soltur1)
+	phase_plot!(Atur2,soltur2)
+	rtur1=regulation_scan(stur1)
+	rtur2=regulation_scan(stur2)
+	lines!(Atur4,rtur1.r,rtur1.TR)
+	lines!(Atur4,rtur2.r,rtur2.TR)
+		lines!(Atur3,rtur1.r,rtur1.RR)
+	lines!(Atur3,rtur2.r,rtur2.RR)
+	ftur
+end
+
+# ╔═╡ f01c9f64-579e-4400-be6c-af4578a48d30
+begin
+	fpa=Figure()
+	apa=Axis(fpa[1,1])
+	incomes_plot!(apa,simpa)
+	fpa
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1328,7 +1895,7 @@ Parameters = "~0.12.3"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.0"
+julia_version = "1.11.4"
 manifest_format = "2.0"
 project_hash = "be64ef2375119083f118e86ead8e7a0d21cc7851"
 
@@ -2802,7 +3369,7 @@ version = "3.2.4+0"
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
-version = "0.8.1+2"
+version = "0.8.1+4"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -3877,12 +4444,48 @@ version = "3.6.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╠═5cda772a-1480-11f0-051b-71408a039c25
-# ╠═70c80389-18c3-401b-afa6-e1e82066aa72
+# ╠═48c10996-812c-4d41-8d23-c46dabefc6aa
+# ╟─4f97c07d-1752-455b-b935-a581d4b63b81
+# ╟─9dad4642-5446-4adc-a6c7-68da82ef43e6
+# ╠═c5e52012-1a6e-4c7b-8077-2856895503bd
+# ╟─569d5054-d912-4bdb-87f1-6138d0320cf3
+# ╟─898ab558-f10f-42e6-9b16-9cb2c3e845dd
+# ╠═e68d29f4-178f-4789-9e64-5de17faf1f17
+# ╠═2c1dc01a-32df-4c35-9563-20cac708fcef
+# ╠═b76c3f9c-2ad5-497e-a341-6a8294edef24
+# ╠═18006082-c14e-4e14-9a1b-ec2e9d46e666
+# ╠═3398ac1b-9530-44e6-b3a7-b93822c71e30
+# ╠═fb7ef10e-01fa-4a5f-9b06-d4668fea6fed
+# ╠═308e5df5-614e-4c7e-ab25-2a45c0fb32dc
+# ╠═5ca70131-ad82-4e1f-afad-671e7e3f359d
+# ╟─ca2a18a8-5109-44e3-97eb-027d02277bad
+# ╠═53d40e4a-c217-48cc-98c2-e34cae7730f0
+# ╠═e0ce0b92-0e7f-4cfe-a794-804b4b0bb014
+# ╠═d37a1931-1250-48ad-85f5-3d74004fcc4f
+# ╠═de59b7d4-c55d-47af-a754-f70e699c955c
+# ╠═267f2e60-ee7c-440d-8077-4868459e62e7
+# ╠═20e7c7df-fd33-4d98-a115-ac936256e07f
+# ╠═f01c9f64-579e-4400-be6c-af4578a48d30
+# ╟─09c6eaf8-af4a-4348-8eca-31f89b3ddada
+# ╠═dc784cd8-6be0-4d08-8a76-494fdb9ab239
+# ╠═677a6f32-5341-4061-9507-7c468f4c0b71
+# ╠═f112d50b-d9ca-48ef-841f-fe0b420971ba
 # ╠═d369d46f-7c93-46cd-926e-36c0a1e7ab13
+# ╠═b77bdaa8-4054-47ff-95fa-adae6f7e36bf
+# ╠═73bf06a1-9e0c-49da-af50-31fba13c283f
+# ╠═f5bbec84-e323-43bf-9bb4-b1baec83d413
+# ╠═92eb46f7-2c3b-4242-b02e-ff5f0e9a4ff0
+# ╠═8c5f8c7c-e56d-4a98-9981-0fa36bd27227
+# ╠═4d7e72d7-490d-47be-8ee6-11af3dec9954
+# ╠═c0d3ffea-96bb-413d-bff1-7f4c03558d0e
 # ╠═4441ecc9-ef09-4402-b9c5-42073a10791d
+# ╠═2978d2c6-257d-4ab6-86bd-cf2575be5f58
+# ╠═6406c67c-0cd6-4a8f-9598-a72b0429b034
+# ╠═03401a9b-44e4-4335-812c-91652ab3b284
+# ╠═b21103c0-6be8-4826-b431-25a906e6a8bf
 # ╠═58db4f43-5c68-4d7d-a88b-f4c423e9ef94
 # ╠═d616345e-ada8-421e-9f62-d7811498de06
-# ╟─c4c4528b-db37-43e9-bc82-90f21d1450ce
+# ╠═a8a5c312-5cc2-47e4-a49a-5d40a0ada055
+# ╠═c4c4528b-db37-43e9-bc82-90f21d1450ce
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

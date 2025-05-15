@@ -99,8 +99,8 @@ function phase_plot!(axis, sol; show_trajectory=false, show_target=false, open_a
     γ_array = scenario.γ(sol.u[end], scenario, sol.t[end])
     
     if show_oa
-        oa = change(scenario, γ=γ, μ=μ, regulate=regulate, ϕ=ϕ)
-        oasol = sim(oa, regulation=0.0)
+        oa = change(scenario, policy="Open Access", γ=γ, μ=μ, regulate=regulate, ϕ=ϕ)
+        oasol = sim(oa)
     end
     
     if show_target
@@ -138,7 +138,8 @@ function phase_plot!(axis, sol; show_trajectory=false, show_target=false, open_a
     end
 
     # Show the market price of use rights
-    scenario.policy=="Tradable Use Rights" ? text!(axis, "ϕ: "*string(round(sol[end,end], digits=2))) : nothing
+    scenario.policy=="Tradable Use Rights" ? text!(axis,0.95*sol.u[end][end-1],0.95*Γ.(sol.u[end][end-1], Ref(scenario), x=sol.u[end-1]), text="ϕ: "*string(round(sol[end,end], digits=2)), align=(:right,:top), space=:relative) : nothing
+    #scenario.policy=="Tradable Use Rights" ? arrows!(axis,sol.u[end][end-1]-sol.u[end][end] , Γ(sol.u[end][end-1], scenario, x=sol.u[end-1]) , 0.0, sol.u[end-1]) : nothing
 end
 
 """
@@ -174,7 +175,7 @@ end
 Draw an arc with arrows at the endpoints, using degrees instead of radians.
 """
 function arrow_arc_deg!(ax, origin, radius, start_angle_deg, stop_angle_deg; 
-                       linewidth=1, color=:black, flip_arrow=false, linestyle=:dot, startarrow=false)
+                       linewidth=1, color=:black, flip_arrow=false, linestyle=:dot, startarrow=false, space=:relative)
     # Helper to convert from degrees to radians
     deg2rad(θ_deg) = θ_deg * π / 180
 
@@ -188,7 +189,7 @@ function arrow_arc_deg!(ax, origin, radius, start_angle_deg, stop_angle_deg;
     rad_stop  = deg2rad(90 - stop_angle_deg)
 
     # 1) Draw the arc in the new angles:
-    arc!(ax, origin, radius, rad_start, rad_stop, linewidth=linewidth, color=color; linestyle=linestyle)
+    arc!(ax, origin, radius, rad_start, rad_stop, linewidth=linewidth, color=color; linestyle=linestyle,space)
 
     # 2) Function to calculate a point on the circle at a given *degree* measure:
     point_on_circle_deg(θ_deg) = origin .+ radius * Point2f(
@@ -226,7 +227,8 @@ function arrow_arc_deg!(ax, origin, radius, start_angle_deg, stop_angle_deg;
         [end_dir[1]] .* dx,
         [end_dir[2]] .* dx,
         color=color,
-        linewidth=linewidth
+        linewidth=linewidth,
+        space=space
     )
 end
 
@@ -235,7 +237,7 @@ end
 
 Plot the distribution of incomes.
 """
-function incomes_plot!(aa, sol; order=false, color=:darkorange)
+function incomes_plot_old!(aa, sol; order=false, color=:darkorange)
     p = sol.prob.p
     
     r_inc = incomes(sol.u[end-1], p)
@@ -253,4 +255,46 @@ function incomes_plot!(aa, sol; order=false, color=:darkorange)
     lines!(aa, p.w̃.*p.ū, linewidth=2, color=:black, linestyle=:dot)
     fir = findall(resource_revenue[id].>0.0)
     fia = findall(alt_revenues[id].>0.0)
+end
+
+# -- plotting, with dimensional toggle --
+function incomes_plot!(ax, sol; order=false, color=:darkorange, dimensional::Bool=false, resource_incomes=true)
+    p = sol.prob.p
+    inc = incomes(sol)
+
+    # unpack for readability
+    res   = inc.resource
+    wage  = inc.wages
+    trd   = inc.trade
+    total = inc.total
+
+    # ordering
+    idx = order ? sortperm(total) : eachindex(total)
+
+    # bottom bars: resource + wages
+    barplot!(ax, (res[idx] .+ wage[idx]), color=color, alpha=1.0, offset=trd[idx])
+    # top bars: trade revenues
+    barplot!(ax, trd[idx], color=color)
+    barplot!(ax, trd[idx], color=HSLA(0,0,0,0.2))
+    # dotted line: max nondimensional effort*price curve
+
+   dim=dimensional ? p.rpk : 1.0
+   μ = p.μ(sol.u[end], p, 0.0)
+   γ =  occursin("Protected Area", p.policy) || occursin("Exclusive Use Rights", p.policy) ? p.w̃ : p.γ(sol.u[end], p, 0.0)
+   line_data = μ .* γ .* dim
+   line_data = inc.wages_0.*dim
+    lines!(ax, line_data, linewidth=1, color=:white, linestyle=:solid)
+    ylims!(ax,minimum(trd),maximum(total))
+
+    if resource_incomes
+        id=findall(res[idx].>0.0)
+        #=y=vcat(trd[id[1]],res[id].+trd[id],trd[reverse(id)])
+        x=vcat(id[1],id,reverse(id))
+        lines!(ax,x,y, color=:black)=#
+        scatter!(ax,id,total[idx[id]], color=:black, markersize=3)
+        #scatter!(ax,id,trd[id], color=:black, markersize=4)
+
+    end
+
+    return nothing
 end
