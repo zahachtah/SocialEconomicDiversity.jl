@@ -177,7 +177,7 @@ incomes(sol::ODESolution) = incomes(sol.u[end], sol.prob.p)
         sum([abs(x[i] - x[j]) for i in 1:length(x), j in 1:length(x)]) / (2 * length(x) * sum(x))
     end
 
-    function regulation_scan(p; m=100, kR=0.0, kT=0.0, kG=0.0, kE=0.0, kI=0.0)
+    function regulation_scan(p; m=100, kR=0.2, kT=1.0, kG=0.2, kE=0.0, kI=0.0)
         r = range(0.0, stop=1.0-1.0/m, length=m)
         RR = zeros(m)
         WR = zeros(m)

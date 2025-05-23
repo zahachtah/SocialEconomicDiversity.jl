@@ -239,25 +239,26 @@ function monte_carlo_scan(;N=1, k=[1.0,0.0,-0.0,0.0], optvar=false)
     return O
 end
 
-function monte_carlo_scan2(; N=1, k=[1.0, 0.0, -0.0, 0.0], optvar=false)
+function monte_carlo_scan2(; M=1,N=100, k=[1.0, 0.0, -0.0, 0.0], optvar=false, mode=:mixed)
     RE = []
     O  = []
-    j = 1
 
-    while j < N
+j=1
+    Pars=MCdist(M*2;mode)
+
+
+    while j<=M && j<size(Pars,1)
         mod(j,100)==0 ? print(string(j) * ", ") : nothing
-
-        #–– sample uncertainty
-        mean_w̃  = rand()
-        sigma_w̃ = rand()
-        mean_ū   = 2 * rand()
-        sigma_ū  = (1-2*rand()) * mean_ū
+        q=range(Pars[j,1]-Pars[j,2],stop=Pars[j,1]+Pars[j,2],length=N)./N
+        w=sed(mean=Pars[j,3], sigma=Pars[j,4], distribution=LogNormal)
+        dist!(w,N)
 
         #–– build & simulate baseline
         s = scenario(
             base(),
-            w̃ = sed(mean=mean_w̃,  sigma=sigma_w̃, distribution=LogNormal),
-            ū = sed(mean=mean_ū,    sigma=sigma_ū,   normalize=true)
+            w̃ = sed(data=w./q),
+            ū = sed(data=q),
+            wonky=R[j,5]
         )
         sol = sim(s)
 
@@ -340,7 +341,7 @@ function monte_carlo_scan2(; N=1, k=[1.0, 0.0, -0.0, 0.0], optvar=false)
 end
 1+1
 
-GR=monte_carlo_scan2(N=1000, k=[0.2,1.0,-0.2,0.1])
+GR=monte_carlo_scan2(M=4000, k=[0.2,1.0,-0.2,0.05])
 
 function analyzePolicies(A; goal=:relative_score)
     bgc=:gray
@@ -389,15 +390,15 @@ function analyzePoliciesY0(A; goal=:relative_score)
     wm=median([median(s.w̃) for s in A ])
     um=median([median(s.ū) for s in A ])
     policies=unique([s.name for s in A])
-    f=Figure(size=(800,1000), title=string(goal))
+    f=Figure(size=(400,400), title=string(goal))
     a1=Axis(f[2,1],ylabel="moderately overfished", backgroundcolor=bgc)
     hidexdecorations!(a1)
     a2=Axis(f[3,1], ylabel="highly overfished", backgroundcolor=bgc, xticks=(1:length(policies),policies), xticklabelrotation=-pi/4, xticklabelcolor=ColorSchemes.tab20[1:length(policies)])
     a3=Axis(f[2,2], backgroundcolor=bgc)
     hidexdecorations!(a3)
     a4=Axis(f[3,2],  backgroundcolor=bgc, xticks=(1:length(policies),policies), xticklabelrotation=-pi/4, xticklabelcolor=ColorSchemes.tab20[1:length(policies)])
-    a5=Axis(f[4,1], xlabel="std(w̃)", backgroundcolor=bgc)
-    a6=Axis(f[4,2], xlabel="std(ū)", backgroundcolor=bgc)
+   # a5=Axis(f[4,1], xlabel="std(w̃)", backgroundcolor=bgc)
+   # a6=Axis(f[4,2], xlabel="std(ū)", backgroundcolor=bgc)
     Label(f[1,1],text="Low w̃", tellwidth=false)
     Label(f[1,2],text="High w̃", tellwidth=false)
     Label(f[0,1:2],text=string(goal),fontsize=30, tellwidth=false)
@@ -419,11 +420,185 @@ function analyzePoliciesY0(A; goal=:relative_score)
         id4=findall([median(s.w̃) for s in A].>wm .&& [s.y0 for s in A].<0.25)
         scatter!(a4,[findall(s.name.==policies)[1]+mw.*(0.5 .- rand()) for s in A[id4]],[s[goal] for s in A[id4]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id4]]]; markersize,alpha)
         plotMedians(A,a4,id4, policies,goal)
-        scatter!(a5,[std(s.w̃) for s in A],[s[goal] for s in A],color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A]]; markersize,alpha)
-        scatter!(a6,[std(s.ū) for s in A],[s[goal] for s in A],color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A]]; markersize,alpha)
+        #scatter!(a5,[std(s.w̃) for s in A],[s[goal] for s in A],color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A]]; markersize,alpha)
+        #scatter!(a6,[std(s.ū) for s in A],[s[goal] for s in A],color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A]]; markersize,alpha)
 
         linkaxes!([a1,a2,a3,a4])
     f
+end
+
+function analyzePoliciesY02(A; goal=:relative_score)
+    bgc=:black
+    alpha=0.5
+    markersize=2
+    mw=1.0
+    C=clamp.([cov(s.w̃,s.ū).*100 for s in A],-1,1)
+
+    wm=median([median(s.w̃) for s in A ])
+    um=median([median(s.ū) for s in A ])
+    policies=unique([s.name for s in A])
+    f=Figure(size=(800,800), title=string(goal), rowgap=1, colgap=1)
+
+    goal=:relative_RR
+    a1=Axis(f[2,1],xreversed=true, yreversed=true,ylabel="moderately\noverfished", backgroundcolor=bgc, yticks=(1:length(policies),policies),  yticklabelcolor=ColorSchemes.tab20[1:length(policies)], ygridvisible=false)
+    hidexdecorations!(a1, grid=false)
+    a2=Axis(f[3,1],xreversed=true, yreversed=true, ylabel="highly\noverfished", xticks=([1,.9,.8,.7,.6,.5,.4],["1",".9",".8",".7",".6",".5",".4"]),backgroundcolor=bgc, yticks=(1:length(policies),policies),  yticklabelcolor=ColorSchemes.tab20[1:length(policies)], ygridvisible=false)
+    a3=Axis(f[2,2],xreversed=true, yreversed=true, backgroundcolor=bgc, ygridvisible=false)
+    hidexdecorations!(a3, grid=false)
+    hideydecorations!(a3)
+    a4=Axis(f[3,2],xreversed=true, yreversed=true,  backgroundcolor=bgc, ygridvisible=false, xticks=([1,.9,.8,.7,.6,.5,.4],["1",".9",".8",".7",".6",".5",".4"]))
+    hideydecorations!(a4)
+    Label(f[1,1],text="Low w̃", tellwidth=false)
+    Label(f[1,2],text="High w̃", tellwidth=false)
+    Label(f[0,1:2],text="Resource Revenue",fontsize=30, tellwidth=false)
+    [hidespines!(x) for x in [a1,a2,a3,a4]]
+
+    id1=findall([median(s.w̃) for s in A].<wm .&& [s.y0 for s in A].>0.25)
+    scatter!(a1,[s[goal] for s in A[id1]],[findall(s.name.==policies)[1].+clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id1]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id1]]]; markersize,alpha)
+    plotMedians(A,a1,id1, policies,goal)
+    score(a1,A,id1,goal)
+    id2=findall([median(s.w̃) for s in A].<wm .&& [s.y0 for s in A].<0.25) 
+    scatter!(a2,[s[goal] for s in A[id2]],[findall(s.name.==policies)[1].+clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id2]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id2]]]; markersize,alpha)
+    plotMedians(A,a2,id2, policies,goal)
+    score(a2,A,id2,goal)
+
+    id3=findall([median(s.w̃) for s in A].>wm .&& [s.y0 for s in A].>0.25)
+    scatter!(a3,[s[goal] for s in A[id3]],[findall(s.name.==policies)[1].+clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id3]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id3]]]; markersize,alpha)
+    plotMedians(A,a3,id3, policies,goal)
+    score(a3,A,id3,goal)
+    id4=findall([median(s.w̃) for s in A].>wm .&& [s.y0 for s in A].<0.25)
+    scatter!(a4,[s[goal] for s in A[id4]],[findall(s.name.==policies)[1].+clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id4]],[s[goal] for s in A[id4]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id4]]]; markersize,alpha)
+    plotMedians(A,a4,id4, policies,goal)
+    score(a4,A,id4,goal)
+    [xlims!(a,1.01,0.4) for a in [a1,a2,a3,a4]]
+    linkaxes!([a1,a2,a3,a4])
+
+    goal=:relative_ToR
+    a1=Axis(f[2,3],xreversed=true, yreversed=true,ylabel="moderately\noverfished", backgroundcolor=bgc, yticks=(1:length(policies),policies),  yticklabelcolor=ColorSchemes.tab20[1:length(policies)], ygridvisible=false)
+    hidexdecorations!(a1, grid=false)
+    hideydecorations!(a1)
+    a2=Axis(f[3,3],xreversed=true, yreversed=true, ylabel="highly\noverfished", xticks=([1,.9,.8,.7,.6,.5,.4],["1",".9",".8",".7",".6",".5",".4"]),backgroundcolor=bgc, yticks=(1:length(policies),policies),  yticklabelcolor=ColorSchemes.tab20[1:length(policies)], ygridvisible=false)
+    hideydecorations!(a2)
+    a3=Axis(f[2,4],xreversed=true, yreversed=true, backgroundcolor=bgc, ygridvisible=false)
+    hidexdecorations!(a3, grid=false)
+    hideydecorations!(a3)
+    a4=Axis(f[3,4],xreversed=true, yreversed=true,  backgroundcolor=bgc, ygridvisible=false, xticks=([1,.9,.8,.7,.6,.5,.4],["1",".9",".8",".7",".6",".5",".4"]))
+    hideydecorations!(a4)
+    Label(f[1,3],text="Low w̃", tellwidth=false)
+    Label(f[1,4],text="High w̃", tellwidth=false)
+    Label(f[0,3:4],text="Total Revenue",fontsize=30, tellwidth=false)
+    [hidespines!(x) for x in [a1,a2,a3,a4]]
+
+    id1=findall([median(s.w̃) for s in A].<wm .&& [s.y0 for s in A].>0.25)
+    scatter!(a1,[s[goal] for s in A[id1]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id1]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id1]]]; markersize,alpha)
+    plotMedians(A,a1,id1, policies,goal)
+    score(a1,A,id1,goal)
+    id2=findall([median(s.w̃) for s in A].<wm .&& [s.y0 for s in A].<0.25) 
+    scatter!(a2,[s[goal] for s in A[id2]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id2]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id2]]]; markersize,alpha)
+    plotMedians(A,a2,id2, policies,goal)
+    score(a2,A,id2,goal)
+
+    id3=findall([median(s.w̃) for s in A].>wm .&& [s.y0 for s in A].>0.25)
+    scatter!(a3,[s[goal] for s in A[id3]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id3]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id3]]]; markersize,alpha)
+    plotMedians(A,a3,id3, policies,goal)
+    score(a3,A,id3,goal)
+
+    id4=findall([median(s.w̃) for s in A].>wm .&& [s.y0 for s in A].<0.25)
+    scatter!(a4,[s[goal] for s in A[id4]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id4]],[s[goal] for s in A[id4]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id4]]]; markersize,alpha)
+    plotMedians(A,a4,id4, policies,goal)
+    score(a4,A,id4,goal)
+    [xlims!(a,1.01,0.4) for a in [a1,a2,a3,a4]]
+    linkaxes!([a1,a2,a3,a4])
+
+    goal=:relative_GI
+    a1=Axis(f[5,1],xreversed=true, yreversed=true,ylabel="moderately\noverfished", backgroundcolor=bgc, yticks=(1:length(policies),policies),  yticklabelcolor=ColorSchemes.tab20[1:length(policies)], ygridvisible=false)
+    hidexdecorations!(a1, grid=false)
+    a2=Axis(f[6,1],xreversed=true, yreversed=true, ylabel="highly\noverfished", xticks=([1,.9,.8,.7,.6,.5,.4],["1",".9",".8",".7",".6",".5",".4"]),backgroundcolor=bgc, yticks=(1:length(policies),policies),  yticklabelcolor=ColorSchemes.tab20[1:length(policies)], ygridvisible=false)
+    a3=Axis(f[5,2],xreversed=true, yreversed=true, backgroundcolor=bgc, ygridvisible=false)
+    hidexdecorations!(a3, grid=false)
+    hideydecorations!(a3)
+    a4=Axis(f[6,2],xreversed=true, yreversed=true,  backgroundcolor=bgc, ygridvisible=false, xticks=([1,.9,.8,.7,.6,.5,.4],["1",".9",".8",".7",".6",".5",".4"]))
+    hideydecorations!(a4)
+    Label(f[4,1:2],text="Gini",fontsize=30, tellwidth=false)
+    [hidespines!(x) for x in [a1,a2,a3,a4]]
+    id1=findall([median(s.w̃) for s in A].<wm .&& [s.y0 for s in A].>0.25) #mw.*(0.5 .- rand())
+    scatter!(a1,[s[goal] for s in A[id1]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id1]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id1]]]; markersize,alpha)
+    plotMedians(A,a1,id1, policies,goal)
+    score(a1,A,id1,goal)
+    id2=findall([median(s.w̃) for s in A].<wm .&& [s.y0 for s in A].<0.25) 
+    scatter!(a2,[s[goal] for s in A[id2]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id2]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id2]]]; markersize,alpha)
+    plotMedians(A,a2,id2, policies,goal)
+    score(a2,A,id2,goal)
+
+    id3=findall([median(s.w̃) for s in A].>wm .&& [s.y0 for s in A].>0.25)
+    scatter!(a3,[s[goal] for s in A[id3]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id3]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id3]]]; markersize,alpha)
+    plotMedians(A,a3,id3, policies,goal)
+    score(a3,A,id3,goal)
+
+    id4=findall([median(s.w̃) for s in A].>wm .&& [s.y0 for s in A].<0.25)
+    scatter!(a4,[s[goal] for s in A[id4]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id4]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id4]]]; markersize,alpha)
+    plotMedians(A,a4,id4, policies,goal)
+    score(a4,A,id4,goal)
+    [xlims!(a,1.01,0.4) for a in [a1,a2,a3,a4]]
+    linkaxes!([a1,a2,a3,a4])
+
+
+    goal=:relative_score
+    a1=Axis(f[5,3],xreversed=true, yreversed=true,ylabel="moderately\noverfished", backgroundcolor=bgc, yticks=(1:length(policies),policies),  yticklabelcolor=ColorSchemes.tab20[1:length(policies)], ygridvisible=false)
+    hidexdecorations!(a1, grid=false)
+    hideydecorations!(a1)
+    a2=Axis(f[6,3],xreversed=true, yreversed=true, ylabel="highly\noverfished", xticks=([1,.9,.8,.7,.6,.5,.4],["1",".9",".8",".7",".6",".5",".4"]),backgroundcolor=bgc, yticks=(1:length(policies),policies),  yticklabelcolor=ColorSchemes.tab20[1:length(policies)], ygridvisible=false)
+    hideydecorations!(a2)
+    a3=Axis(f[5,4],xreversed=true, yreversed=true, backgroundcolor=bgc, ygridvisible=false)
+    hidexdecorations!(a3, grid=false)
+    hideydecorations!(a3)
+    a4=Axis(f[6,4],xreversed=true, yreversed=true,  backgroundcolor=bgc, ygridvisible=false, xticks=([1,.9,.8,.7,.6,.5,.4],["1",".9",".8",".7",".6",".5",".4"]))
+    hideydecorations!(a4)
+    Label(f[4,3:4],text="Governance goal",fontsize=30, tellwidth=false)
+    [hidespines!(x) for x in [a1,a2,a3,a4]]
+
+    id1=findall([median(s.w̃) for s in A].<wm .&& [s.y0 for s in A].>0.25)
+    scatter!(a1,[s[goal] for s in A[id1]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id1]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id1]]]; markersize,alpha)
+    plotMedians(A,a1,id1, policies,goal)
+    score(a1,A,id1,goal)
+    id2=findall([median(s.w̃) for s in A].<wm .&& [s.y0 for s in A].<0.25) 
+    scatter!(a2,[s[goal] for s in A[id2]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id2]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id2]]]; markersize,alpha)
+    plotMedians(A,a2,id2, policies,goal)
+    score(a2,A,id2,goal)
+
+    id3=findall([median(s.w̃) for s in A].>wm .&& [s.y0 for s in A].>0.25)
+    scatter!(a3,[s[goal] for s in A[id3]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id3]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id3]]]; markersize,alpha)
+    plotMedians(A,a3,id3, policies,goal)
+    score(a3,A,id3,goal)
+
+    id4=findall([median(s.w̃) for s in A].>wm .&& [s.y0 for s in A].<0.25)
+    scatter!(a4,[s[goal] for s in A[id4]],[findall(s.name.==policies)[1].-clamp.(cov(s.w̃,s.ū).*50 ,-1,1) for s in A[id4]],[s[goal] for s in A[id4]], color=ColorSchemes.tab20[[findall(s.name.==policies)[1] for s in A[id4]]]; markersize,alpha)
+    plotMedians(A,a4,id4, policies,goal)
+    score(a4,A,id4,goal)
+    [xlims!(a,1.01,0.4) for a in [a1,a2,a3,a4]]
+    linkaxes!([a1,a2,a3,a4])
+
+    f
+end
+
+
+
+f6=analyzePoliciesY02(GR, goal=:relative_GI)
+
+save(homedir()*"/.julia/dev/SocialEconomicDiversity/figures/figure6.png",f6)
+
+A=GR
+id1=findall([median(s.w̃) for s in A].<1 .&& [s.y0 for s in A].>0.25)
+
+function score(a,A,id,goal, p=0.99)
+    S=zeros(6)
+    Su=zeros(6)
+    for i in 1:Int64(round(length(id)/6))
+        s=[A[id[(i-1)*6+j]][goal] for j in 1:6 ]
+        S.+=s.>p
+        Su.+=s.>p .&& sum(s.>p)==1
+    end
+    [text!(a,0.41,i,text=rich(string(Int64(Su[i]))," ",rich(string(Int64(S[i])), color=:darkorange), color=:white, fontsize=10), align=(:right,:center)) for i in 1:6]
 end
 
 function analyzePoliciesSigma(A; goal=:relative_score)
@@ -434,9 +609,11 @@ function analyzePoliciesSigma(A; goal=:relative_score)
     f=Figure(size=(800,1000), title=string(goal))
     a1=Axis(f[2,1],ylabel="positive correlation", backgroundcolor=bgc)
     hidexdecorations!(a1)
+    
     a2=Axis(f[3,1], ylabel="negative correlation", backgroundcolor=bgc, xticks=(1:length(policies),policies), xticklabelrotation=-pi/4, xticklabelcolor=ColorSchemes.tab20[1:length(policies)])
     a3=Axis(f[2,2], backgroundcolor=bgc)
     hidexdecorations!(a3)
+    hideydecorations!(a3)
     a4=Axis(f[3,2],  backgroundcolor=bgc, xticks=(1:length(policies),policies), xticklabelrotation=-pi/4, xticklabelcolor=ColorSchemes.tab20[1:length(policies)])
     a5=Axis(f[4,1], xlabel="std(w̃)", backgroundcolor=bgc)
     a6=Axis(f[4,2], xlabel="std(ū)", backgroundcolor=bgc)
@@ -478,12 +655,12 @@ xs = 1:length(policies)
 
 # 3) overplot as big black diamonds
 scatter!(a1,
-xs, medians;
-marker     = :diamond,
-markersize = 8,
-color      = :transparent,
-strokewidth= 1.5,
-strokecolor=:black
+medians,xs;
+marker     = :dot,
+markersize = 6,
+color      = :white,
+strokewidth= 0,
+strokecolor=:white,
 )
 end
 

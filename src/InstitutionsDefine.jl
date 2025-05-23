@@ -53,10 +53,16 @@ function aur_plot!(a,s; colorid=1, colorscheme=ColorSchemes.tab20, regulation=0.
     Γ_plot!(a,sol;color)
     Φ_plot!(a,sol, linewidth=1; color)
     attractor_plot!(a,sol; color)
-
+#=
     id=findall(p.R.==1.0)
     y=range(0.0,stop=1.0,length=p.N)
     z=Γ.(p.w̃[id], Ref(scenario(p,policy="Open Access")))
+
+    lines!(a,p.w̃[id],max.(0.005,z), color=:red, linewidth=2)=#
+
+    id=findall(p.R.==1.0)
+    y=range(0.0,stop=1.0,length=p.N)
+    z=Γ.(p.w̃[id], Ref(p))
 
     lines!(a,p.w̃[id],max.(0.005,z), color=:red, linewidth=2)
          
@@ -112,207 +118,6 @@ function ei_plot!(a,s;colorid=1, colorscheme=ColorSchemes.tab20, regulation=0.75
 end
 
 
-
-function oldFig4()# using SocialEconomicDiversity, CairoMakie
-set_theme!(theme_light())
-labelsize=25
-annotation_font_size=18
-annotation_font_color=:black
-#Test with historical use rights
-s=high_impact(N=100)
-s1=scenario(s,policy="Open Access")
-s2a=scenario(s,policy="Exclusive Use Rights", reverse=true)
-s2b=scenario(s,policy="Exclusive Use Rights", reverse=false)
-s3a=scenario(s,policy="Tradable Use Rights", policy_target=:effort, market_rate=0.05)
-s3b=scenario(s,policy="Tradable Use Rights", policy_target=:yield, market_rate=0.05)
-s4a=scenario(s,policy="Protected Area", m=0.3)
-s4b=scenario(s,policy="Protected Area", m=0.3)
-s5=scenario(s,policy="Economic Incentives", policy_target=:μ, policy_method=:taxation)
-s6a=scenario(s,policy="Development")
-s6b=scenario(SocialEconomicDiversity.change(s,ū=sed(mean=0.5,sigma=0.0, normalize=true)),policy="Development")
-
-# Switch back to using "regulation" instead of regulation
-
-regulation=0.5
-f=Figure(size=(900+300,1800))
-a1=Axis(f[1,3])#,title=s1.policy)
-a2=Axis(f[2,3])#,title=s2a.policy)
-a3=Axis(f[3,3])#,title=s3a.policy)
-a4=Axis(f[4,3])#,title=s4a.policy)
-a5=Axis(f[5,3])#,title=s5.policy)
-a6=Axis(f[6,3])#,title=s6.policy)
-[hidedecorations!(a) for a in [a1,a2,a3,a4,a5]]
-
-#Open access
-oa_color=ColorSchemes.tab20[16]
-sol=sim(s1;regulation=0.0)
-
-bg_plot!(a1)
-Γ_plot!(a1,sol, color=oa_color)
-Φ_plot!(a1,sol, color=oa_color, linewidth=1)
-attractor_plot!(a1,sol, color=oa_color)
-trajecory_plot!(a1,sol, color=oa_color)
-
-#assigned use rights
-aur1_color=ColorSchemes.tab20[1]
-aur2_color=ColorSchemes.tab20[2]
-sol2a=sim(s2a;regulation=0.75)
-sol2b=sim(s2b;regulation=0.75)
-bg_plot!(a2)
-Γ_plot!(a2,sol, color=oa_color)
-Γ_plot!(a2,sol2a, color=aur1_color)
-Γ_plot!(a2,sol2b, color=aur2_color)
-Φ_plot!(a2,sol2a, color=oa_color, linewidth=1)
-attractor_plot!(a2,sol2a, color=aur1_color)
-attractor_plot!(a2,sol2b, color=aur2_color)
-arrows!(a2,[0.05],[0.25],[0.0],[0.72],color=aur1_color, linewidth=1)
-arrows!(a2,[0.05],[1.0],[0.0],-[0.72],color=aur1_color, linewidth=1)
-text!(a2,0.07,0.85,text="high w̃ excluded", color=aur1_color, font=:bold, fontsize=annotation_font_size)
-
-arrows!(a2,[0.14],[0.0],[0.0],[0.72],color=aur2_color, linewidth=1)
-arrows!(a2,[0.14],[0.75],[0.0],-[0.72],color=aur2_color, linewidth=1)
-text!(a2,0.16,0.5,text="low w̃ excluded", color=aur2_color, font=:bold, fontsize=annotation_font_size)
-attractor_plot!(a2,sol, color=oa_color)
-
-#tradable use rights
-tur1_color=ColorSchemes.tab20[3]
-tur2_color=ColorSchemes.tab20[4]
-sol3a=sim(s3a;regulation=0.51)
-sol3b=sim(s3b;regulation=0.75)
-bg_plot!(a3)
-Γ_plot!(a3,sol, color=oa_color)
-Γ_plot!(a3,sol3a, color=tur1_color)
-Γ_plot!(a3,sol3b, color=tur2_color)
-Φ_plot!(a3,sol3a, color=oa_color, linewidth=1)
-attractor_plot!(a3,sol3a, color=tur1_color)
-attractor_plot!(a3,sol3b, color=tur2_color)
-target_plot!(a3,sol3a,color=tur1_color, linewidth=2)
-target_plot!(a3,sol3b,color=tur2_color, linewidth=2)
-arrows!(a3,[0.1], [0.5], [0.4], [0.0], color=tur1_color)
-text!(a3,0.12,0.52,text="Price ϕ=0.45", color=tur1_color, font=:bold, fontsize=annotation_font_size)
-text!(a3,0.52,0.11,text="Yield limit=0.25", color=tur2_color, font=:bold, rotation=-pi/17, fontsize=annotation_font_size)
-text!(a3,0.55,0.27,text="Effort limit=0.5", color=tur1_color, font=:bold, fontsize=annotation_font_size)
-attractor_plot!(a3,sol, color=oa_color)
-
-
-#Understand why regulation=0.0 || start_oa=true makes error for Protected Area!
-pa1_color=ColorSchemes.tab20[5]
-pa2_color=ColorSchemes.tab20[6]
-pa1_sol=sim(s4b;regulation=0.3)
-pa2_sol=sim(s4b;regulation=0.5)
-pa3_sol=sim(s4b;regulation=0.7)
-pa4_sol=sim(s4b;regulation=0.8)
-pa5_sol=sim(s4b;regulation=0.9)
-pa6_sol=sim(s4b;regulation=0.95)
-bg_plot!(a4)
-Φ_plot!(a4,sol, color=oa_color, linewidth=1)
-Γ_plot!(a4,sol, color=oa_color)
-cases=[pa4_sol]
-[Γ_plot!(a4,sol, color=pa1_color) for sol in cases]
-[Φ_plot!(a4,sol, color=pa1_color, linewidth=1) for sol in cases]
-APA=[sim(s4b;regulation=r) for r in range(0.0,stop=1.0,length=40)]
-[attractor_plot!(a4,sim(s4b;regulation=r), color=pa2_color, markersize=8) for r in range(0.0,stop=1.0,length=40)]
-#arrow_arc!(a4, [0.0,0.0], 0.75, pi/2-pi/10, pi/8)
-arrow_arc_deg!(a4, [0.0,0.0], 0.85, 14, 37, color=pa1_color, linewidth=1, linestyle=:solid)
-text!(a4,0.26,0.82,text="Exclusion", color=pa1_color, font=:bold, rotation=-pi/8, fontsize=annotation_font_size)
-arrow_arc_deg!(a4, [0.7,0.16], 0.35, -59, -34, color=pa1_color, linewidth=1, linestyle=:solid)
-text!(a4,0.45,0.22,text="Spillover", color=pa1_color, font=:bold, rotation=pi/4, fontsize=annotation_font_size)
-attractor_plot!(a4,sim(s4b;regulation=0.3), color=pa1_color, markersize=8)
-attractor_plot!(a4,sim(s4b;regulation=0.8), color=pa1_color, markersize=8)
-text!(a4,0.16,0.53,text="fₚ=0.3", color=pa1_color, font=:bold, fontsize=annotation_font_size)
-text!(a4,0.53,0.56,text="fₚ=0.8", color=pa1_color, font=:bold, fontsize=annotation_font_size)
-attractor_plot!(a4,sol, color=oa_color)
-
-# Economic incentives
-ei1_color=ColorSchemes.tab20[7]
-ei2_color=ColorSchemes.tab20[8]
-phase_plot!(a5,sim(s5;regulation))
-
-#development
-d1_color=ColorSchemes.tab20[9]
-d2_color=ColorSchemes.tab20[10]
-sol6a=sim(s6a;regulation)
-sol6b=sim(s6b;regulation)
-Γ_plot!(a6,sol, color=oa_color)
-Φ_plot!(a6,sol6a, color=d1_color, linewidth=1)
-Φ_plot!(a6,sol6b, color=d2_color, linewidth=1)
-Γ_plot!(a6,sol6a, color=d1_color)
-attractor_plot!(a6,sim(s6a;regulation=0.0), color=oa_color, markersize=8)
-attractor_plot!(a6,sim(s6a;regulation=1.0), color=oa_color, markersize=8)
-attractor_plot!(a6,sim(s6b;regulation=1.0), color=oa_color, markersize=8)
-trajecory_plot!(a6,sol6a, color=d1_color)
-trajecory_plot!(a6,sol6b, color=d2_color)
-#phase_plot!(a6,sol6a,show_trajectory=true, t=0.0)
-#phase_plot!(a6,sol,show_trajectory=true, t=500.0)
-#phase_plot!(a6,sol6a,show_trajectory=true, t=1000.0, show_exploitation=false)
-#phase_plot!(a6,sol6b,show_trajectory=true, t=1000.0, show_exploitation=false)
-
-a12=Axis(f[1,2],aspect=DataAspect(),width=320)
-hidespines!(a12)
-hidedecorations!(a12)
-img=load(assetpath(homedir()*"/.julia/dev/SocialEconomicDiversity/Latex/OpenAccess.tex.png"))
-image!(a12, rotr90(img))
-
-a32=Axis(f[3,2],aspect=DataAspect(),width=320)
-hidespines!(a32)
-hidedecorations!(a32)
-img=load(assetpath(homedir()*"/.julia/dev/SocialEconomicDiversity/Latex/TradableUseRights_short.tex.png"))
-image!(a32, rotr90(img))
-
-
-a11=Axis(f[1,1], width=450,limits=(0,1,0,1))
-hidespines!(a11)
-hidedecorations!(a11)
-text!(a11,0.0,0.9,text=rich("Open access", color=:darkgray, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(a11,0.0,0.9,text="In the absence of any policy incentives, actors base their use of resource on the incentives provided by the alternative opportunity cost such as wage labor.  In the absence of any policy incentives, actors base their use of resource on the incentives provided by the alternative opportunity cost such as wage labor.  In the absence of any policy incentives, actors base their use of resource on the incentives provided by the alternative opportunity cost such as wage labor", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
-
-a21=Axis(f[2,1], width=450,limits=(0,1,0,1))
-hidespines!(a21)
-hidedecorations!(a21)
-text!(a21,0.0,0.9,text=rich("Exclusive use rights", color=aur1_color, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(a21,0.0,0.9,text="In the absence of any policy incentives, actors base their use of resource on the incentives provided by the alternative opportunity cost such as wage labor.  In the absence of any policy incentives, actors base their use of resource on the incentives provided by the alternative opportunity cost such as wage labor.  In the absence of any policy incentives, actors base their use of resource on the incentives provided by the alternative opportunity cost such as wage labor", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
-
-
-a31=Axis(f[3,1], width=450,limits=(0,1,0,1))
-hidespines!(a31)
-hidedecorations!(a31)
-text!(a31,0.0,0.9,text=rich("Tradable use rights", color=tur1_color, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(a31,0.0,0.9,text="Tradable use rights are modeled to capture the dynamics of resource allocation and usage. The equations describe how individual utility depends on direct usage, costs from deviations in allocation, and market-based rights values. Resource utilization changes based on yield and costs, with limits set by predefined caps. The value of tradable rights adjusts dynamically with market demand and supply, influencing the overall costs of usage. These equations provide a framework for understanding how tradable rights integrate market forces into resource management, promoting efficiency and sustainability.", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
-
-
-
-a41=Axis(f[4,1], width=450,limits=(0,1,0,1))
-hidespines!(a41)
-hidedecorations!(a41)
-t="text"
-text!(a41,0.0,0.9,text=rich("Protected areas", color=pa1_color, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(a41,0.0,0.9,text=L"Some %$(t) and some math: $\frac{2\alpha+1}{y}$, Tradable use rights are modeled to capture the dynamics of resource allocation and usage. The equations describe how individual utility depends on direct usage, costs from deviations in allocation, and market-based rights values. Resource utilization changes based on yield and costs, with limits set by predefined caps. The value of tradable rights adjusts dynamically with market demand and supply, influencing the overall costs of usage. These equations provide a framework for understanding how tradable rights integrate market forces into resource management, promoting efficiency and sustainability.", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
-
-a51=Axis(f[5,1], width=450,limits=(0,1,0,1))
-hidespines!(a51)
-hidedecorations!(a51)
-text!(a51,0.0,0.9,text=rich("Economic incentives", color=ei1_color, font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(a51,0.0,0.9,text="Taxes & subsidies can be implemented to adjust the incentives of user by affecting the price of the resource or the cost of extraction. Subsidies move the inentives left while taxes move them right. Indirectly, economic incentives such as loans for gear can result in an increase in impact curve downward or by applying a fee for certain gears can move the impact curve up.", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
-
-a61=Axis(f[6,1], width=450,limits=(0,1,0,1))
-hidespines!(a61)
-hidedecorations!(a61)
-text!(a61,0.0,0.9,text=rich("Development trajectories", color=ColorSchemes.tab20[9], font=:bold, fontsize=25), word_wrap_width=440, fontsize=18, font="georgia", space=:relative)
-text!(a61,0.0,0.9,text="Alternative income opportunitites and harvest efficiencies increase as development proceeds over time. As a result, both incentive and impact curves change. For a high impact starting point this means a steady increase in resource levels as the effect of incentives outweighs the effect of higher impacts. For a low impact starting point, we find a Kuznets type behavior with initial reduction in resource levels and subsequent recovery.", word_wrap_width=440, fontsize=18, font="georgia", space=:relative, align=(:left, :top))
-
-
-
-Label(f[0,1], "Policy instruments:", fontsize=labelsize, tellwidth=false,color=:black, font=:bold, halign=:left)
-Label(f[0,2], "Formalization", fontsize=labelsize, tellwidth=false,color=:black, font=:bold)
-Label(f[0,3], "Visualization", fontsize=labelsize, tellwidth=false,color=:black, font=:bold)
-
-
-
-println(sum(incomes(sol3a.u[end-1],sol3a.prob.p).trade))
-f
-end
-#ftemp
-oldFig4()
 #save("figures/Figure_4.png",f)
 
 #= Do universal basic incomes add to w̃ or do they max(w̃,UBI)? UBI does not "take away" from ū as it is not linked to use of time, meaning that alternative opporunities are added on top of UBI?
@@ -387,7 +192,7 @@ function tradable_use_rights_plot()
 end
 save(homedir()*"/.julia/dev/SocialEconomicDiversity/figures/Tradable_Use_Rights.png",tradable_use_rights_plot())
 
-function development_plot()
+function development_plot(;s=base())
     f=Figure(size=(400,400))
     a_d=Axis(f[1,1])
     annotation_font_size=18
@@ -424,7 +229,7 @@ function development_plot()
 end
 save(homedir()*"/.julia/dev/SocialEconomicDiversity/figures/development.png",development_plot())
 
-function economic_incentives_plot()
+function economic_incentives_plot(;s=base())
     annotation_font_size=18
     f=Figure(size=(400,400))
     a_ei=Axis(f[1,1])
@@ -494,8 +299,9 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=base(N=1000))
     b_pa2=Axis(f[8,3])#,title=s4a.policy)
     b_ei_1=Axis(f[9,3])#,title=s5.policy)
     b_ei_2=Axis(f[10,3])
-    b_d=Axis(f[11:12,3])#,title=s6.policy)
-    [hidedecorations!(a) for a in [b_oa_1,b_aur_1,b_aur_2,b_tur_1,b_tur_2,b_pa1,b_pa2,b_ei_1,b_ei_2, b_d]]
+    b_d=Axis(f[11:12,3], xlabel="development time →" )#,title=s6.policy)
+    [hidedecorations!(a) for a in [b_oa_1,b_aur_1,b_aur_2,b_tur_1,b_tur_2,b_pa1,b_pa2,b_ei_1,b_ei_2]]
+    [hidespines!(a) for a in [b_oa_1,b_aur_1,b_aur_2,b_tur_1,b_tur_2,b_pa1,b_pa2,b_ei_1,b_ei_2, b_d]]
     t_oa=Axis(f[1:2,1])#,title=s1.policy)
     t_aur=Axis(f[3:4,1])#,title=s2a.policy)
     t_tur=Axis(f[5:6,1])#,title=s3a.policy)
@@ -503,6 +309,7 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=base(N=1000))
     t_ei=Axis(f[9:10,1])#,title=s5.policy)
     t_d=Axis(f[11:12,1])#,title=s6.policy)
     [hidedecorations!(a) for a in [t_oa,t_aur,t_tur,t_pa,t_ei, t_d]]
+    [hidespines!(a) for a in [t_oa,t_aur,t_tur,t_pa,t_ei, t_d]]
     colsize!(f.layout, 2, Relative(0.3))
     colsize!(f.layout, 3, Relative(1/4))
 
@@ -572,12 +379,12 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=base(N=1000))
     attractor_plot!(a_d,sim(s6b;regulation=0.9), color=ColorSchemes.tab20[9], markersize=20)
     #trajecory_plot!(a_d,sol6a, color=d1_color, linewidth=4)
     trajecory_plot!(a_d,sol6b, color=d2_color, linewidth=4)
-    arrows!(a_d,[0.15], [0.78], [0.18], [-0.08], color=d2_color, linewidth=2)
-    text!(a_d,0.0, 0.99,text="Environmental\nKuznets\ntrajectory", align=(:left,:top),color=d2_color, font=:bold, fontsize=annotation_font_size)
+    #arrows!(a_d,[0.15], [0.78], [0.18], [-0.08], color=d2_color, linewidth=2)
+    #text!(a_d,0.0, 0.99,text="Environmental\nKuznets\ntrajectory", align=(:left,:top),color=d2_color, font=:bold, fontsize=annotation_font_size)
    # text!(a_d,0.55, 0.3,text="Development\nwith high \ninitial impact", align=(:left,:top),color=ColorSchemes.tab20[7], font=:bold, fontsize=annotation_font_size)
     arrow_arc_deg!(a_d, [1.0,0.0], 0.55, -29,-52, color=d2_color, linewidth=2, linestyle=:solid, flip_arrow=true)
-    text!(a_d,0.62,0.26,text="Impact\n    ū(t)", color=d2_color, font=:bold, fontsize=annotation_font_size)
-    text!(a_d,0.38,0.68, text="time →", rotation=-pi/4-0.4, color=d2_color, fontsize=annotation_font_size)
+    text!(a_d,0.62,0.5,text="Technological\ndevelopment\nū(t)", color=d2_color, font=:bold, fontsize=annotation_font_size, glowcolor = (:white, 1.0), glowwidth=5.0)
+    text!(a_d,0.38,0.68, text="trajectory →", rotation=-pi/4-0.4, color=d2_color, fontsize=annotation_font_size)
     arrows!(a_d,[0.07], [0.2], [0.4], [0.0], color=d2_color, linewidth=2)
     text!(a_d,0.02,0.05,text="Socio-economic\ndevelopment w̃(t)", color=d2_color, font=:bold, fontsize=annotation_font_size)
 
@@ -634,17 +441,24 @@ function newFig4(; labelsize=25,annotation_font_size=18,s=base(N=1000))
 
     text!(b_ei_1,10,0.007, text="Taxes")
     text!(b_ei_2,10,0.007, text="Impact")
-    #arrow_arc_deg!(b_tur_1, [20,-0.002], 0.75, 20, 0.2, color=ColorSchemes.tab20[7], linewidth=1, linestyle=:solid)
-xlims!(b_d,0,1)
-ylims!(b_d,0,1)
-    for (i,tt) in enumerate([1,2/3,1/3,1/length(sol6b.t)])
-        t=Int(round(tt*length(sol6b.t)))
-        inc=incomes(sol6b.u[t],sol6b.prob.p)
-        #scatter!(b_d,(1:length(inc.total)).-i*50,inc.total.+(i-1)*maximum(inc.total))
-        text!(b_d,-i*50,+(i-1)*maximum(inc.total),text=incometext(incomes(sim(s6b,regulation=tt))), space=:relative,fontsize=annotation_font_size, color=ColorSchemes.tab20[9])
 
-    end
-    text!(b_d,0.4,0.5,text="Work in \nProgress",fontsize=24, font=:bold, space=:relative)
+    Ri=[sum(incomes(u,sol6b.prob.p).resource) for u in sol6b.u]  
+    Ti=[sum(incomes(u,sol6b.prob.p).total) for u in sol6b.u]  
+    Gi=[incomes(u,sol6b.prob.p).gini for u in sol6b.u] 
+    Ei=[u[end] for u in sol6b.u]   
+
+        #t=Int(round(tt*length(sol6b.t)))
+        #inc=incomes(sol6b.u[t],sol6b.prob.p)
+        #scatter!(b_d,(1:length(inc.total)).-i*50,inc.total.+(i-1)*maximum(inc.total))
+        #text!(b_d,-i*50,+(i-1)*maximum(inc.total),text=incometext(incomes(sim(s6b,regulation=tt))), space=:relative,fontsize=annotation_font_size, color=ColorSchemes.tab20[9])
+        lines!(b_d,sol6b.t[1:(end-2)],Ri[1:(end-2)], label="Resource income", linewidth=3,color=:crimson)
+        lines!(b_d,sol6b.t[1:(end-2)],Ti[1:(end-2)], label="Total income", linewidth=3,color=:darkorange)
+        lines!(b_d,sol6b.t[1:(end-2)],Gi[1:(end-2)], label="Gini", linewidth=3,color=:purple)
+        lines!(b_d,sol6b.t[1:(end-2)],Ei[1:(end-2)], label="Resource level", linewidth=3,color=:forestgreen)
+        text!(b_d,150, 0.45,text="Environmental\nKuznets trajectory", fontsize=annotation_font_size)
+    arrows!(b_d,[320],[0.45],[0],[-0.1])
+        axislegend(b_d,position=:rb, framevisible=false)
+    #text!(b_d,0.4,0.5,text="Work in \nProgress",fontsize=24, font=:bold, space=:relative)
 
     t="text"
     D=policy_descriptions()
@@ -730,134 +544,6 @@ function testPA(;regulation=0.2)
 end
 
 
-function Fig4(; labelsize=25, annotation_font_size=18, s = base(N=1000))
-    # Prepare figure and layout
-    base_size = 300
-    fig = Figure(size=(4*base_size, 7*base_size))
-    # Axes for outcomes
-    outcomes = [Axis(fig[i*2-1:i*2, 2]) for i in 1:6]
-    # Axes for distributional effects
-    dist_axes = (
-        Axis(fig[2,3]),
-        (Axis(fig[3,3]), Axis(fig[4,3])),
-        (Axis(fig[5,3]), Axis(fig[6,3])),
-        (Axis(fig[7,3]), Axis(fig[8,3])),
-        (Axis(fig[9,3]), Axis(fig[10,3])),
-        Axis(fig[11:12,3])
-    )
-    # Axes for descriptions
-    desc_axes = [Axis(fig[i*2-1:i*2, 1]) for i in 1:6]
-
-    # Hide decorations and spines
-    for ax in vcat(outcomes, collect(dist_axes)..., desc_axes)
-        hidedecorations!(ax)
-        hidespines!(ax)
-    end
-
-    # Adjust column widths
-    colsize!(fig.layout, 2, Relative(0.3))
-    colsize!(fig.layout, 3, Relative(1/4))
-
-    ########## System Outcomes ##########
-    # Open Access
-    s1 = scenario(s, policy="Open Access")
-    oa_plot!(outcomes[1], s1)
-
-    # Exclusive Use Rights
-    s2a = scenario(s, policy="Exclusive Use Rights", reverse=true)
-    s2b = scenario(s, policy="Exclusive Use Rights", reverse=false)
-    oa_plot!(outcomes[2], s2a)
-    aur_plot!(outcomes[2], s2a, regulation=0.5)
-    aur_plot!(outcomes[2], s2b, regulation=0.5, colorid=2)
-    text!(outcomes[2], 0.15, 0.0, text="Low w̃\nexclusion", space=:relative, fontsize=annotation_font_size)
-    text!(outcomes[2], 0.15, 0.51, text="High w̃\nexclusion", space=:relative, fontsize=annotation_font_size)
-
-    # Tradable Use Rights
-    s3a = scenario(s, policy="Tradable Use Rights", policy_target=:effort, market_rate=0.05)
-    s3b = scenario(s, policy="Tradable Use Rights", policy_target=:effort, market_rate=0.05, historical_use_rights=true)
-    tur_plot!(outcomes[3], s3a, regulation=0.51, colorid=3)
-    tur_plot!(outcomes[3], s3b, regulation=0.5, colorid=4)
-
-    # Protected Area
-    s4a = scenario(s, policy="Protected Area", m=0.2)
-    s4b = scenario(s, policy="Protected Area", m=0.5)
-    oa_plot!(outcomes[4], s1)
-    pa_plot!(outcomes[4], s4a, colorid=5, regulation=0.82)
-    pa_plot!(outcomes[4], s4b, colorid=6, regulation=0.3)
-
-    # Economic Incentives
-    s5a = scenario(s, policy="Economic Incentives", policy_target=:μ, policy_method=:subsidy)
-    s5b = scenario(s, policy="Economic Incentives", policy_target=:γ, policy_method=:taxation)
-    s5c = scenario(s, policy="Economic Incentives", policy_target=:γ, policy_method=:subsidy)
-    s5d = scenario(s, policy="Economic Incentives", policy_target=:γ, policy_method=:additive)
-    oa_plot!(outcomes[5], s1)
-    Φ_plot!(outcomes[5], sim(s5a, regulation=0.9), color=ColorSchemes.tab20[7], linewidth=1)
-    ei_plot!(outcomes[5], s5b, colorid=7)
-    ei_plot!(outcomes[5], s5c, colorid=7)
-    ei_plot!(outcomes[5], s5d, regulation=0.3, colorid=7)
-    arrow_arc_deg!(outcomes[5], [1.0,0.0], 0.65, -29, -62, color=ColorSchemes.tab20[7], linewidth=1)
-    text!(outcomes[5], 0.55, 0.3, text="Impact\n ē, q and r", font=:bold, rotation=pi/4, fontsize=annotation_font_size)
-    arrows!(outcomes[5], [0.07], [0.2], [0.25], [0.0], color=ColorSchemes.tab20[7])
-    text!(outcomes[5], 0.09, 0.1, text="Effort", font=:bold, fontsize=annotation_font_size)
-
-    # Development
-    s6a = scenario(s, policy="Development")
-    sol6a0 = sim(s6a, regulation=0.0)
-    u0_a, y0_a = sol6a0.u[end][1:end-1], sol6a0.u[end][end]
-    sol6a = sim(s6a, regulation=0.9, u0_a, y0_a)
-
-    s6b = scenario(s, ū=sed(mean=0.5, sigma=0.0, normalize=true), policy="Development", μ_value=4.9)
-    sol6b0 = sim(s6b, regulation=0.0)
-    u0_b, y0_b = sol6b0.u[end][1:end-1], sol6b0.u[end][end]
-    sol6b = sim(s6b, regulation=0.9, u0_b, y0_b)
-
-    Φ_plot!(outcomes[6], sol6b, color=ColorSchemes.tab20[9], linewidth=1)
-    Φ_plot!(outcomes[6], sol6b, color=ColorSchemes.tab20[9], linewidth=1, t=1000.0)
-    Γ_plot!(outcomes[6], sol6a, color=ColorSchemes.tab20[9], t=1000.0)
-    attractor_plot!(outcomes[6], sim(s6b, regulation=0.0), color=:darkgray, markersize=20)
-    attractor_plot!(outcomes[6], sim(s6b, regulation=0.9), color=ColorSchemes.tab20[9], markersize=20)
-    trajecory_plot!(outcomes[6], sol6b, color=ColorSchemes.tab20[9], linewidth=4)
-    arrows!(outcomes[6], [0.15], [0.8], [0.2], [-0.1], color=ColorSchemes.tab20[9])
-    text!(outcomes[6], 0.0, 0.99, text="Environmental\nKuznets\ncurve", align=(:left,:top), font=:bold, fontsize=annotation_font_size)
-
-    ########## Distributional Effects ##########
-    # Open Access
-    incomes_plot!(dist_axes[1], sim(s1, regulation=0.0), color=:lightgray)
-    text!(dist_axes[1], 0.0, 0.8, text=incometext(incomes(sim(s1, regulation=0.0))), space=:relative, fontsize=annotation_font_size)
-
-    # Exclusive Use
-    incomes_plot!(dist_axes[2][1], sim(s2a, regulation=0.5), color=ColorSchemes.tab20[1])
-    incomes_plot!(dist_axes[2][2], sim(s2b, regulation=0.47), color=ColorSchemes.tab20[2])
-    # (add texts...)
-
-    # Tradable Use
-    incomes_plot!(dist_axes[3][1], sim(s3a, regulation=0.5), color=ColorSchemes.tab20[3])
-    incomes_plot!(dist_axes[3][2], sim(s3b, regulation=0.5), color=ColorSchemes.tab20[4])
-
-    # Protected Area
-    incomes_plot!(dist_axes[4][1], sim(s4a, regulation=0.82), color=ColorSchemes.tab20[5])
-    incomes_plot!(dist_axes[4][2], sim(s4b, regulation=0.2 ), color=ColorSchemes.tab20[6])
-
-    # Economic Incentives
-    incomes_plot!(dist_axes[5][1], sim(s5a, regulation=0.4), color=ColorSchemes.tab20[7])
-    incomes_plot!(dist_axes[5][2], sim(s5b, regulation=0.4), color=ColorSchemes.tab20[8])
-
-    # Development
-    incomes_plot!(dist_axes[6], sim(s6b, regulation=0.9), color=ColorSchemes.tab20[9])
-
-    ########## Descriptions ##########
-    # Open Access
-    #text!(desc_axes[1], ...)
-    image!(desc_axes[1], rotr90(load(assetpath(".../OpenAccess.tex.png"))))
-    # (repeat for other policies)
-
-    # Column labels
-    Label(fig[0,1], text="Policy Instrument", fontsize=labelsize, font=:bold)
-    Label(fig[0,2], text="System\nOutcomes", fontsize=labelsize, font=:bold)
-    Label(fig[0,3], text="Distributional\nEffects", fontsize=labelsize, font=:bold)
-
-    return fig
-end
 
 function getfeatures(q)
     pol=unique([g.policy for g in GR3])

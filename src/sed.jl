@@ -362,6 +362,7 @@ Uses s.N as the length of the distributions.
 """
 function dist!(s)
     N = s.N
+
     
     # Identify all SED parameters
     sed_params = []
@@ -376,13 +377,27 @@ function dist!(s)
         if !has_deps
             dist!(v, N)
         end
-    end
+    end   
     
     # Then process dependent SEDs
     for (k, v, has_deps) in sed_params
+        println(v)
         if has_deps
+            
             dist!(v, N; context=s)
         end
+    end
+    if !haskey(s,:w̃) && haskey(s,:w) && haskey(s,:q) && haskey(s,:ē) && haskey(s,:p) && haskey(s,:r) && haskey(s,:K)
+        println("did")
+        s=(s...,w̃=sed(data=s.w./(s.q.*s.p.*s.K)))#dependent=(q=1.0, w=0.5, p=1,ē=1,r=1,K=1, fun=(dep -> dep.w ./( dep.q.*dep.p.*dep.K)))))
+    else
+        println("missing one of w,q,ē,p,K,r")
+    end
+
+    if !haskey(s,:ū) && haskey(s,:w) && haskey(s,:q) && haskey(s,:ē) && haskey(s,:p) && haskey(s,:r) && haskey(s,:K)
+        s=(s...,ū=sed(data=s.ē.*s.q./s.r))#dependent=(q=1.0, w=0.5, ē=1,  p=1,r=1,K=1, fun=(dep -> dep.ē .* dep.q ./ dep.r))))
+    else
+        println("missing one of w,q,ē,p,K,r")
     end
     
     return s

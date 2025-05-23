@@ -86,7 +86,7 @@ Create a phase plot with incentive and impact distributions, attractors, and tra
 """
 function phase_plot!(axis, sol; show_trajectory=false, show_target=false, open_access_color=:lightgray, 
                      incentive_line_color=:darkorange, impact_line_color=:darkorange, t=0.0, 
-                     show_exploitation=true, show_oa=true)
+                     show_exploitation=true, show_oa=true, trajectory_color=:gray)
     if show_exploitation
         poly!(axis, Rect(0, 0, 0.5, 1), color=HSLA(10, 0.0, 0.5, 0.1))
     end
@@ -121,9 +121,9 @@ function phase_plot!(axis, sol; show_trajectory=false, show_target=false, open_a
     if show_trajectory
         # Show trajectory
         lines!(axis, 
-               [u[scenario.N+1] for u in sol.u[1:end-1]], 
-               [sum(u[1:scenario.N]./scenario.μ(u, scenario, sol.t[i]))/scenario.N for (i,u) in enumerate(sol.u[1:end-1])], 
-               color=scenario.policy=="Development" ? sol.t[1:end-1] : :gray, 
+               [u[scenario.N+1] for u in sol.u[1:end-2]], 
+               [sum(u[1:scenario.N]./scenario.μ(u, scenario, sol.t[i]))/scenario.N for (i,u) in enumerate(sol.u[1:end-2])], 
+               color=scenario.policy=="Development" ? sol.t[1:end-2] : trajectory_color, 
                linestyle=:dot, 
                colormap=cgrad([:lightgray, :darkorange], [0.0, 0.5, 1.0]))
     end
@@ -237,45 +237,28 @@ end
 
 Plot the distribution of incomes.
 """
-function incomes_plot_old!(aa, sol; order=false, color=:darkorange)
-    p = sol.prob.p
-    
-    r_inc = incomes(sol.u[end-1], p)
 
-    resource_revenue = r_inc.resource
-    alt_revenues = r_inc.wages
-    trade_revenues = r_inc.trade
-    income = r_inc.total
-    inc = resource_revenue + alt_revenues
-    id = order ? sortperm(income) : collect(1:p.N)
-    barplot!(aa, inc[id], color=order ? p.w̃[id] : color, alpha=1.0, offset=trade_revenues[id])
-    barplot!(aa, trade_revenues[id], color=order ? p.w̃[id] : color)
-    barplot!(aa, trade_revenues[id], color=HSLA(0,0,0,0.2))
-    barplot!(aa, trade_revenues[id], color=HSLA(0,0,0,0.2))
-    lines!(aa, p.w̃.*p.ū, linewidth=2, color=:black, linestyle=:dot)
-    fir = findall(resource_revenue[id].>0.0)
-    fia = findall(alt_revenues[id].>0.0)
-end
 
 # -- plotting, with dimensional toggle --
-function incomes_plot!(ax, sol; order=false, color=:darkorange, dimensional::Bool=false, resource_incomes=true)
+function incomes_plot!(ax, sol; order=false, color=:darkorange, dimensional::Bool=false, resource_incomes=true, xlabel_as_w̃=false, base=0.0)
     p = sol.prob.p
     inc = incomes(sol)
 
     # unpack for readability
     res   = inc.resource
     wage  = inc.wages
-    trd   = inc.trade
+    trd   = inc.trade.+base
     total = inc.total
 
     # ordering
     idx = order ? sortperm(total) : eachindex(total)
+    xvals= xlabel_as_w̃ ? p.w̃ : 1:length(total)
 
     # bottom bars: resource + wages
-    barplot!(ax, (res[idx] .+ wage[idx]), color=color, alpha=1.0, offset=trd[idx])
+    barplot!(ax, xvals,(res[idx] .+ wage[idx]), color=color, alpha=1.0, offset=trd[idx])
     # top bars: trade revenues
-    barplot!(ax, trd[idx], color=color)
-    barplot!(ax, trd[idx], color=HSLA(0,0,0,0.2))
+    barplot!(ax, xvals,trd[idx], color=color)
+    barplot!(ax, xvals,trd[idx], color=HSLA(0,0,0,0.2))
     # dotted line: max nondimensional effort*price curve
 
    dim=dimensional ? p.rpk : 1.0
@@ -283,7 +266,7 @@ function incomes_plot!(ax, sol; order=false, color=:darkorange, dimensional::Boo
    γ =  occursin("Protected Area", p.policy) || occursin("Exclusive Use Rights", p.policy) ? p.w̃ : p.γ(sol.u[end], p, 0.0)
    line_data = μ .* γ .* dim
    line_data = inc.wages_0.*dim
-    lines!(ax, line_data, linewidth=1, color=:white, linestyle=:solid)
+    lines!(ax, xvals,line_data, linewidth=1, color=:white, linestyle=:solid)
     ylims!(ax,minimum(trd),maximum(total))
 
     if resource_incomes
@@ -291,7 +274,7 @@ function incomes_plot!(ax, sol; order=false, color=:darkorange, dimensional::Boo
         #=y=vcat(trd[id[1]],res[id].+trd[id],trd[reverse(id)])
         x=vcat(id[1],id,reverse(id))
         lines!(ax,x,y, color=:black)=#
-        scatter!(ax,id,total[idx[id]], color=:black, markersize=3)
+        scatter!(ax,xvals[id],total[idx[id]], color=:black, markersize=3)
         #scatter!(ax,id,trd[id], color=:black, markersize=4)
 
     end
